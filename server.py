@@ -679,7 +679,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                             z_1d = float(latest.get("z_score_1d", 0.0))
                             close_px = float(latest.get("asset_close", 0.0))
                             # Cache into SQLite
-                            act = "BUY ATM CALL" if z_1d <= -thresh else ("BUY ATM PUT" if z_1d >= thresh else "WAITING FOR BARRIER")
+                            act = "LONG ASSET" if z_1d <= -thresh else ("SHORT ASSET" if z_1d >= thresh else "WAITING FOR BARRIER")
                             warehouse.update_champion_live_signal(t, z_1d, close_px, act, bool(abs(z_1d) >= thresh))
                     except Exception:
                         z_1d = 0.0
@@ -687,13 +687,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
                 # Signal state
                 if z_1d <= -thresh:
-                    action = "BUY ATM CALL"
+                    action = "LONG ASSET"
                     badge = "ACTIVE BULLISH SIGNAL"
                     badge_class = "tag-green"
                     is_active = True
                     active_signals += 1
                 elif z_1d >= thresh:
-                    action = "BUY ATM PUT"
+                    action = "SHORT ASSET"
                     badge = "ACTIVE BEARISH SIGNAL"
                     badge_class = "tag-red"
                     is_active = True
@@ -789,13 +789,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 close_val = float(close_px) if close_px is not None else 0.0
 
                 if z_val <= -thresh:
-                    action = "BUY ATM CALL"
+                    action = "LONG ASSET"
                     badge = "ACTIVE BULLISH FLOW"
                     badge_class = "tag-green"
                     is_active = True
                     active_signals += 1
                 elif z_val >= thresh:
-                    action = "BUY ATM PUT"
+                    action = "SHORT ASSET"
                     badge = "ACTIVE BEARISH FLOW"
                     badge_class = "tag-red"
                     is_active = True
@@ -875,12 +875,46 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         filter_earnings=True
                     )
                     if opt.get("status") == "SUCCESS" and opt.get("champion_triplet"):
+                        champ = opt["champion_triplet"]
                         warehouse.save_champion_triplet(t, {
                             "market": m,
                             "sector": s,
                             "theme": theme,
-                            "champion_triplet": opt["champion_triplet"]
+                            "champion_triplet": champ
                         })
+                        eval_t = optimizer.evaluate_single_param(
+                            z=np.array(z_series, dtype=float),
+                            p=np.array(prices, dtype=float),
+                            dates=dates,
+                            thresh=champ["threshold"],
+                            horizon=champ["holding_days"],
+                            earnings_dates=edates,
+                            filter_earnings=True,
+                            calc_details=True
+                        )
+                        raw_trades = eval_t.get("trades", [])
+                        if raw_trades:
+                            gold_trades = []
+                            for tr in raw_trades:
+                                gold_trades.append({
+                                    "ticker": t,
+                                    "trade_date": tr["date"],
+                                    "action": tr["action"],
+                                    "signal_z": tr.get("signal_z", 0.0),
+                                    "underlying_entry": tr["entry_price"],
+                                    "strike": tr["exit_price"],
+                                    "contract_dte": 0,
+                                    "holding_sessions": tr["holding_sessions"],
+                                    "entry_option_price": tr["entry_price"],
+                                    "exit_option_price": tr["exit_price"],
+                                    "pnl_pct": tr["pnl_rec_pct"],
+                                    "dollar_pnl": tr["dollar_rec"],
+                                    "is_win": 1 if tr["win_rec"] else 0,
+                                    "loss_cause": tr.get("loss_cause", ""),
+                                    "mfe_pct": tr.get("mfe_pct", 0.0),
+                                    "mae_pct": tr.get("mae_pct", 0.0)
+                                })
+                            warehouse.save_champion_trades(t, gold_trades)
                         synced.append(t)
                 except Exception as e:
                     print(f"Error syncing gold ledger for {t}: {e}")
@@ -965,12 +999,12 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 badge_class = "tag-blue"
 
                 if z_1d <= -thresh:
-                    action = "BUY ATM CALL"
+                    action = "LONG ASSET"
                     action_badge = "ACTIVE BULLISH SIGNAL"
                     badge_class = "tag-green"
                     is_active = True
                 elif z_1d >= thresh:
-                    action = "BUY ATM PUT"
+                    action = "SHORT ASSET"
                     action_badge = "ACTIVE BEARISH SIGNAL"
                     badge_class = "tag-red"
                     is_active = True
@@ -1077,11 +1111,11 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 is_active = abs(z_val) >= thresh
 
                 if z_val <= -thresh:
-                    action = "BUY ATM CALL"
+                    action = "LONG ASSET"
                     badge = "ACTIVE BULLISH FLOW"
                     badge_class = "tag-green"
                 elif z_val >= thresh:
-                    action = "BUY ATM PUT"
+                    action = "SHORT ASSET"
                     badge = "ACTIVE BEARISH FLOW"
                     badge_class = "tag-red"
                 else:

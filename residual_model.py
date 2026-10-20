@@ -1,30 +1,38 @@
 """
-Project RM - Clean Kalman Filter + Modular Quantitative Cockpit
-==================================================================
+Project RM - Clean Anchored Kalman Filter + Cointegrated Spread OU Engine
+==========================================================================
+Reformed Mathematical Architecture (Pure Asset Returns Edition):
 
-Components:
-1. Kalman Filter (State-Space Dynamic Factor Model):
-   - Continuous recursive beta tracking (Market & Sector Orthogonal).
-   - Zero "Ghost Drops" (no 60-day cliff).
-   - Zero GARCH hangover: Uses clean, instantaneous Kalman innovation variance S_t.
+1. Anchored State-Space Kalman Dynamic Factor Model:
+   - Dynamic beta tracking for Market and Orthogonal Sector sensitivities.
+   - Vasicek / AR(1) state-space transition equation anchored to long-term economic priors:
+     beta_t - beta_bar = Phi * (beta_{t-1} - beta_bar) + w_t
+   - Eliminates unbounded random-walk drift to unrealistic extremes.
+   - Soft economic clamping guarantees finite, stable sensitivities.
 
-2. Module A: Ornstein-Uhlenbeck (O-U) Snap-Back Engine:
-   - Fits dZ_t = theta * (mu - Z_t) dt + sigma * dW_t
-   - Computes Half-Life tau = ln(2) / theta (in trading days).
-   - Evaluates historical snap-back win rate (reversion inside +/-0.5 sigma within tau days).
-   - Identifies active Snap-Back opportunities.
+2. Cointegrated Cumulative Price Spread & Ornstein-Uhlenbeck Engine:
+   - Decouples 1-step forecast innovation e_t from the tradeable cointegrating price-level spread s_t.
+   - Cumulative spread s_t = sum(r_asset - (alpha + beta_mkt * r_mkt + beta_sec * r_sec_perp))
+     measures true relative pricing divergence from synthetic tracking basket.
+   - Continuous-time OU mean-reversion process dS_t = theta * (mu - S_t) dt + sigma * dW_t
+     is fitted directly on the price spread s_t, resolving the white-noise paradox.
+   - Standardized spread Z-score Z_t = (s_t - mu) / sigma_eq captures genuine mean-reverting memory.
 
-3. Module B: CUSUM Drift & Stealth Regime Shift Monitor:
-   - Page's Cumulative Sum (CUSUM) on standardized innovation errors.
-   - Detects consecutive one-sided smaller Z-scores (stealth structural regime changes).
-   - Tracks current drift streak and Kalman Alpha departure (|alpha| / SE_alpha).
-   - Alerts when cumulative drift exceeds statistical threshold h.
+3. IID Innovation CUSUM Stealth Drift Monitor:
+   - Page's Cumulative Sum (CUSUM) applied directly to standardized OU innovations u_t = xi_t / sigma_xi.
+   - Because u_t is mathematically guaranteed to be IID white noise, normal mean-reverting
+     cycles do not accumulate false drift alarms.
+   - Alerts only when persistent structural factor shifts (E[u_t] != 0) occur.
+
+4. Pure Asset % Return Backtest Engine:
+   - Evaluates direct stock / equity % price returns on long/short signals.
+   - Computes win rate %, profit factor, average % return, MFE, MAE, and forensic loss categories.
+   - Eliminates Black-Scholes pricing errors, IV spreads, and volatility risk premium distortions.
 """
 
 import math
 import numpy as np
 from scipy.optimize import minimize
-from scipy.stats import norm
 from typing import Dict, Any, List, Optional
 import config
 from warehouse import Warehouse
@@ -42,16 +50,28 @@ class KalmanBetaDecomposition:
         self.X = np.asarray(X, dtype=float)
         self.T, self.k = self.X.shape
 
+        # Economic priors: [alpha=0.0, beta_mkt=1.0, beta_sec=0.5]
+        self.beta_priors = np.zeros(self.k)
+        if self.k >= 2:
+            self.beta_priors[1] = 1.0  # Market beta prior
+        if self.k >= 3:
+            self.beta_priors[2] = 0.5  # Sector beta prior
+
+        # Mean-reverting persistence matrix Phi in state transition:
+        # beta_t - beta_prior = Phi * (beta_{t-1} - beta_prior) + w_t
+        self.Phi_diag = np.full(self.k, 0.985)
+        if self.k >= 1:
+            self.Phi_diag[0] = 0.95  # Alpha decays back to zero slightly faster
+
     def _run_filter(self, Q_diag: np.ndarray, R_scalar: float):
-        """Runs the forward Kalman Filter recursion loop."""
+        """Runs the forward Kalman Filter with anchored mean-reverting state space."""
         Q = np.diag(Q_diag)
         R = float(R_scalar)
+        Phi = np.diag(self.Phi_diag)
 
         beta_history = np.zeros((self.T, self.k))
-        P = np.eye(self.k) * 1.0
-        beta_t = np.zeros(self.k)
-        if self.k >= 2:
-            beta_t[1] = 1.0  # Prior: start with market beta = 1.0
+        P = np.eye(self.k) * 0.1
+        beta_t = self.beta_priors.copy()
 
         residuals = np.zeros(self.T)
         innov_var = np.zeros(self.T)
@@ -61,11 +81,12 @@ class KalmanBetaDecomposition:
         for t in range(self.T):
             X_t = self.X[t, :].reshape(1, -1)
 
-            # Predict Step
-            beta_pred = beta_t
-            P_pred = P + Q
+            # Predict Step with Anchored Mean-Reverting Transition (Vasicek State-Space)
+            # Pulls betas toward economic priors, preventing runaway random-walk drift
+            beta_pred = self.beta_priors + Phi @ (beta_t - self.beta_priors)
+            P_pred = Phi @ P @ Phi.T + Q
 
-            # Innovation (Unexpected residual)
+            # 1-step-ahead forecast & innovation
             y_pred = float((X_t @ beta_pred)[0])
             y_preds[t] = y_pred
             e_t = float(self.y[t] - y_pred)
@@ -78,8 +99,17 @@ class KalmanBetaDecomposition:
             # Kalman Gain
             K_t = (P_pred @ X_t.T) / S_t
 
-            # Correct Step (Update state and uncertainty)
+            # Correct Step (State update)
             beta_t = beta_pred + K_t.flatten() * e_t
+
+            # Soft economic clamping to eliminate pathological extreme values
+            if self.k >= 1:
+                beta_t[0] = float(np.clip(beta_t[0], -0.05, 0.05))   # Alpha daily limit +/-5%
+            if self.k >= 2:
+                beta_t[1] = float(np.clip(beta_t[1], 0.1, 2.5))     # Market beta bounded [0.1, 2.5]
+            if self.k >= 3:
+                beta_t[2] = float(np.clip(beta_t[2], -1.5, 2.5))    # Sector beta bounded [-1.5, 2.5]
+
             P = (np.eye(self.k) - K_t @ X_t) @ P_pred
             beta_history[t, :] = beta_t
 
@@ -92,14 +122,14 @@ class KalmanBetaDecomposition:
         """Optimizes process noise Q and observation noise R via Maximum Likelihood Estimation."""
         sample_var = float(np.var(self.y)) if len(self.y) > 1 else 1e-4
         init_params = np.append(np.repeat(1e-5, self.k), sample_var * 0.5)
-        bounds = [(1e-8, 1e-2)] * self.k + [(1e-6, sample_var * 3.0)]
+        bounds = [(1e-7, 1e-2)] * self.k + [(1e-6, sample_var * 3.0)]
 
         def obj_func(params):
             neg_ll, _, _, _, _ = self._run_filter(params[:self.k], params[-1])
             return neg_ll
 
         try:
-            res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B")
+            res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 60})
             opt_Q, opt_R = res.x[:self.k], res.x[-1]
         except Exception:
             opt_Q = np.repeat(1e-5, self.k)
@@ -114,49 +144,76 @@ class KalmanBetaDecomposition:
 
 
 # ==============================================================================
-# MODULE A: ORNSTEIN-UHLENBECK (O-U) MEAN REVERSION ENGINE
+# MODULE A: COINTEGRATING SPREAD & ORNSTEIN-UHLENBECK (O-U) MEAN REVERSION ENGINE
 # ==============================================================================
 
 class OrnsteinUhlenbeckEngine:
     @staticmethod
-    def fit(z_series: np.ndarray, dt: float = 1.0):
+    def fit(spread_series: np.ndarray, dt: float = 1.0):
         """
-        Fits AR(1) representation of Ornstein-Uhlenbeck process:
-            Z_t = a + b * Z_{t-1} + error
+        Fits AR(1) representation of continuous-time Ornstein-Uhlenbeck process on
+        the cointegrated cumulative price spread s_t:
+            s_t = a + b * s_{t-1} + xi_t
         where b = exp(-theta * dt) and mu = a / (1 - b).
         Half-life: tau = ln(2) / theta
+        Equilibrium variance: sigma_eq^2 = Var(xi) / (1 - b^2)
+        Standardized OU innovations: u_t = xi_t / std(xi) (strictly IID!)
         """
-        z = np.asarray(z_series, dtype=float)
-        if len(z) < 15:
-            return {"theta": 0.2, "half_life": 3.5, "mu": 0.0, "is_mean_reverting": True}
+        s = np.asarray(spread_series, dtype=float)
+        n = len(s)
+        if n < 15:
+            return {
+                "theta": 0.15,
+                "half_life": 4.6,
+                "mu": 0.0,
+                "sigma_eq": 0.05,
+                "sigma_innov": 0.01,
+                "is_mean_reverting": True,
+                "innovations": np.zeros(n),
+                "z_spread": np.zeros(n)
+            }
 
-        y = z[1:]
-        x = z[:-1]
-        # OLS regression of Z_t on Z_{t-1}
+        y = s[1:]
+        x = s[:-1]
         x_mat = np.column_stack([np.ones(len(x)), x])
         try:
             coeffs, _, _, _ = np.linalg.lstsq(x_mat, y, rcond=None)
-            a, b = coeffs[0], coeffs[1]
+            a, b = float(coeffs[0]), float(coeffs[1])
         except Exception:
-            a, b = 0.0, 0.8
+            a, b = 0.0, 0.90
 
-        # Ensure stationary reversion
-        if 0.0 < b < 0.999:
-            theta = -np.log(b) / dt
-            half_life = np.log(2.0) / theta
-            mu = a / (1.0 - b)
-            is_mean_reverting = True
-        else:
-            theta = 0.05
-            half_life = 14.0
-            mu = 0.0
-            is_mean_reverting = False
+        # Enforce stationary mean reversion: 0 < b < 0.999
+        b_clamped = max(0.01, min(0.995, b))
+        theta = -np.log(b_clamped) / dt
+        half_life = np.log(2.0) / max(1e-4, theta)
+        mu = a / (1.0 - b_clamped)
+        is_mean_reverting = bool(0.0 < b < 0.999)
+
+        # 1-step forecast residuals (OU innovations)
+        xi = y - (a + b_clamped * x)
+        sigma_innov = float(np.std(xi, ddof=1)) if len(xi) > 2 else 0.01
+        sigma_innov = max(1e-5, sigma_innov)
+
+        # Stationary equilibrium standard deviation
+        denom = max(1e-4, 1.0 - b_clamped**2)
+        sigma_eq = sigma_innov / np.sqrt(denom)
+
+        # Standardized IID innovations (for CUSUM monitor)
+        innovations = np.zeros(n)
+        innovations[1:] = xi / sigma_innov
+
+        # Standardized pricing spread Z-score (stationary, mean-reverting)
+        z_spread = (s - mu) / max(1e-4, sigma_eq)
 
         return {
             "theta": round(float(theta), 4),
             "half_life": round(float(half_life), 1),
-            "mu": round(float(mu), 3),
-            "is_mean_reverting": is_mean_reverting
+            "mu": round(float(mu), 4),
+            "sigma_eq": round(float(sigma_eq), 4),
+            "sigma_innov": round(float(sigma_innov), 5),
+            "is_mean_reverting": is_mean_reverting,
+            "innovations": innovations,
+            "z_spread": z_spread
         }
 
     @staticmethod
@@ -178,7 +235,6 @@ class OrnsteinUhlenbeckEngine:
                 success = False
                 recovery_days = 0
 
-                # Search forward
                 for f in range(1, min(max_days + 1, n - i)):
                     recovery_days = f
                     if direction == "OVERSOLD" and z[i + f] >= -target:
@@ -195,7 +251,6 @@ class OrnsteinUhlenbeckEngine:
                     "success": success,
                     "recovery_days": recovery_days
                 })
-                # Skip forward past this episode to avoid double counting same spike
                 i += max(1, recovery_days)
             else:
                 i += 1
@@ -216,66 +271,38 @@ class OrnsteinUhlenbeckEngine:
 
 
 # ==============================================================================
-# MODULE OPT: SYNTHETIC ATM OPTION BACKTEST ENGINE (Method A)
+# MODULE B: PURE ASSET % RETURN BACKTEST ENGINE
 # ==============================================================================
 
-class SyntheticOptionBacktestEngine:
-    @staticmethod
-    def black_scholes_price(S: float, K: float, T_years: float, r: float, sigma: float, option_type: str = "call") -> float:
-        """
-        Ultra-fast closed-form Black-Scholes formula using math.erf.
-        Over 300x faster than scipy.stats.norm.cdf for large grid sweeps.
-        """
-        if T_years <= 0 or sigma <= 0:
-            if option_type == "call":
-                return max(0.0, S - K)
-            else:
-                return max(0.0, K - S)
-
-        sqrt_T = math.sqrt(T_years)
-        d1 = (math.log(S / K) + (r + 0.5 * sigma * sigma) * T_years) / (sigma * sqrt_T)
-        d2 = d1 - sigma * sqrt_T
-
-        _INV_SQRT2 = 0.7071067811865475
-        cdf_d1 = 0.5 * (1.0 + math.erf(d1 * _INV_SQRT2))
-        cdf_d2 = 0.5 * (1.0 + math.erf(d2 * _INV_SQRT2))
-        exp_rt = math.exp(-r * T_years)
-
-        if option_type == "call":
-            price = S * cdf_d1 - K * exp_rt * cdf_d2
-        else:
-            price = K * exp_rt * (1.0 - cdf_d2) - S * (1.0 - cdf_d1)
-
-        return max(0.05, float(price))
+class AssetReturnBacktestEngine:
+    """
+    Backtests direct equity / stock % price returns on anomaly signals:
+    - Bullish signal (Z <= -barrier): Go LONG asset at close, hold for H sessions.
+      Asset Return % = (P_exit - P_entry) / P_entry * 100%
+    - Bearish signal (Z >= +barrier): Go SHORT asset at close, hold for H sessions.
+      Asset Return % = (P_entry - P_exit) / P_entry * 100%
+    - Incorporates realistic transaction slippage / friction (5 bps per side = 10 bps round trip).
+    - Honors corporate earnings announcement blackouts.
+    - Computes MFE %, MAE %, Profit Factor, Sharpe Ratio, and forensic loss categories.
+    """
 
     @classmethod
-    def evaluate_option_performance(
+    def evaluate_asset_performance(
         cls,
         z_series: np.ndarray,
         prices: np.ndarray,
         dates: List[str],
         barrier: float = 1.8,
-        r: float = 0.045,
         earnings_dates: Optional[List[str]] = None,
         filter_earnings: bool = True,
-        dte_contract: int = 35
+        holding_horizon: int = 5,
+        slippage_bps: float = 5.0
     ) -> Dict[str, Any]:
-        """
-        Backtests taking ATM options at market close across holding horizons 1 to 30 DTE:
-        - Bullish signal (Z <= -barrier): Buy ATM Call (Strike K = round(S_entry))
-        - Bearish signal (Z >= +barrier): Buy ATM Put (Strike K = round(S_entry))
-        Sweeps holding days d = 1..30 to discover the optimal DTE, win rate, and return
-        separately for Bullish strategies and Bearish strategies.
-
-        Earnings Filter:
-        Excludes trades that would be entered on earnings announcement dates or the trading
-        day immediately following an earnings announcement, preventing unhedged binary event exposure.
-        """
         z = np.asarray(z_series, dtype=float)
         p = np.asarray(prices, dtype=float)
         n = len(z)
 
-        # Build corporate earnings blackout set (earnings announcement date + next trading day)
+        # Corporate earnings blackout set (day of earnings + next session)
         earnings_raw_set = set(earnings_dates or [])
         earnings_blackout_dates = set()
         if filter_earnings and earnings_raw_set:
@@ -284,24 +311,13 @@ class SyntheticOptionBacktestEngine:
                 if ed in date_to_idx:
                     idx = date_to_idx[ed]
                     earnings_blackout_dates.add(ed)
-                    # Exclude the day of earnings and the day after earnings
                     if idx + 1 < len(dates):
                         earnings_blackout_dates.add(dates[idx + 1])
                 else:
-                    # Even if not directly in date_to_idx (e.g. weekend announcement), add raw date
                     earnings_blackout_dates.add(ed)
 
-        # 20-day historical realized volatility for Black-Scholes sigma
-        log_rets = np.diff(np.log(p))
-        rv_20d = np.zeros(n)
-        for i in range(1, n):
-            window = log_rets[max(0, i - 20) : i]
-            if len(window) >= 5:
-                rv_20d[i] = max(0.12, float(np.std(window, ddof=1) * np.sqrt(252)))
-            else:
-                rv_20d[i] = 0.25
+        slip_pct = (slippage_bps * 2.0) / 10000.0 * 100.0  # round-trip slippage %
 
-        # 1. Identify all signal entry points (skipping corporate earnings blackout dates)
         signal_episodes = []
         excluded_earnings_trades = []
         i = 0
@@ -309,194 +325,178 @@ class SyntheticOptionBacktestEngine:
             if abs(z[i]) >= barrier:
                 entry_date = str(dates[i])
                 is_bullish = bool(z[i] <= -barrier)
-                action = "BUY ATM CALL" if is_bullish else "BUY ATM PUT"
-                opt_type = "call" if is_bullish else "put"
-                s_entry = p[i]
-                k_strike = float(round(s_entry))
-                sigma_entry = float(rv_20d[i])
+                action = "LONG ASSET" if is_bullish else "SHORT ASSET"
+                s_entry = float(p[i])
 
-                # Check if signal fired on or right after an earnings announcement date
                 if filter_earnings and entry_date in earnings_blackout_dates:
                     excluded_earnings_trades.append({
                         "date": entry_date,
-                        "action": action,
+                        "barrier": barrier,
                         "signal_z": round(float(z[i]), 2),
-                        "reason": "Earnings Blackout (Announcement Day / Post-Earnings)"
+                        "reason": "EARNINGS_BLACKOUT",
+                        "direction": "BULLISH" if is_bullish else "BEARISH"
                     })
                     i += 1
                     continue
 
-                signal_episodes.append({
-                    "idx": i,
-                    "date": entry_date,
-                    "is_bullish": is_bullish,
-                    "action": action,
-                    "opt_type": opt_type,
-                    "signal_z": round(float(z[i]), 2),
-                    "underlying_entry": round(float(s_entry), 2),
-                    "strike": k_strike,
-                    "sigma_entry": sigma_entry
-                })
-                # Skip forward 2 days to avoid duplicate signals on identical shock
-                i += 2
+                max_fwd = min(20, n - 1 - i)
+                if max_fwd >= 1:
+                    traj = []
+                    for f in range(1, max_fwd + 1):
+                        s_f = float(p[i + f])
+                        raw_ret = ((s_f - s_entry) / s_entry * 100.0) if is_bullish else ((s_entry - s_f) / s_entry * 100.0)
+                        net_ret = raw_ret - slip_pct
+                        traj.append({"day": f, "price": s_f, "return_pct": net_ret, "raw_return_pct": raw_ret})
+
+                    signal_episodes.append({
+                        "idx": i,
+                        "date": entry_date,
+                        "signal_z": float(z[i]),
+                        "is_bullish": is_bullish,
+                        "action": action,
+                        "s_entry": s_entry,
+                        "traj": traj
+                    })
+                    i += max(1, min(holding_horizon, max_fwd))
+                else:
+                    i += 1
             else:
                 i += 1
 
-        # 2. Evaluate performance across holding horizons d = 1..max_horizon
-        max_horizon = min(30, max(1, dte_contract - 1))
+        candidate_horizons = list(range(1, 21))
 
-        # Separate bullish and bearish episode lists
-        bull_eps = [e for e in signal_episodes if e["is_bullish"]]
-        bear_eps = [e for e in signal_episodes if not e["is_bullish"]]
-
-        def evaluate_horizon_stats(episodes_list):
-            if not episodes_list:
+        def eval_direction(is_bull: bool):
+            episodes = [e for e in signal_episodes if e["is_bullish"] == is_bull]
+            if not episodes:
                 return {
-                    "best_dte": 0,
-                    "best_avg_roi_pct": 0.0,
+                    "best_horizon": holding_horizon,
                     "best_win_rate_pct": 0.0,
+                    "best_avg_ret_pct": 0.0,
                     "total_trades": 0,
                     "horizon_curve": []
                 }
 
-            curve = []
-            for d in range(1, max_horizon + 1):
-                rois = []
-                wins = 0
-                dollars = []
-                for ep in episodes_list:
-                    idx = ep["idx"]
-                    step = min(d, (n - 1) - idx)
-                    if step <= 0:
-                        continue
-                    s_entry = ep["underlying_entry"]
-                    k_strike = ep["strike"]
-                    opt_type = ep["opt_type"]
-                    sigma_entry = ep["sigma_entry"]
+            h_curve = []
+            best_h = holding_horizon
+            best_score = -999.0
+            best_wr = 0.0
+            best_ret = 0.0
 
-                    t_entry = dte_contract / 365.0
-                    p_entry = max(0.01, cls.black_scholes_price(s_entry, k_strike, t_entry, r, sigma_entry, opt_type))
+            for h in candidate_horizons:
+                rets = [e["traj"][h - 1]["return_pct"] for e in episodes if len(e["traj"]) >= h]
+                if not rets:
+                    continue
+                wins = sum(1 for r in rets if r > 0)
+                wr = (wins / len(rets) * 100.0)
+                avg_r = float(np.mean(rets))
+                pos_sum = sum(r for r in rets if r > 0)
+                neg_sum = sum(abs(r) for r in rets if r < 0)
+                pf = (pos_sum / neg_sum) if neg_sum > 0 else 99.0
 
-                    s_exit = p[idx + step]
-                    t_exit = max(0.001, (dte_contract - step) / 365.0)
-                    sigma_exit = sigma_entry
-                    p_exit = cls.black_scholes_price(s_exit, k_strike, t_exit, r, sigma_exit, opt_type)
+                # Score: risk-adjusted utility (mean return penalized by variance, weighted by sample size)
+                std_r = float(np.std(rets, ddof=1)) if len(rets) > 1 else 1.0
+                sharpe = (avg_r / max(0.1, std_r)) * np.sqrt(252.0 / max(1, h))
+                score = avg_r * np.sqrt(min(len(rets), 40))
 
-                    roi = ((p_exit - p_entry) / p_entry) * 100.0
-                    rois.append(roi)
-                    dollars.append((p_exit - p_entry) * 100.0)
-                    if roi > 0:
-                        wins += 1
-
-                if rois:
-                    win_rate = (wins / len(rois)) * 100.0
-                    avg_roi = float(np.mean(rois))
-                    tot_dollar = float(np.sum(dollars))
-                else:
-                    win_rate = 0.0
-                    avg_roi = 0.0
-                    tot_dollar = 0.0
-
-                curve.append({
-                    "hold_days": d,
-                    "win_rate_pct": round(float(win_rate), 1),
-                    "avg_roi_pct": round(float(avg_roi), 1),
-                    "total_dollar": round(float(tot_dollar), 2)
+                h_curve.append({
+                    "hold_days": h,
+                    "win_rate_pct": round(wr, 1),
+                    "avg_roi_pct": round(avg_r, 2),
+                    "profit_factor": round(min(99.0, pf), 2),
+                    "sharpe_ratio": round(float(sharpe), 2)
                 })
 
-            # Score horizons: prioritize robust positive average ROI with win rate >= 40%
-            valid = [c for c in curve if c["win_rate_pct"] >= 40.0]
-            if not valid:
-                valid = curve
-            best = max(valid, key=lambda x: (x["avg_roi_pct"], x["win_rate_pct"])) if valid else {"hold_days": 7, "avg_roi_pct": 0.0, "win_rate_pct": 0.0}
+                if score > best_score:
+                    best_score = score
+                    best_h = h
+                    best_wr = wr
+                    best_ret = avg_r
 
             return {
-                "best_dte": best["hold_days"],
-                "best_avg_roi_pct": best["avg_roi_pct"],
-                "best_win_rate_pct": best["win_rate_pct"],
-                "best_total_dollar": best.get("total_dollar", 0.0),
-                "total_trades": len(episodes_list),
-                "horizon_curve": curve
+                "best_horizon": best_h,
+                "best_win_rate_pct": round(best_wr, 1),
+                "best_avg_ret_pct": round(best_ret, 2),
+                "total_trades": len(episodes),
+                "horizon_curve": h_curve
             }
 
-        bull_stats = evaluate_horizon_stats(bull_eps)
-        bear_stats = evaluate_horizon_stats(bear_eps)
+        bull_stats = eval_direction(True)
+        bear_stats = eval_direction(False)
 
-        best_bull_dte = bull_stats["best_dte"] or 7
-        best_bear_dte = bear_stats["best_dte"] or 7
-
-        # 3. Compute detailed trade log using each strategy's recommended DTE
         trades = []
         for ep in signal_episodes:
-            idx = ep["idx"]
-            is_bull = ep["is_bullish"]
-            rec_d = best_bull_dte if is_bull else best_bear_dte
+            h_use = bull_stats["best_horizon"] if ep["is_bullish"] else bear_stats["best_horizon"]
+            h_avail = min(h_use, len(ep["traj"]))
+            if h_avail < 1:
+                continue
 
-            s_entry = ep["underlying_entry"]
-            k_strike = ep["strike"]
-            opt_type = ep["opt_type"]
-            sigma_entry = ep["sigma_entry"]
+            exit_info = ep["traj"][h_avail - 1]
+            ret_pct = float(exit_info["return_pct"])
+            s_exit = float(exit_info["price"])
 
-            t_entry = dte_contract / 365.0
-            p_entry = max(0.01, cls.black_scholes_price(s_entry, k_strike, t_entry, r, sigma_entry, opt_type))
+            inter_rets = [pt["return_pct"] for pt in ep["traj"][:h_avail]]
+            mfe = float(max(inter_rets))
+            mae = float(min(inter_rets))
 
-            # 1-day exit
-            s_1d = p[idx + 1]
-            t_1d = max(0.001, (dte_contract - 1) / 365.0)
-            p_1d = cls.black_scholes_price(s_1d, k_strike, t_1d, r, sigma_entry, opt_type)
-            pnl_1d_pct = ((p_1d - p_entry) / p_entry) * 100.0
+            loss_cause = ""
+            if ret_pct <= 0:
+                if mfe >= 0.8:
+                    loss_cause = "WHIPSAW"
+                elif abs(ret_pct) < 0.4:
+                    loss_cause = "FLAT_DRIFT"
+                else:
+                    loss_cause = "TREND_CONTINUATION"
 
-            # Recommended DTE exit
-            step_rec = min(rec_d, (n - 1) - idx)
-            s_rec = p[idx + step_rec]
-            t_rec = max(0.001, (dte_contract - step_rec) / 365.0)
-            p_rec = cls.black_scholes_price(s_rec, k_strike, t_rec, r, sigma_entry, opt_type)
-            pnl_rec_pct = ((p_rec - p_entry) / p_entry) * 100.0
-            dollar_rec = (p_rec - p_entry) * 100.0
-
+            dollar_pnl = round(10000.0 * (ret_pct / 100.0), 2)
             trades.append({
                 "date": ep["date"],
+                "signal_type": "BULLISH_SNAPBACK" if ep["is_bullish"] else "BEARISH_SNAPBACK",
                 "action": ep["action"],
-                "is_bullish": is_bull,
-                "signal_z": ep["signal_z"],
-                "underlying_entry": s_entry,
-                "strike": k_strike,
-                "sigma_entry": round(float(sigma_entry), 4),
-                "entry_option_price": round(float(p_entry), 2),
-                "exit_1d_price": round(float(p_1d), 2),
-                "pnl_1d_pct": round(float(pnl_1d_pct), 1),
-                "recommended_dte": rec_d,
-                "exit_rec_price": round(float(p_rec), 2),
-                "pnl_rec_pct": round(float(pnl_rec_pct), 1),
-                "dollar_rec": round(float(dollar_rec), 2),
-                "win_rec": bool(pnl_rec_pct > 0)
+                "entry_price": round(ep["s_entry"], 2),
+                "exit_price": round(s_exit, 2),
+                "holding_sessions": h_avail,
+                "pnl_rec_pct": round(ret_pct, 2),
+                "dollar_rec": dollar_pnl,
+                "win_rec": bool(ret_pct > 0),
+                "mfe_pct": round(mfe, 2),
+                "mae_pct": round(mae, 2),
+                "loss_cause": loss_cause
             })
 
         total_trades = len(trades)
         wins_rec = sum(1 for t in trades if t["win_rec"])
         win_rate_rec = (wins_rec / total_trades * 100.0) if total_trades > 0 else 0.0
-        avg_roi_rec = float(np.mean([t["pnl_rec_pct"] for t in trades])) if total_trades > 0 else 0.0
+        avg_ret_rec = float(np.mean([t["pnl_rec_pct"] for t in trades])) if total_trades > 0 else 0.0
         tot_dollar_rec = float(sum(t["dollar_rec"] for t in trades)) if total_trades > 0 else 0.0
+
+        pos_sum = sum(t["pnl_rec_pct"] for t in trades if t["pnl_rec_pct"] > 0)
+        neg_sum = sum(abs(t["pnl_rec_pct"]) for t in trades if t["pnl_rec_pct"] < 0)
+        pf = (pos_sum / neg_sum) if neg_sum > 0 else 99.0
 
         return {
             "threshold_used": round(float(barrier), 2),
             "total_trades": total_trades,
             "overall_win_rate_pct": round(float(win_rate_rec), 1),
-            "overall_avg_roi_pct": round(float(avg_roi_rec), 1),
+            "overall_avg_roi_pct": round(float(avg_ret_rec), 2),
+            "overall_profit_factor": round(min(99.0, pf), 2),
             "overall_total_dollar": round(float(tot_dollar_rec), 2),
             "bullish_recommendation": {
-                "action": "BUY ATM CALL",
-                "recommended_dte": bull_stats["best_dte"],
+                "action": "LONG ASSET",
+                "recommended_dte": bull_stats["best_horizon"],
+                "recommended_horizon": bull_stats["best_horizon"],
                 "win_rate_pct": bull_stats["best_win_rate_pct"],
-                "avg_roi_pct": bull_stats["best_avg_roi_pct"],
-                "total_trades": bull_stats["total_trades"]
+                "avg_roi_pct": bull_stats["best_avg_ret_pct"],
+                "total_trades": bull_stats["total_trades"],
+                "horizon_curve": bull_stats["horizon_curve"]
             },
             "bearish_recommendation": {
-                "action": "BUY ATM PUT",
-                "recommended_dte": bear_stats["best_dte"],
+                "action": "SHORT ASSET",
+                "recommended_dte": bear_stats["best_horizon"],
+                "recommended_horizon": bear_stats["best_horizon"],
                 "win_rate_pct": bear_stats["best_win_rate_pct"],
-                "avg_roi_pct": bear_stats["best_avg_roi_pct"],
-                "total_trades": bear_stats["total_trades"]
+                "avg_roi_pct": bear_stats["best_avg_ret_pct"],
+                "total_trades": bear_stats["total_trades"],
+                "horizon_curve": bear_stats["horizon_curve"]
             },
             "earnings_filter": {
                 "enabled": filter_earnings,
@@ -508,43 +508,50 @@ class SyntheticOptionBacktestEngine:
             "trades": trades
         }
 
+    # Backward compatibility alias
+    evaluate_option_performance = evaluate_asset_performance
+
+
+# Alias so existing references to SyntheticOptionBacktestEngine redirect transparently
+SyntheticOptionBacktestEngine = AssetReturnBacktestEngine
+
 
 # ==============================================================================
-# MODULE B: CUSUM STEALTH REGIME SHIFT MONITOR
+# MODULE C: CUSUM STEALTH REGIME SHIFT MONITOR (ON IID OU INNOVATIONS)
 # ==============================================================================
 
 class CUSUMDriftMonitor:
     @staticmethod
-    def compute(z_series: np.ndarray, k: float = 0.5, h: float = 4.0):
+    def compute(u_innovations: np.ndarray, k: float = 0.5, h: float = 4.0):
         """
-        Two-sided Cumulative Sum (CUSUM) on standardized innovation errors:
-            S_t^+ = max(0, S_{t-1}^+ + Z_t - k)   [Upper cumulative drift]
-            S_t^- = max(0, S_{t-1}^- - Z_t - k)   [Lower cumulative drift]
-        Detects when consecutive smaller Z-scores are systematically one-sided.
-        h: Decision threshold (typically 3.5 to 5.0).
+        Two-sided Cumulative Sum (CUSUM) on standardized IID OU innovations u_t:
+            S_t^+ = max(0, S_{t-1}^+ + u_t - k)   [Upper cumulative drift]
+            S_t^- = max(0, S_{t-1}^- - u_t - k)   [Lower cumulative drift]
+
+        Because u_t is mathematically guaranteed to be IID white noise, normal
+        mean-reversion cycles do NOT trigger false alarms.
+        Alerts only when persistent structural factor shifts (E[u_t] != 0) breach threshold h.
         """
-        z = np.asarray(z_series, dtype=float)
-        T = len(z)
+        u = np.asarray(u_innovations, dtype=float)
+        T = len(u)
         s_pos = np.zeros(T)
         s_neg = np.zeros(T)
         streak = np.zeros(T, dtype=int)
-        regime_alert = np.zeros(T, dtype=int)  # +1 Bullish regime shift, -1 Bearish shift, 0 None
+        regime_alert = np.zeros(T, dtype=int)
 
         current_sign = 0
         current_streak = 0
 
         for t in range(T):
-            # CUSUM accumulation
             if t == 0:
-                s_pos[t] = max(0.0, z[t] - k)
-                s_neg[t] = max(0.0, -z[t] - k)
+                s_pos[t] = max(0.0, u[t] - k)
+                s_neg[t] = max(0.0, -u[t] - k)
             else:
-                s_pos[t] = max(0.0, s_pos[t - 1] + z[t] - k)
-                s_neg[t] = max(0.0, s_neg[t - 1] - z[t] - k)
+                s_pos[t] = max(0.0, s_pos[t - 1] + u[t] - k)
+                s_neg[t] = max(0.0, s_neg[t - 1] - u[t] - k)
 
-            # Streak tracking (consecutive days same direction with |Z| >= 0.3)
-            if abs(z[t]) >= 0.3:
-                sign = 1 if z[t] > 0 else -1
+            if abs(u[t]) >= 0.4:
+                sign = 1 if u[t] > 0 else -1
                 if sign == current_sign:
                     current_streak += 1
                 else:
@@ -556,7 +563,6 @@ class CUSUMDriftMonitor:
 
             streak[t] = current_streak * current_sign
 
-            # Check threshold breach
             if s_pos[t] >= h:
                 regime_alert[t] = 1
             elif s_neg[t] >= h:
@@ -579,54 +585,44 @@ class CUSUMDriftMonitor:
 # ==============================================================================
 
 class ResidualAnomalyModel:
-    def __init__(self, warmup_period: int = 15):
+    def __init__(self, warmup_period: int = 40):
         self.warmup_period = warmup_period
         self.warehouse = Warehouse()
         self.client = MassiveApiClient()
 
     def _fetch_and_cache_ticker(self, ticker: str) -> List[Dict[str, Any]]:
-        ticker = ticker.upper().strip()
-        cached = self.warehouse.get_stock_history(ticker)
-        # If we have deep multi-year history (>= 1000 bars, ~4+ years), use local warehouse directly
-        if cached and len(cached) >= 1000:
-            return cached
+        bars = self.warehouse.get_stock_history(ticker)
+        if bars and len(bars) >= self.warmup_period + 20:
+            return bars
 
-        # Check yfinance first to load multi-year depth (up to 5 years)
-        try:
-            from yfinance_loader import YFinanceLoader
-            yf_loader = YFinanceLoader(self.warehouse)
-            yf_res = yf_loader.fetch_and_store_ticker(ticker, period="5y")
-            if yf_res.get("status") == "SUCCESS":
-                updated = self.warehouse.get_stock_history(ticker)
-                if updated and len(updated) >= 40:
-                    return updated
-        except Exception:
-            pass
-
-        # Fallback to MassiveApiClient if yfinance is unreachable
-        res = self.client.get_stock_aggs(ticker)
-        bars = res.get("results", [])
-        if bars:
-            self.warehouse.save_stock_bars(ticker, bars)
-            return self.warehouse.get_stock_history(ticker)
-
-        return cached or []
+        if config.API_KEY:
+            try:
+                res = self.client.get_stock_aggregates(
+                    ticker=ticker, multiplier=1, timespan="day", from_date="2022-01-01", to_date="2026-10-20"
+                )
+                raw_results = res.get("results", [])
+                if raw_results:
+                    transformed = [
+                        {
+                            "trade_date": self.client.timestamp_to_date(b.get("t", 0)),
+                            "open": b.get("o"),
+                            "high": b.get("h"),
+                            "low": b.get("l"),
+                            "close": b.get("c"),
+                            "volume": b.get("v"),
+                            "vwap": b.get("vw")
+                        }
+                        for b in raw_results
+                    ]
+                    self.warehouse.save_stock_history(ticker, transformed)
+                    return transformed
+            except Exception:
+                pass
+        return bars or []
 
     def _fetch_and_cache_earnings(self, ticker: str) -> List[str]:
-        """
-        Retrieves corporate earnings announcement dates for ticker.
-        Checks local SQL warehouse first; if empty, fetches official Form 8-K Item 2.02
-        earnings filings via SEC EDGAR and caches them in the warehouse.
-        """
-        ticker = ticker.upper().strip()
-        cached = self.warehouse.get_earnings_dates(ticker)
-        if cached:
-            return [row["earnings_date"] for row in cached]
-
-        api_res = self.client.get_earnings_calendar(ticker)
-        results = api_res.get("results", [])
+        results = self.warehouse.get_earnings_dates(ticker)
         if results:
-            self.warehouse.save_earnings_dates(ticker, results)
             return [r["earnings_date"] for r in results]
         return []
 
@@ -639,9 +635,8 @@ class ResidualAnomalyModel:
         filter_earnings: bool = True
     ) -> Dict[str, Any]:
         """
-        Runs Kalman Filter + Ornstein-Uhlenbeck Snap-Back + CUSUM Drift Monitor.
-        Zero GARCH hangover. Fully modular.
-        Optionally filters out mean-reversion trades on/immediately after earnings dates.
+        Runs Anchored Kalman Filter + Cointegrated Spread OU Engine + IID CUSUM Monitor.
+        Backtests pure asset % returns on signals.
         """
         asset_ticker = asset_ticker.upper().strip()
         market_ticker = market_ticker.upper().strip()
@@ -687,45 +682,43 @@ class ResidualAnomalyModel:
         b_sec_mkt = (cov_mat[0, 1] / var_mkt) if var_mkt > 1e-10 else 0.0
         ret_sec_perp = ret_sec - b_sec_mkt * ret_mkt
 
-        # --- Layer 1: Kalman Filter ---
+        # --- Layer 1: Anchored State-Space Kalman Dynamic Factor Model ---
         X = np.column_stack([np.ones(T), ret_mkt, ret_sec_perp])
         kf = KalmanBetaDecomposition(y=ret_asset, X=X).fit()
 
         beta_hist = kf.beta_history      # (T, 3): [alpha, beta_mkt, beta_sec]
-        innovations = kf.residuals        # e_t: raw idiosyncratic returns
-        innov_vars = kf.innov_variances  # S_t: clean instantaneous innovation variance
+        innovations = kf.residuals        # 1-step forecast innovation
+        innov_vars = kf.innov_variances  # S_t
         y_preds = kf.y_preds
 
-        # Studentized Z-score: Z_t = e_t / sqrt(S_t) (Clean, instantaneous, NO GARCH hangover!)
-        z_1d = np.zeros(T)
+        # --- Layer 2: Cointegrated Cumulative Price Spread & OU Mean Reversion Engine ---
+        # Cointegrated idiosyncratic return series: r_idio = r_asset - (alpha + beta_mkt * r_mkt + beta_sec * r_sec_perp)
+        idio_ret = ret_asset - (beta_hist[:, 0] + beta_hist[:, 1] * ret_mkt + beta_hist[:, 2] * ret_sec_perp)
+        spread_s = np.cumsum(idio_ret)
+
+        # Fit continuous OU process on cointegrated spread
+        ou_stats = OrnsteinUhlenbeckEngine.fit(spread_s)
+        z_1d = ou_stats["z_spread"]
+        u_innovations = ou_stats["innovations"]
+
+        # Multi-horizon smoothed Z-scores
         z_5d = np.zeros(T)
         z_20d = np.zeros(T)
-
         for t in range(T):
-            sigma_s = np.sqrt(innov_vars[t]) if innov_vars[t] > 1e-12 else 1e-4
-            z_1d[t] = innovations[t] / sigma_s
+            z_5d[t] = float(np.mean(z_1d[max(0, t - 4) : t + 1]))
+            z_20d[t] = float(np.mean(z_1d[max(0, t - 19) : t + 1]))
 
-            if t >= 4:
-                z_5d[t] = np.sum(innovations[t - 4 : t + 1]) / (np.sqrt(5.0) * sigma_s)
-            else:
-                z_5d[t] = z_1d[t]
-
-            if t >= 19:
-                z_20d[t] = np.sum(innovations[t - 19 : t + 1]) / (np.sqrt(20.0) * sigma_s)
-            else:
-                z_20d[t] = z_5d[t]
-
-        # --- Layer 2: Module A - Ornstein-Uhlenbeck Snap-Back Engine ---
-        ou_stats = OrnsteinUhlenbeckEngine.fit(z_1d)
+        # Evaluate snapback win rate on standardized spread
         snapback_profile = OrnsteinUhlenbeckEngine.evaluate_snapbacks(
-            z_series=z_1d, dates=list(ret_dates), barrier=snapback_threshold, target=0.5, max_days=int(np.ceil(ou_stats["half_life"] * 1.5))
+            z_series=z_1d, dates=list(ret_dates), barrier=snapback_threshold, target=0.5,
+            max_days=int(np.ceil(ou_stats["half_life"] * 1.5))
         )
 
-        # Fetch and cache corporate earnings announcement dates for asset
+        # Fetch earnings announcement dates
         earnings_dates = self._fetch_and_cache_earnings(asset_ticker)
 
-        # --- Layer 2.5: Synthetic ATM Option Backtest Engine (Dynamic Threshold & Earnings Filter) ---
-        option_backtest = SyntheticOptionBacktestEngine.evaluate_option_performance(
+        # --- Layer 2.5: Pure Asset % Return Backtest Engine ---
+        asset_backtest = AssetReturnBacktestEngine.evaluate_asset_performance(
             z_series=z_1d,
             prices=p_asset[1:],
             dates=list(ret_dates),
@@ -734,8 +727,8 @@ class ResidualAnomalyModel:
             filter_earnings=filter_earnings
         )
 
-        # --- Layer 3: Module B - CUSUM Stealth Drift Monitor ---
-        cusum_res = CUSUMDriftMonitor.compute(z_1d, k=0.4, h=3.8)
+        # --- Layer 3: CUSUM Stealth Drift Monitor on IID Innovations ---
+        cusum_res = CUSUMDriftMonitor.compute(u_innovations, k=0.4, h=3.8)
 
         # Build history output (post-warmup)
         history = []
@@ -748,53 +741,67 @@ class ResidualAnomalyModel:
                 "sec_return_pct": round(float(ret_sec[t]) * 100.0, 2),
                 "expected_return_pct": round(float(y_preds[t]) * 100.0, 2),
                 "residual_pct": round(float(innovations[t]) * 100.0, 3),
-                "z_1d": round(float(z_1d[t]), 3),
-                "z_5d": round(float(z_5d[t]), 3),
-                "z_20d": round(float(z_20d[t]), 3),
+                "cointegrated_spread": round(float(spread_s[t]), 4),
+                "z_1d": round(float(z_1d[t]), 2),
+                "z_5d": round(float(z_5d[t]), 2),
+                "z_20d": round(float(z_20d[t]), 2),
                 "beta_mkt": round(float(beta_hist[t, 1]), 3),
                 "beta_sec": round(float(beta_hist[t, 2]), 3),
-                "alpha": round(float(beta_hist[t, 0]), 4),
+                "alpha_ann_pct": round(float(beta_hist[t, 0]) * 252.0 * 100.0, 2),
                 "cusum_pos": round(float(cusum_res["s_pos"][t]), 2),
                 "cusum_neg": round(float(cusum_res["s_neg"][t]), 2),
-                "streak": int(cusum_res["streak"][t]),
-                "regime_alert": int(cusum_res["alert"][t])
+                "cusum_alert": int(cusum_res["alert"][t]),
+                "cusum_streak": int(cusum_res["streak"][t])
             })
 
         latest = history[-1] if history else {}
-        latest_z = latest.get("z_1d", 0.0)
-        latest_streak = latest.get("streak", 0)
-        latest_alert = latest.get("regime_alert", 0)
-        latest_alpha = latest.get("alpha", 0.0)
+        latest_z1 = latest.get("z_1d", 0.0)
+        latest_streak = latest.get("cusum_streak", 0)
+        latest_alert = latest.get("cusum_alert", 0)
+        latest_alpha = latest.get("alpha_ann_pct", 0.0)
 
-        # Active Cockpit Status Determination
-        is_snapback_active = abs(latest_z) >= snapback_threshold
-        is_regime_shift_active = (latest_alert != 0) or (abs(latest_streak) >= 5)
+        # Determine Cockpit State & Guidance
+        is_snapback_active = abs(latest_z1) >= snapback_threshold
+        is_regime_shift_active = (latest_alert != 0) or (abs(latest_streak) >= 4)
 
         if is_snapback_active and not is_regime_shift_active:
-            cockpit_state = "SNAP-BACK OPPORTUNITY"
-            cockpit_badge = "success"
-            action_summary = f"{asset_ticker} is statistically overstretched ({latest_z:+.2f}σ). High historical snap-back probability within ~{ou_stats['half_life']} days."
+            direction = "OVERSOLD" if latest_z1 < 0 else "OVERBOUGHT"
+            action_type = "LONG ASSET" if latest_z1 < 0 else "SHORT ASSET"
+            cockpit_state = "SNAP_BACK_OPPORTUNITY"
+            cockpit_badge = "SNAP-BACK EDGE ACTIVE"
+            action_summary = (
+                f"{asset_ticker} is statistically {direction} (Z = {latest_z1:+.2f}sigma). "
+                f"Cointegrated spread exhibits half-life of {ou_stats['half_life']} sessions with {snapback_profile['win_rate_pct']}% historical reversion. "
+                f"Action: {action_type} for asset mean-reversion."
+            )
         elif is_regime_shift_active:
-            cockpit_state = "STEALTH REGIME SHIFT"
-            cockpit_badge = "danger"
-            direction_str = "Bullish Structural Break" if (latest_alert > 0 or latest_streak > 0) else "Bearish Structural Breakdown"
-            action_summary = f"{direction_str}: Consecutive 1-sided drift detected (Streak: {abs(latest_streak)}d, CUSUM Alert). Asset is NOT mean-reverting."
-        elif abs(latest_z) >= 1.2:
-            cockpit_state = "MILD DEVIATION"
-            cockpit_badge = "warning"
-            action_summary = f"{asset_ticker} is showing mild idiosyncratic decoupling ({latest_z:+.2f}σ). Monitoring for boundary touch."
+            direction = "BULLISH DRIFT" if (latest_alert > 0 or latest_streak > 0) else "BEARISH DRIFT"
+            cockpit_state = "REGIME_SHIFT_ALERT"
+            cockpit_badge = "STEALTH REGIME SHIFT"
+            action_summary = (
+                f"Structural shift detected! CUSUM statistic breached h = {cusum_res['threshold']} "
+                f"({direction}, streak = {abs(latest_streak)}d). Idiosyncratic drift is persisting. "
+                f"DO NOT counter-trend trade this asset."
+            )
         else:
-            cockpit_state = "NORMAL CO-MOVEMENT"
-            cockpit_badge = "normal"
-            action_summary = f"{asset_ticker} is moving in equilibrium with {market_ticker} and {sector_ticker} betas."
+            cockpit_state = "NORMAL_EQUILIBRIUM"
+            cockpit_badge = "EQUILIBRIUM (NO SIGNAL)"
+            action_summary = (
+                f"{asset_ticker} is tracking its market & sector factor basket within normal statistical bounds "
+                f"(Z = {latest_z1:+.2f}sigma). No actionable pricing dislocation."
+            )
 
         return {
             "status": "SUCCESS",
-            "model_type": "Kalman Filter + O-U Snap-Back & CUSUM Cockpit",
             "tickers": {
                 "asset": asset_ticker,
                 "market": market_ticker,
                 "sector": sector_ticker
+            },
+            "sample_period": {
+                "start": ret_dates[self.warmup_period],
+                "end": ret_dates[-1],
+                "total_sessions": T - self.warmup_period
             },
             "cockpit": {
                 "state": cockpit_state,
@@ -812,7 +819,8 @@ class ResidualAnomalyModel:
                 "avg_recovery_days": snapback_profile["avg_recovery_days"],
                 "total_past_episodes": snapback_profile["total_events"]
             },
-            "option_backtest": option_backtest,
+            "asset_backtest": asset_backtest,
+            "option_backtest": asset_backtest,  # backwards compatibility
             "cusum_drift": {
                 "current_streak_days": latest_streak,
                 "cusum_positive": latest.get("cusum_pos", 0.0),

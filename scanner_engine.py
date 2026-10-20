@@ -169,13 +169,13 @@ class UniverseScannerEngine:
                     status = "BLOCKED_EARNINGS"
                     earnings_blocked_count += 1
                 elif is_bullish:
-                    signal_action = "BUY_CALL"
-                    action_badge = "BUY CALL"
+                    signal_action = "LONG_ASSET"
+                    action_badge = "LONG ASSET"
                     active_bullish += 1
                     ready_to_trade_count += 1
                 elif is_bearish:
-                    signal_action = "BUY_PUT"
-                    action_badge = "BUY PUT"
+                    signal_action = "SHORT_ASSET"
+                    action_badge = "SHORT ASSET"
                     active_bearish += 1
                     ready_to_trade_count += 1
 
