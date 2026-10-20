@@ -1,0 +1,232 @@
+---
+import Base from "@/layouts/Base.astro";
+import CallToAction from "@/layouts/components/CallToAction.astro";
+import CareerCard from "@/layouts/components/CareerCard.astro";
+import Faq from "@/layouts/components/Faq.astro";
+import GradientBlob from "@/layouts/components/GradientBlob.astro";
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import ValueCard from "@/layouts/components/ValueCard.astro";
+import { getListPage, getSinglePage } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import type { Careers } from "@/types";
+
+// Page-level content from content collection
+const careersIndex = await getListPage("careers", "-index");
+const pageData: Careers = careersIndex.data;
+
+// Individual job listings
+const jobs = await getSinglePage("careers");
+---
+
+<Base {...pageData}>
+  <!-- Page Header -->
+  <section class="section-ph pb-10 relative">
+    <div class="container relative">
+      <div class="absolute top-0 left-0 w-full">
+        <div class="h-100 w-full overflow-hidden -translate-y-10">
+          <canvas class="heroSporeCanvas w-full opacity-70"></canvas>
+        </div>
+      </div>
+      <div class="lg:max-w-4xl mx-auto text-center relative z-10">
+        <h1
+          class="hasHighlight mb-0"
+          set:html={markdownify(pageData.page_header!.title)}
+        />
+      </div>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 size-160 xl:size-300 -z-20 blur-2xl"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+  </section>
+
+  <!-- Hero Content — Office Gallery -->
+  {
+    (pageData.gallery?.enable ?? true) && (
+      <section class="section pt-0">
+        <div class="container text-center">
+          <a href="#open-roles" class="btn btn-primary">
+            View Open Roles
+          </a>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto mt-10">
+            {pageData.gallery?.items?.map((img: any) => (
+              <div class={`rounded-2xl overflow-hidden ${img.class ?? ""}`}>
+                <ImageMod
+                  src={img.src}
+                  alt={img.alt}
+                  width={600}
+                  height={625}
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <hr class="h-px bg-linear-to-r from-transparent from-3% via-white/40 to-97% to-transparent border-0 my-20" />
+      </section>
+    )
+  }
+
+  <!-- What We Offer -->
+  {
+    (pageData.what_we_offer?.enable ?? true) && (
+      <section class="section relative">
+        <div class="container">
+          <div class="section-container">
+            <div class="section-intro centralize">
+              <h2 class="title hasHighlight">
+                {pageData.what_we_offer?.title ?? "What We Offer"}
+              </h2>
+              <p class="subtitle">{pageData.what_we_offer?.subtitle}</p>
+            </div>
+            <div class="section-content">
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mb-9">
+                {pageData.what_we_offer?.offers?.map((offer: any) => (
+                  <ValueCard
+                    logo={offer.logo}
+                    title={offer.title}
+                    list={offer.list}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <GradientBlob />
+      </section>
+    )
+  }
+
+  <!-- What Our Staff Say -->
+  {
+    (pageData.staff_testimonials?.enable ?? true) && (
+      <section class="section relative max-lg:overflow-hidden">
+        <div class="container">
+          <div class="section-container">
+            <div class="section-intro centralize">
+              <h2 class="title">{pageData.staff_testimonials?.title}</h2>
+            </div>
+            <div class="section-content">
+              <div class="grid lg:grid-cols-2 gap-8">
+                {pageData.staff_testimonials?.items?.map((item) => (
+                  <div class="rounded-2xl  bg-white/5 p-8 md:p-10">
+                    <div class="mb-6">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="45"
+                        height="28"
+                        viewBox="0 0 45 28"
+                        fill="none"
+                      >
+                        <path
+                          d="M15.3955 0V10.9561H24.8691L16.5791 28H0L13.0264 0H15.3955ZM36.7109 0V10.9561H45L36.7109 28H21.3154L34.3418 0H36.7109Z"
+                          fill="white"
+                        />
+                      </svg>
+                    </div>
+                    <blockquote class="text-text leading-relaxed mb-8 text-xl font-medium">
+                      {item.quote}
+                    </blockquote>
+                    <div class="flex items-center gap-4">
+                      <ImageMod
+                        src={item.avatar}
+                        alt={item.name}
+                        width={48}
+                        height={48}
+                        class="size-12 rounded-full object-cover"
+                      />
+                      <div>
+                        <p class="text-white font-semibold">{item.name}</p>
+                        <p class="text-text text-sm">{item.designation}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="absolute top-0 lg:bottom-0 grid place-items-center size-full lg:translate-y-20 -z-10">
+          <div class="size-180 xl:size-300 bg-radial from-primary-light/60 to-transparent from-0% to-70% rounded-full" />
+          <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-180">
+            <div class="h-100 w-full overflow-hidden">
+              <canvas class="heroSporeCanvas w-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Open Positions -->
+  {
+    (pageData.open_positions?.enable ?? true) && (
+      <section
+        id="open-roles"
+        class="section-box max-lg:overflow-hidden pb-16 xl:pb-19 bg-transparent relative isolate overflow-hidden"
+      >
+        <div class="container">
+          <div class="section-container">
+            <div class="section-intro centralize">
+              <h2 class="title hasHighlight">
+                Open <strong class="italic">Positions</strong>
+              </h2>
+            </div>
+            <div class="section-content">
+              <div class="grid lg:grid-cols-2 gap-8">
+                {jobs.map((job) => (
+                  <CareerCard
+                    title={job.data.title}
+                    description={job.data.description ?? ""}
+                    type={job.data.type ?? "Full time"}
+                    location={job.data.location ?? "Remote"}
+                    href={`/careers/${job.id}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="absolute inset-x-0 top-0 -z-10">
+          <svg
+            class="w-full"
+            viewBox="0 0 1920 1099"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M960 1.5C1224.88 1.5 1464.62 62.943 1638.08 162.205C1811.58 261.491 1918.5 398.425 1918.5 549.356C1918.5 700.287 1811.58 837.222 1638.08 936.508C1464.62 1035.77 1224.88 1097.21 960 1097.21C695.116 1097.21 455.383 1035.77 281.923 936.508C108.42 837.222 1.50012 700.287 1.5 549.356C1.5 398.425 108.42 261.491 281.923 162.205C455.383 62.943 695.116 1.5 960 1.5Z"
+              fill="black"
+              stroke="url(#paint0_linear_car)"
+              stroke-width="3"
+            />
+            <defs>
+              <linearGradient
+                id="paint0_linear_car"
+                x1="960"
+                y1="0"
+                x2="960"
+                y2="84.3521"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="var(--color-primary-light)" />
+                <stop offset="1" stop-color="var(--color-body)" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="absolute inset-0 grid place-items-center size-full -z-10">
+          <div class="size-225 bg-radial from-primary-light/30 to-transparent from-0% to-70% rounded-full" />
+        </div>
+      </section>
+    )
+  }
+
+  <!-- FAQ -->
+  <Faq />
+
+  <!-- Call to Action -->
+  <CallToAction />
+</Base>

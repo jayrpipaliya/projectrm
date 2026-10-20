@@ -1,0 +1,61 @@
+---
+import Base from "@/layouts/Base.astro";
+import CallToAction from "@/layouts/components/CallToAction.astro";
+import Faq from "@/layouts/components/Faq.astro";
+import IntegrationCard from "@/layouts/components/IntegrationCard.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import type { Integrations } from "@/types";
+
+const integrations = await getListPage("integrations", "-index");
+const integrationsData: Integrations = integrations.data;
+---
+
+<Base {...integrationsData}>
+  <!-- Page Header -->
+  <section class="section-ph pb-10 relative">
+    <div class="container relative">
+      <div class="absolute top-0 left-0 w-full">
+        <div class="h-100 w-full overflow-hidden -translate-y-10">
+          <canvas class="heroSporeCanvas w-full opacity-70"></canvas>
+        </div>
+      </div>
+      <div class="lg:max-w-4xl mx-auto text-center relative z-10">
+        <h1
+          class="hasHighlight mb-0"
+          set:html={markdownify(integrationsData.page_header.title)}
+        />
+      </div>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 size-160 xl:size-300 -z-20 blur-2xl"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+  </section>
+
+  <!-- Integrations Grid -->
+  {
+    integrationsData.integrations.enable && (
+      <section class="section pt-0">
+        <div class="container">
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {integrationsData.integrations.items.map((item: any) => (
+              <IntegrationCard
+                icon={item.icon}
+                title={item.title}
+                class={item.class}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- FAQ -->
+  <Faq />
+
+  <!-- Call to Action -->
+  <CallToAction />
+</Base>

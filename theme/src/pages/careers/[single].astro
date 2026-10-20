@@ -1,0 +1,121 @@
+---
+import Base from "@/layouts/Base.astro";
+import Badge from "@/layouts/components/Badge.astro";
+import CallToAction from "@/layouts/components/CallToAction.astro";
+import CareerApplyForm from "@/layouts/components/CareerApplyForm.astro";
+import Faq from "@/layouts/components/Faq.astro";
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { getSinglePage } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+  const jobs = await getSinglePage("careers");
+  return jobs.map((job) => ({
+    params: { single: job.id },
+    props: { job },
+  }));
+}
+
+const { job } = Astro.props;
+const jobData = job.data;
+const { Content } = await render(job);
+---
+
+<Base {...jobData}>
+  <!-- Page Header -->
+  <section class="section-ph pb-8 relative overflow-hidden">
+    <div class="container relative">
+      <div class="absolute top-0 left-0 w-full">
+        <div class="h-100 w-full overflow-hidden -translate-y-10">
+          <canvas class="heroSporeCanvas w-full"></canvas>
+        </div>
+      </div>
+      <div class="lg:max-w-4xl mx-auto text-center relative">
+        <div class="flex justify-center mb-5">
+          <Badge title="Careers" />
+        </div>
+        <h1
+          class="mb-0 text-h3 lg:text-h1 hasHighlight"
+          set:html={markdownify(jobData.title)}
+        />
+      </div>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 size-160 xl:size-300 -z-20 blur-2xl"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+  </section>
+
+  <!-- Hero Banner Image -->
+  <section class="pb-8 relative z-10">
+    <div class="container">
+      <div
+        class="relative rounded-3xl overflow-hidden bg-light aspect-video lg:aspect-1000/520"
+      >
+        <ImageMod
+          src={jobData.banner_image ??
+            "/images/careers/career-details-banner.png"}
+          alt={jobData.title}
+          width={1200}
+          height={624}
+          class="w-full h-full object-cover opacity-80"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Meta Info Cards -->
+  <section class="section-sm pt-0">
+    <div class="container">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {
+          jobData.job_info?.map((item: any) => (
+            <div class="bg-light rounded-2xl p-6 py-12.5 text-center">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <ImageMod
+                  src={item.icon}
+                  alt={item.label}
+                  width={36}
+                  height={36}
+                />
+              </div>
+              <p class="text-text text-sm mb-1">{item.label}</p>
+              <p class="text-white font-semibold">{item.value}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Career Details Content + Apply Form -->
+  <section class="section">
+    <div class="container">
+      <div class="grid lg:grid-cols-[65%_35%] gap-8 items-start">
+        <!-- Left: Job Content -->
+        <div class="content">
+          <Content />
+        </div>
+        <!-- Right: Apply Form -->
+        <div>
+          <CareerApplyForm />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Back Link -->
+  <section class="section-sm pt-0">
+    <div class="container">
+      <a href="/careers" class="btn btn-outline">← Back to Careers</a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <Faq />
+
+  <!-- Call to Action -->
+  <CallToAction />
+</Base>

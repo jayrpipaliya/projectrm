@@ -1,0 +1,151 @@
+---
+import Share from "@/components/Share.astro";
+import Base from "@/layouts/Base.astro";
+import BlogCard from "@/layouts/components/BlogCard.astro";
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { getSinglePage } from "@/lib/contentParser.astro";
+import dateFormat from "@/lib/utils/dateFormat";
+import { markdownify } from "@/lib/utils/textConverter";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getSinglePage("blog");
+  return posts.map((post) => ({
+    params: { single: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const postData = post.data;
+const { Content } = await render(post);
+
+// Related posts
+const allPosts = await getSinglePage("blog");
+const relatedPosts = allPosts.filter((p) => p.id !== post.id).slice(0, 3);
+---
+
+<Base {...postData}>
+  <!-- Blog Single Hero -->
+  <section class="section-ph relative pb-10 lg:pb-14">
+    <div class="container">
+      <div class="mx-auto max-w-246.25 text-center">
+        <h1
+          class="hasHighlight mb-8 text-h4-sm md:text-h1 leading-[1.1]"
+          set:html={markdownify(postData.title)}
+        />
+
+        <div class="overflow-hidden rounded-2xl border border-white/10">
+          <ImageMod
+            src={postData.image ?? "/images/blog/featured-cover.png"}
+            alt={postData.title}
+            width={1200}
+            height={600}
+            class="h-full w-full object-cover"
+          />
+        </div>
+
+        <div
+          class="mx-auto mt-6 flex max-w-140 flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm md:text-base text-text"
+        >
+          <span class="inline-flex items-center gap-2">
+            <ImageMod
+              src={postData.author_image ?? "/images/blog/author-1.png"}
+              width={24}
+              height={24}
+              class="size-6 rounded-full"
+              alt={postData.author}
+            />
+            {postData.author}
+          </span>
+          <span class="inline-flex items-center gap-2">
+            <i class="fa-regular fa-calendar-days text-xs" aria-hidden="true"
+            ></i>
+            {dateFormat(postData.date ?? new Date())}
+          </span>
+          {
+            postData.read_time && (
+              <span class="inline-flex items-center gap-2">
+                <i class="fa-regular fa-clock text-xs" aria-hidden="true" />
+                {postData.read_time}
+              </span>
+            )
+          }
+        </div>
+
+        <hr
+          class="mt-8 h-px border-0 bg-linear-to-r from-transparent via-white/15 to-transparent"
+        />
+      </div>
+    </div>
+
+    <div class="absolute inset-0 h-full w-full overflow-hidden -z-10">
+      <canvas class="heroSporeCanvas w-full opacity-70"></canvas>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -z-20 size-170 -translate-x-1/2 -translate-y-1/2 blur-2xl xl:size-300"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+    <div
+      class="absolute bottom-0 left-0 h-40 w-full -z-10 bg-linear-180 from-transparent to-body"
+    >
+    </div>
+  </section>
+
+  <!-- Article Content -->
+  <section class="section">
+    <div class="container">
+      <div class="mx-auto flex max-w-322.5 flex-col gap-20">
+        <article>
+          <div class="content">
+            <Content />
+          </div>
+        </article>
+
+        <!-- Share -->
+        <div class="flex flex-wrap items-center gap-6 md:gap-8">
+          <h4 class="text-h5 md:text-h4 mb-0">Share:</h4>
+          <Share
+            className="social-icons"
+            slug={post.id}
+            title={postData.title}
+            description={postData.description}
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Read More -->
+  {
+    relatedPosts.length > 0 && (
+      <section class="section pb-34">
+        <div class="container relative isolate">
+          <div class="mb-12 text-center">
+            <h2 class="text-h3-sm md:text-h2 capitalize">Read More Articles</h2>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {relatedPosts.map((relPost) => (
+              <BlogCard
+                image={relPost.data.image ?? "/images/blog/post-1.png"}
+                imageAlt={relPost.data.title}
+                title={relPost.data.title}
+                description={relPost.data.description ?? ""}
+                authorImage={
+                  relPost.data.author_image ?? "/images/blog/author-1.png"
+                }
+                authorName={relPost.data.author}
+                date={dateFormat(relPost.data.date ?? new Date())}
+                href={`/blog/${relPost.id}`}
+              />
+            ))}
+          </div>
+
+          <div class="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-310.5 -translate-x-1/2 -translate-y-1/3 rounded-full bg-radial from-primary/16 from-0% to-transparent to-70% blur-2xl" />
+        </div>
+      </section>
+    )
+  }
+</Base>

@@ -1,0 +1,23 @@
+/* navbar toggler */
+input#nav-toggle:checked + label #show-button {
+  @apply hidden;
+}
+
+input#nav-toggle:checked + label #hide-button {
+  @apply block;
+}
+
+input#nav-toggle:checked ~ #nav-menu {
+  @apply max-lg:block;
+}
+
+/* nav menu background expand */
+#nav-menu-bg {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.4s ease;
+  position: fixed;
+}

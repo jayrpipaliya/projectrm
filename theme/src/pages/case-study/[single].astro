@@ -1,0 +1,235 @@
+---
+import Base from "@/layouts/Base.astro";
+import CallToAction from "@/layouts/components/CallToAction.astro";
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { getSinglePage } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+
+export async function getStaticPaths() {
+  const caseStudies = await getSinglePage("caseStudy");
+  return caseStudies.map((study) => ({
+    params: { single: study.id },
+    props: { study },
+  }));
+}
+
+const { study } = Astro.props;
+const studyData = study.data;
+---
+
+<Base {...studyData}>
+  <!-- Page Header -->
+  <section class="section-ph pb-8 relative overflow-hidden">
+    <div class="container relative">
+      <div class="absolute top-0 left-0 w-full">
+        <div class="h-100 w-full overflow-hidden -translate-y-10">
+          <canvas class="heroSporeCanvas w-full"></canvas>
+        </div>
+      </div>
+      <div class="lg:max-w-4xl mx-auto text-center relative">
+        <h1
+          class="mb-0 text-h3 lg:text-h1 hasHighlight"
+          set:html={markdownify(studyData.title)}
+        />
+      </div>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 size-160 xl:size-300 -z-20 blur-2xl"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+  </section>
+
+  <!-- Hero Image -->
+  <section class="pb-8 relative z-10">
+    <div class="container">
+      <div
+        class="relative rounded-3xl overflow-hidden bg-light aspect-video lg:aspect-1000/520"
+      >
+        <ImageMod
+          src={studyData.image!}
+          alt={studyData.title}
+          class="w-full h-full object-cover opacity-80"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Client Info Cards -->
+  <section class="section-sm pt-0">
+    <div class="container">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {
+          studyData?.client_info?.map((item) => (
+            <div class="bg-light rounded-2xl p-6 py-12.5 text-center">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <ImageMod
+                  src={item.icon}
+                  alt={item.label}
+                  class="w-8 h-8"
+                  width={32}
+                  height={32}
+                />
+              </div>
+              <p class="text-text text-sm mb-1">{item.label}</p>
+              <p class="text-white font-semibold">{item.value}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Overview -->
+  <section class="section">
+    <div class="container">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="relative">
+          <ImageMod
+            src={studyData?.overview?.image!}
+            alt="Overview"
+            class="w-full h-auto rounded-3xl object-cover aspect-630/418"
+          />
+        </div>
+        <div>
+          <h2 class="text-h3 lg:text-h2 mb-6">{studyData?.overview?.title}</h2>
+          <div
+            class="text-text space-y-4"
+            set:html={markdownify(studyData?.overview?.content ?? "", true)}
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="space-y-30 section">
+    <!-- Challenges -->
+    <section>
+      <div class="container">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <h2 class="text-h3 lg:text-h2 mb-6">
+              {studyData?.challenges?.title}
+            </h2>
+            <div
+              class="text-text space-y-4"
+              set:html={markdownify(studyData?.challenges?.content ?? "", true)}
+            />
+          </div>
+          <!-- Blockquote -->
+          <div class="bg-light/80 rounded-3xl p-8 xl:p-10 relative">
+            <div class="text-white mb-6">
+              <svg width="45" height="28" viewBox="0 0 45 28" fill="none">
+                <path
+                  d="M15.3955 0V10.9561H24.8691L16.5791 28H0L13.0264 0H15.3955ZM36.7109 0V10.9561H45L36.7109 28H21.3154L34.3418 0H36.7109Z"
+                  fill="currentColor"></path>
+              </svg>
+            </div>
+            <blockquote class="text-h6 text-white mb-8">
+              {studyData?.challenges?.quote}
+            </blockquote>
+            <div class="flex items-center gap-4">
+              <ImageMod
+                src={studyData?.challenges?.quote_author?.avatar!}
+                alt={studyData?.challenges?.quote_author?.name!}
+                class="size-12 rounded-full object-cover"
+              />
+              <div>
+                <p class="text-white font-semibold">
+                  {studyData?.challenges?.quote_author?.name}
+                </p>
+                <p class="text-text text-sm">
+                  {studyData?.challenges?.quote_author?.designation}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solution -->
+    <section>
+      <div class="container">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="order-2 lg:order-1">
+            <h2 class="text-h3 lg:text-h2 mb-6">
+              {studyData?.solution?.title}
+            </h2>
+            <p class="text-text mb-6">{studyData?.solution?.content}</p>
+            <ul class="space-y-4">
+              {
+                studyData?.solution?.items?.map((item) => (
+                  <li class="flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                      >
+                        <path
+                          d="M2.917 7L5.25 9.333l5.833-5.833"
+                          stroke="var(--color-primary)"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span class="text-text">{item}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="order-1 lg:order-2">
+            <ImageMod
+              src={studyData?.solution?.image!}
+              alt="Solution"
+              class="w-full h-auto rounded-3xl object-cover aspect-630/420"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section>
+      <div class="container">
+        <div class="grid lg:grid-cols-2 gap-12 items-start mb-16">
+          <div>
+            <h2 class="text-h3 lg:text-h2 mb-6">{studyData?.results?.title}</h2>
+            <div
+              class="text-text space-y-4"
+              set:html={markdownify(studyData?.results?.content ?? "", true)}
+            />
+          </div>
+        </div>
+        <!-- Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {
+            studyData?.results?.metrics?.map((metric) => (
+              <div class="bg-light rounded-3xl p-8 py-16 text-center">
+                <div class="text-h2 leading-none font-bold font-secondary text-white mb-2">
+                  {metric.value}
+                </div>
+                <p class="text-text">{metric.label}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Back to Case Studies link -->
+  <section class="section-sm">
+    <div class="container text-center">
+      <a href="/case-study" class="btn btn-outline"> ← Back to Case Studies </a>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <CallToAction />
+</Base>

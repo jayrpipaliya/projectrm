@@ -1,0 +1,75 @@
+---
+import Base from "@/layouts/Base.astro";
+import CallToAction from "@/layouts/components/CallToAction.astro";
+import CaseStudyCard from "@/layouts/components/CaseStudyCard.astro";
+import { getListPage, getSinglePage } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import Testimonial from "@/partials/Testimonial.astro";
+import type { CaseStudy } from "@/types";
+
+const caseStudyList = await getListPage("caseStudy", "-index");
+const pageData: CaseStudy = caseStudyList.data;
+
+// Get all individual case study entries
+const caseStudies = await getSinglePage("caseStudy");
+---
+
+<Base {...pageData}>
+  <!-- Page Header -->
+  <section class="section-ph pb-20 relative overflow-hidden">
+    <div class="container relative">
+      <div class="absolute top-0 left-0 w-full">
+        <div class="h-100 w-full overflow-hidden -translate-y-10">
+          <canvas class="heroSporeCanvas w-full"></canvas>
+        </div>
+      </div>
+      <div class="row justify-center">
+        <div class="mb-20 text-center relative">
+          <h1
+            class="mb-6 lg:col-9 mx-auto text-h3 lg:text-h1 hasHighlight"
+            set:html={markdownify(pageData.page_header!.title)}
+          />
+          <p class="mb-10 lg:col-6 mx-auto text-lg">
+            {pageData.page_header!.content}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div
+      class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 size-160 xl:size-300 -z-20 blur-2xl"
+      style="background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 78%, transparent) 20%, transparent 70%);"
+    >
+    </div>
+  </section>
+  <hr
+    class="h-px bg-linear-to-r from-transparent from-10% via-white/50 to-90% to-transparent border-0"
+  />
+
+  <!-- Case Study Cards -->
+  <section class="section relative">
+    <div class="container">
+      <div class="grid gap-7 lg:gap-14">
+        {
+          caseStudies.map((study) => (
+            <CaseStudyCard
+              href={`/case-study/${study.id}`}
+              image={study.data.image!}
+              logo={study.data.logo!}
+              company={study.data.company!}
+              badge={study.data.badge!}
+              title={study.data.title}
+              description={study.data.description!}
+              stats={study.data.stats}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <Testimonial />
+
+  <!-- Call to Action -->
+  <CallToAction />
+</Base>

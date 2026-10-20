@@ -1,0 +1,124 @@
+---
+const { schedulerUrl } = Astro.props;
+---
+
+<div
+  id="ghl-modal"
+  class="fixed inset-0 z-100 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-all duration-300 opacity-0 px-4"
+>
+  <div
+    class="relative w-full max-w-3xl min-h-[500px] h-[800px] max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300"
+  >
+    <!-- GHL Embed Script -->
+    <script is:inline src="https://api.leadconnectorhq.com/js/form_embed.js" type="text/javascript"></script>
+
+    <button
+      id="close-ghl-modal"
+      class="absolute top-5 right-5 z-101 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-black/50 hover:text-black transition-all duration-200 border border-black/5 group"
+      aria-label="Close modal"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6 transform group-hover:rotate-90 transition-transform"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <div class="w-full h-full overflow-hidden bg-white">
+      <!-- GoHighLevel Scheduler iframe -->
+      <iframe
+        id="ghl-iframe"
+        src=""
+        data-src={schedulerUrl}
+        class="w-full h-full"
+        frameborder="0"
+        title="Schedule a Meeting"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("ghl-modal");
+  const modalContent = modal?.querySelector("div");
+  const closeBtn = document.getElementById("close-ghl-modal");
+  const iframe = document.getElementById("ghl-iframe") as HTMLIFrameElement;
+  const triggers = document.querySelectorAll("[data-ghl-trigger]");
+
+  function openModal() {
+    if (!modal || !iframe || !modalContent) return;
+
+    // Set iframe src from data-src if not already set
+    if (!iframe.src || iframe.src === window.location.href) {
+      iframe.src = iframe.getAttribute("data-src") || "";
+    }
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    // Quick timeout to allow display:flex to register before adding opacity/scale
+    setTimeout(() => {
+      modal.classList.replace("opacity-0", "opacity-100");
+      modalContent.classList.replace("scale-95", "scale-100");
+    }, 10);
+
+    document.body.style.overflow = "hidden"; // Prevent scrolling
+  }
+
+  function closeModal() {
+    if (!modal || !modalContent) return;
+
+    modal.classList.replace("opacity-100", "opacity-0");
+    modalContent.classList.replace("scale-100", "scale-95");
+
+    setTimeout(() => {
+      modal.classList.replace("flex", "hidden");
+      modal.classList.add("hidden");
+    }, 300);
+
+    document.body.style.overflow = ""; // Re-enable scrolling
+  }
+
+  triggers.forEach((trigger) => {
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal();
+    });
+  });
+
+  closeBtn?.addEventListener("click", closeModal);
+
+  // Close on backdrop click
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close on Escape key
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal?.classList.contains("hidden")) {
+      closeModal();
+    }
+  });
+</script>
+
+<style>
+  #ghl-iframe::-webkit-scrollbar {
+    width: 6px;
+  }
+  #ghl-iframe::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  #ghl-iframe::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+</style>

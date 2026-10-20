@@ -1,0 +1,38 @@
+---
+import StepCard from "./StepCard.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import type { BusinessNeedsSection } from "@/types";
+
+const bnEntry = await getListPage("businessNeedsSection", "business-needs");
+const bnData: BusinessNeedsSection = bnEntry.data;
+if (!bnData.enable) return;
+---
+
+{
+  bnData.enable && (
+    <section class="section relative isolate">
+      <div class="container">
+        <div class="section-container">
+          <div class="section-intro centralize">
+            <h2 class="title hasHighlight  " set:html={bnData.title} />
+          </div>
+          <div class="section-content">
+            <div class="flex flex-col gap-y-2 px-4">
+              {bnData.items.map((item) => (
+                <StepCard
+                  image={item.image}
+                  number={item.number}
+                  title={item.title}
+                  content={item.content}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute inset-0 grid place-items-center size-full -z-10">
+        <div class="size-225 bg-radial from-primary/30 to-transparent from-0% to-70% rounded-full" />
+      </div>
+    </section>
+  )
+}

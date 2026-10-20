@@ -1,0 +1,18 @@
+# Environment variables
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs and scratch
+*.log
+.system_generated/
+scratch/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+.vercel

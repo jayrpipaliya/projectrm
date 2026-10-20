@@ -1,0 +1,75 @@
+---
+import GradientBlob from "./GradientBlob.astro";
+import PricingCard from "./PricingCard.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import type { Pricing } from "@/types";
+
+interface Props {
+  /** Override the section title HTML */
+  title?: string;
+  /** Override the section description */
+  content?: string;
+  isHome?: boolean;
+}
+
+const { title, content, isHome = true } = Astro.props;
+
+const pricingEntry = await getListPage("pricing", "-index");
+const pricingData: Pricing = pricingEntry.data;
+
+const sectionTitle = title ?? pricingData.page_header?.title ?? "";
+const sectionContent = content ?? pricingData.page_header?.content ?? "";
+---
+
+<section
+  class={`section-box ${isHome ? "" : "pt-0"} my-0 bg-transparent`}
+  id="pricing"
+>
+  <div class="container">
+    <div class="section-container">
+      {
+        isHome && (
+          <div class="section-intro centralize">
+            <h2 class="title hasHighlight  " set:html={sectionTitle} />
+            {sectionContent && <p>{sectionContent}</p>}
+          </div>
+        )
+      }
+      <div class="section-content">
+        <div class="pricing-container">
+          <div class="price-togger">
+            <input
+              type="checkbox"
+              data-pricing-toggle
+              id="pricing-toggle"
+              class="hidden"
+            />
+            <label for="pricing-toggle" class="price-toggler-btn active"
+              >{pricingData.toggler?.monthly_label ?? "Monthly"}</label
+            >
+            <label for="pricing-toggle" class="price-toggler-btn"
+              >{pricingData.toggler?.yearly_label ?? "Yearly"}</label
+            >
+          </div>
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-7 relative z-10">
+            {
+              pricingData.plans.map((plan) => (
+                <PricingCard
+                  price={plan.price}
+                  yearly_price={plan.yearly_price}
+                  title={plan.title}
+                  is_featured={plan.is_featured}
+                  offer_text={plan.offer_text}
+                  button={plan.button}
+                  description={plan.description}
+                  features={plan.features}
+                />
+              ))
+            }
+          </div>
+        </div>
+        <GradientBlob />
+      </div>
+    </div>
+  </div>
+</section>

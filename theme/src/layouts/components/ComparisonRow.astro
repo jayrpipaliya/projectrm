@@ -1,0 +1,67 @@
+---
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import type { ComparisonRowSection } from "@/types";
+
+const comparisonEntry = await getListPage(
+  "comparisonRowSection",
+  "comparison-row",
+);
+const comparisonData: ComparisonRowSection = comparisonEntry.data;
+if (!comparisonData.enable) return;
+---
+
+{
+  comparisonData.enable && (
+    <section class="section relative isolate overflow-x-hidden">
+      <div class="container">
+        <div class="section-container">
+          <div class="section-intro centralize">
+            <h2 class="title hasHighlight  " set:html={comparisonData.title} />
+          </div>
+          <div class="section-content">
+            <div class="flex flex-col gap-y-5 px-4">
+              {comparisonData.items.map(({ title, price, images }) => (
+                <div class="relative max-lg:border max-lg:border-border max-lg:rounded-4xl max-lg:py-8 max-lg:corner-squircle">
+                  <div class="flex items-center flex-col lg:flex-row lg:justify-between w-full gap-y-8">
+                    <div class="bg-body border border-border px-4 w-full py-2.5 rounded-full flex items-center justify-center relative z-10 gap-x-2 max-w-70">
+                      <span class="font-semibold text-white text-lg">
+                        {title}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center justify-start gap-3 xl:gap-5 lg:min-w-90">
+                      {images?.slice(0, 5).map((src: string) => (
+                        <ImageMod
+                          src={src}
+                          alt={`${title} icon`}
+                          class="max-h-12"
+                        />
+                      ))}
+                    </div>
+
+                    <div class="bg-body border border-border px-4 w-full py-2.5 rounded-full flex items-center justify-center relative z-10 gap-x-2 max-w-60">
+                      <span class="font-normal text-text text-base">
+                        <span class="text-secondary font-secondary font-bold text-h6">
+                          {price}
+                        </span>{" "}
+                        {comparisonData.price_suffix ?? "/Per Month"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="absolute inset-0 items-center -z-10 hidden xl:flex">
+                    <div class="border-t border-border border-dashed w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute inset-0 grid place-items-center size-full -z-10">
+        <div class="size-225 bg-radial from-primary-light/30 to-transparent from-0% to-70% rounded-full" />
+      </div>
+    </section>
+  )
+}

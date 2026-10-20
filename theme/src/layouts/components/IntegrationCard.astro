@@ -1,0 +1,21 @@
+---
+import DynamicIcon from "@/helpers/DynamicIcon";
+
+interface Props {
+  icon: string;
+  title: string;
+  class: string;
+}
+const { icon, title, class:iconClass } = Astro.props;
+---
+
+<div
+  class="p-6 xl:p-8 rounded-2xl bg-light border border-border group hover:border-primary/30 transition-all duration-300 text-center"
+>
+  <div
+    class="mb-4 size-14 mx-auto rounded-xl bg-white/5 grid place-items-center"
+  >
+    <DynamicIcon icon={icon} className={`text-3xl ${iconClass}`} />
+  </div>
+  <h3 class="text-h6 font-semibold text-white">{title}</h3>
+</div>

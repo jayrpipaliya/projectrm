@@ -1,0 +1,120 @@
+---
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import type { OurStorySection } from "@/types";
+
+const ourStoryEntry = await getListPage("ourStorySection", "our-story");
+const ourStoryData: OurStorySection = ourStoryEntry.data;
+if (!ourStoryData.enable) return;
+---
+
+<section class="section overflow-hidden">
+  <div class="container">
+    <div class="section-container">
+      <div class="section-intro centralize">
+        <h2
+          class="title hasHighlight lg:col-8 mx-auto"
+          set:html={ourStoryData.title}
+        />
+      </div>
+      <div class="section-content">
+        <hr
+          class="h-px bg-linear-to-r from-transparent from-3% via-white/40 to-97% to-transparent border-0"
+        />
+        <div class="relative max-w-220 mx-auto">
+          <div class="p-6 py-20 xl:px-15 border-x border-text/10">
+            <div
+              class="flex flex-col items-center text-center lg:max-w-3xl mx-auto"
+            >
+              <div>
+                <ImageMod
+                  width={211}
+                  height={211}
+                  class="size-52 rounded-full mb-7"
+                  src={ourStoryData.ceo.image}
+                  alt={ourStoryData.ceo.name}
+                />
+                <p class="text-white font-semibold">
+                  {ourStoryData.ceo.name}
+                </p>
+                <p class="text-text-dark text-sm">{ourStoryData.ceo.role}</p>
+              </div>
+              <div class="text-h6 mt-12 mb-17 text-left mx-auto">
+                <div set:html={ourStoryData.letter} />
+              </div>
+
+              {
+                ourStoryData.letter_points &&
+                  ourStoryData.letter_points.length > 0 && (
+                    <>
+                      <div class="text-h6 text-white font-semibold text-center mb-7">
+                        {ourStoryData.letter_points_title ??
+                          "Here's how we do it:"}
+                      </div>
+                      <div class="flex flex-col gap-y-7 relative vertical-bg-line ">
+                        {ourStoryData.letter_points.map((point) => (
+                          <div class="bg-linear-to-tl from-border to-body border border-border px-8 w-full py-2.5 rounded-full flex items-center justify-center relative z-10 gap-x-2">
+                            <span class="font-semibold text-white text-lg">
+                              {point}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )
+              }
+
+              {
+                ourStoryData.closing_content && (
+                  <p class="mt-15 text-h6">{ourStoryData.closing_content}</p>
+                )
+              }
+
+              {
+                ourStoryData.button &&
+                  ourStoryData.button.enable &&
+                  ourStoryData.button.link && (
+                    <div class="mt-12 flex justify-center">
+                      <a
+                        href={ourStoryData.button.link}
+                        class="btn btn-primary py-4"
+                      >
+                        {ourStoryData.button.label}
+                      </a>
+                    </div>
+                  )
+              }
+            </div>
+          </div>
+          <div
+            class="size-2 bg-white absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+          >
+          </div>
+          <div
+            class="size-2 bg-white absolute right-0 top-0 translate-x-1/2 -translate-y-1/2"
+          >
+          </div>
+          <div
+            class="size-2 bg-white absolute left-0 bottom-0 -translate-x-1/2 translate-y-1/2"
+          >
+          </div>
+          <div
+            class="size-2 bg-white absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2"
+          >
+          </div>
+        </div>
+        <hr
+          class="h-px bg-linear-to-r from-transparent from-3% via-white/40 to-97% to-transparent border-0"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    class="absolute inset-0 grid place-items-center size-full -z-10 translate-y-10"
+  >
+    <div
+      class="size-180 xl:size-300 bg-radial from-primary/40 to-transparent from-0% to-70% rounded-full"
+    >
+    </div>
+  </div>
+</section>

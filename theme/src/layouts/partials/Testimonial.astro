@@ -1,0 +1,37 @@
+---
+import GradientBlob from "@/components/GradientBlob.astro";
+import TestimonialCard from "@/components/TestimonialCard.astro";
+import { getListPage } from "@/lib/contentParser.astro";
+import type { TestimonialSection } from "@/types";
+
+const testimonialEntry = await getListPage("testimonialSection", "testimonial");
+const testimonialData: TestimonialSection = testimonialEntry.data;
+---
+
+{
+  testimonialData.enable && (
+    <section class="section relative">
+      <div class="container">
+        <div class="section-container">
+          <div class="section-intro centralize">
+            <h2 class="title hasHighlight  " set:html={testimonialData.title} />
+          </div>
+          <div class="section-content">
+            <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-7">
+              {testimonialData.testimonials.map((item) => (
+                <TestimonialCard
+                  poster={item.poster}
+                  name={item.name}
+                  designation={item.designation}
+                  content={item.content}
+                  video={item.video}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <GradientBlob />
+    </section>
+  )
+}

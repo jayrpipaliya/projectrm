@@ -1,0 +1,26 @@
+---
+enable: true
+badge: ""
+title: "The 5 things every <strong>Business Needs</strong>"
+items:
+  - image: "/images/brands-group-1.png"
+    number: "01"
+    title: "TRAFFIC"
+    content: "Drive more high-quality local leads to your business through optimized Google search and social visibility."
+  - image: "/images/brands-group-2.png"
+    number: "02"
+    title: "CAPTURE"
+    content: "Convert website visitors into real conversations using web chat widgets and fast lead capture forms."
+  - image: "/images/brands-group-3.png"
+    number: "03"
+    title: "NURTURING"
+    content: "Automatically follow up with every lead via SMS and email so no one slips through the cracks."
+  - image: "/images/brands-group-4.png"
+    number: "04"
+    title: "CONVERT"
+    content: "Turn prospects into paying customers by making appointment booking and payments incredibly simple."
+  - image: "/images/brands-group-5.png"
+    number: "05"
+    title: "REFER"
+    content: "Automatically request 5-star Google reviews from happy customers to drive even more organic traffic."
+---

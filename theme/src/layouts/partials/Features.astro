@@ -1,0 +1,81 @@
+---
+import FeatureCard from "@/components/FeatureCard.astro";
+import type { OurFeaturesSection } from "@/types";
+
+interface Props {
+  our_features: OurFeaturesSection;
+}
+
+const { our_features } = Astro.props;
+---
+
+<section class="section-box mx-5 relative isolate overflow-hidden">
+  <div class="container">
+    <div class="section-container">
+      <div class="section-intro centralize">
+        <h2 class="title hasHighlight" set:html={our_features.title} />
+        <p class="subtitle">{our_features.content}</p>
+      </div>
+      <div class="section-content">
+        <div
+          class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 border-r border-text-light/5 border-b"
+        >
+          {
+            our_features.items.map((item) => (
+              <FeatureCard
+                logo={item.logo}
+                title={item.title}
+                is_starred={item.is_starred}
+              />
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="absolute bottom-0 left-0 -z-10">
+    <svg
+      width="1880"
+      height="706"
+      viewBox="0 0 1880 706"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g filter="url(#filter0_f_feat)">
+        <path
+          d="M265 598.973C173.931 658.402 -22.5806 807.13 -125 857.275V910H1750C1691.94 910 1142.76 643.191 986.456 530.174C472.864 158.816 488.018 453.438 265 598.973Z"
+          fill="url(#paint0_linear_feat)"></path>
+      </g>
+      <defs>
+        <filter
+          id="filter0_f_feat"
+          x="-475"
+          y="0"
+          width="2575"
+          height="1260"
+          filterUnits="userSpaceOnUse"
+          color-interpolation-filters="sRGB"
+          ><feFlood flood-opacity="0" result="BackgroundImageFix"
+          ></feFlood><feBlend
+            mode="normal"
+            in="SourceGraphic"
+            in2="BackgroundImageFix"
+            result="shape"></feBlend><feGaussianBlur
+            stdDeviation="175"
+            result="effect1"></feGaussianBlur></filter
+        >
+        <linearGradient
+          id="paint0_linear_feat"
+          x1="641.165"
+          y1="334"
+          x2="641.165"
+          y2="909.999"
+          gradientUnits="userSpaceOnUse"
+          ><stop stop-color="var(--color-primary-light)"></stop><stop
+            offset="1"
+            stop-color="var(--color-primary)"></stop></linearGradient
+        >
+      </defs>
+    </svg>
+  </div>
+</section>

@@ -1,0 +1,36 @@
+---
+interface Props {
+  title: string;
+  content?: string;
+}
+const { title, content } = Astro.props;
+---
+
+<div class="accordion">
+  <button class="accordion-header" data-accordion>
+    {title}
+    <svg
+      class="accordion-icon"
+      viewBox="0 0 11 11"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M0.75 5.41602H10.0833"
+        stroke="var(--color-text-dark)"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+      <path
+        d="M5.41663 10.083L5.41663 0.749675"
+        class="accordion-icon-vertical-line"
+        stroke="var(--color-text-dark)"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+    </svg>
+  </button>
+  <div class="accordion-content">
+    {content}
+  </div>
+</div>

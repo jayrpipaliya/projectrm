@@ -1,0 +1,59 @@
+---
+import ImageMod from "@/layouts/components/ImageMod.astro";
+interface Props {
+  image: string;
+  logo: string;
+  company: string;
+  badge: string;
+  title: string;
+  description: string;
+  stats?: Array<{ value: string; label: string }>;
+  href: string;
+}
+const { image, logo, company, badge, title, description, stats, href } =
+  Astro.props;
+---
+
+<div class="grid lg:grid-cols-2 gap-4">
+  <div class="relative overflow-hidden rounded-2xl min-h-80 bg-light">
+    <ImageMod
+      src={image}
+      alt={title}
+      class="absolute inset-0 w-full h-full object-cover"
+    />
+    <div
+      class="absolute inset-0 bg-linear-to-t from-dark/80 via-transparent to-transparent"
+    >
+    </div>
+    <div class="absolute bottom-0 left-0 p-8">
+      <ImageMod src={logo} alt={company} class="h-8 mb-4 brightness-0 invert" />
+    </div>
+  </div>
+  <div class="p-8 xl:p-10 rounded-2xl bg-light border border-border">
+    <div
+      class="px-4 py-1.5 bg-white max-w-min text-dark rounded-lg text-sm font-medium mb-12"
+    >
+      {badge}
+    </div>
+    <h3
+      class="text-h4 font-bold text-white mt-4 mb-3 hover:text-primary transition-colors duration-200"
+    >
+      <a href={href}>{title}</a>
+    </h3>
+    <p class="text-text-dark text-lg">{description}</p>
+    {
+      stats && stats.length > 0 && (
+        <div class="flex items-center justify-between gap-8 mt-20">
+          {stats.slice(0, 2).map((stat) => (
+            <div class="flex flex-col">
+              <div class="text-h3 font-bold font-secondary text-white">
+                {stat.value}
+              </div>
+              <p class="text-sm text-text tracking-wide">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>

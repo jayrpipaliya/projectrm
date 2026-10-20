@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project RM - Relative Anomaly & Volatility Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #111827;
+            --bg-card-hover: #1f2937;
+            --border: #2d3748;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-group h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .badge-cyan { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid #059669; }
+        .badge-amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button.btn-success { background: #059669; }
+        button.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        button.btn-outline:hover { background: var(--bg-card-hover); }
+
+        /* Anomaly Model Section Styles */
+        .anomaly-card {
+            background: linear-gradient(145deg, #111827 0%, #0d1424 100%);
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        .anomaly-input-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: #090d16;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 18px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            background: #111827;
+            border: 1px solid #374151;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            width: 110px;
+            text-transform: uppercase;
+            font-family: monospace;
+        }
+
+        .preset-btn {
+            background: #1e293b;
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            border: 1px solid #334155;
+        }
+
+        .preset-btn:hover {
+            background: #334155;
+            color: #fff;
+        }
+
+        .anomaly-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .a-box {
+            background: #0a0e17;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .a-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .a-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .a-sub {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
+        .table-wrap {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            text-align: left;
+        }
+
+        th {
+            background: #1e293b;
+            color: var(--text-muted);
+            padding: 8px 10px;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        tr:hover {
+            background: #1e293b;
+            cursor: pointer;
+        }
+
+        tr.active-contract {
+            background: rgba(6, 182, 212, 0.2) !important;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .tag-call { color: #34d399; font-weight: 600; }
+        .tag-put { color: #f87171; font-weight: 600; }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+
+        .metric-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .tester-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 860px) {
+            .tester-grid { grid-template-columns: 1fr; }
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            background: #0d131f;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: #090d16;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 280px;
+            overflow-y: auto;
+            font-size: 0.78rem;
+            color: #a5f3fc;
+            font-family: Consolas, Monaco, monospace;
+        }
+
+        .notice-banner {
+            background: rgba(17, 24, 39, 0.9);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 12px 18px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.86rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .explanation-card {
+            background: #0d131f;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-group">
+            <h1>Project RM <span style="font-size: 1.05rem; color: var(--accent-cyan); font-weight: 400;">“Relatively Mispriced”</span></h1>
+        </div>
+
+        <div class="header-actions">
+            <span id="api-status-badge" class="badge badge-green">
+                <span class="status-dot"></span>
+                <span>Polygon API Connected (.env)</span>
+            </span>
+            <a href="#diagnostics-section" class="btn-outline" style="text-decoration: none; padding: 7px 14px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 5px;">
+                <span>↓</span> Test Lab & Diagnostics
+            </a>
+            <button class="btn-outline" onclick="triggerSync()">Sync Warehouse</button>
+        </div>
+    </header>
+
+    <!-- SECTION 1: RELATIVE ANOMALY & MODULAR COCKPIT -->
+    <div class="anomaly-card">
+        <div class="card-header" style="margin-bottom: 12px;">
+            <div>
+                <h2>Project RM: Relative Anomaly & Scenario Cockpit</h2>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                    Kalman State-Space dynamic betas + Ornstein-Uhlenbeck Snap-Back Engine + CUSUM Drift Monitor.
+                </div>
+            </div>
+            <div id="anomaly-badge-container">
+                <span id="cockpit-status-badge" class="badge badge-green" style="font-size: 0.82rem; padding: 6px 14px;">
+                    NORMAL CO-MOVEMENT
+                </span>
+            </div>
+        </div>
+
+        <!-- Cockpit Summary Banner -->
+        <div id="cockpit-summary-box" style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--accent-green); padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; font-size: 0.85rem; color: #e2e8f0;">
+            <strong>System Assessment:</strong> <span id="cockpit-summary-text">Loading model assessment...</span>
+        </div>
+
+        <!-- Input Bar: Plug and Play Tickers & Cockpit Scenario Toggles -->
+        <div class="anomaly-input-bar">
+            <div class="input-group">
+                <label>Target Asset</label>
+                <input type="text" id="target-asset" value="MSFT">
+            </div>
+            <div class="input-group">
+                <label>Market Index</label>
+                <input type="text" id="market-index" value="QQQ">
+            </div>
+            <div class="input-group">
+                <label>Sector ETF</label>
+                <input type="text" id="sector-etf" value="IGV">
+            </div>
+
+            <!-- Dynamic Snap-Back Threshold Slider & Number Input -->
+            <div class="input-group" style="min-width: 175px;">
+                <label style="color: var(--accent-cyan); display: flex; justify-content: space-between;">
+                    <span>Trigger Barrier</span>
+                    <span id="threshold-display-label" style="font-family: monospace; font-weight: 700;">&plusmn;1.8&sigma;</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" id="snapback-threshold" value="1.8" step="0.1" min="1.0" max="3.5"
+                        style="width: 65px; text-align: center; color: var(--accent-cyan); font-weight: 700;"
+                        onchange="onThresholdChange(this.value)">
+                    <input type="range" id="threshold-slider" min="1.0" max="3.0" step="0.1" value="1.8"
+                        style="width: 95px; accent-color: var(--accent-cyan); cursor: pointer;"
+                        oninput="onSliderInput(this.value)" onchange="onThresholdChange(this.value)">
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Presets</label>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button class="preset-btn" onclick="applyPreset('MSFT', 'QQQ', 'IGV')">MSFT / QQQ / IGV</button>
+                    <button class="preset-btn" onclick="applyPreset('NVDA', 'QQQ', 'SMH')">NVDA / QQQ / SMH</button>
+                    <button class="preset-btn" onclick="applyPreset('AAPL', 'QQQ', 'XLK')">AAPL / QQQ / XLK</button>
+                    <button class="preset-btn" onclick="applyPreset('JNJ', 'SPY', 'XLV')">JNJ / SPY / XLV</button>
+                </div>
+            </div>
+
+            <div style="margin-left: auto; align-self: flex-end;">
+                <button class="btn-success" style="padding: 8px 18px; font-weight: 600;" onclick="runAnomalyAnalysis()">Run Analysis</button>
+            </div>
+        </div>
+
+        <!-- Scenario Cockpit Toggles Bar -->
+        <div style="display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; background: #090d16; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+            <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-right: 4px;">Cockpit Modules:</span>
+            
+            <button id="toggle-ou" onclick="toggleModule('ou')"
+                style="padding: 5px 12px; font-size: 0.75rem; background: var(--accent-cyan); color: #000; border: none; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                <span>●</span> Module A: Snap-Back Engine (O-U)
+            </button>
+            
+            <button id="toggle-cusum" onclick="toggleModule('cusum')"
+                style="padding: 5px 12px; font-size: 0.75rem; background: var(--accent-purple); color: #fff; border: none; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                <span>●</span> Module B: CUSUM Regime Shift
+            </button>
+
+            <button id="toggle-horizon" onclick="toggleModule('horizon')"
+                style="padding: 5px 12px; font-size: 0.75rem; background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                <span>○</span> Multi-Horizon Z (5d/20d)
+            </button>
+        </div>
+
+        <!-- Modular Metric Cards Grid: Multi-Horizon STDV & Dynamic Cockpit -->
+        <div class="anomaly-metrics">
+            <!-- 1-Day Z-Score (1 STDV) -->
+            <div class="a-box" id="card-z1d">
+                <div class="a-label">1-Day Z-Score (1 STDV)</div>
+                <div class="a-value" id="val-z1d">--</div>
+                <div class="a-sub" id="val-z1d-sub">Clean Kalman Innovation (&sigma;)</div>
+            </div>
+
+            <!-- 5-Day Z-Score (5 STDV) -->
+            <div class="a-box" id="card-z5d" style="border-color: rgba(245, 158, 11, 0.4);">
+                <div class="a-label" style="color: var(--accent-amber);">5-Day Z-Score (5 STDV)</div>
+                <div class="a-value" style="color: var(--accent-amber);" id="val-z5d">--</div>
+                <div class="a-sub" id="val-z5d-sub">5-Day Cumulative Residual Momentum</div>
+            </div>
+
+            <!-- 20-Day Z-Score (20 STDV) -->
+            <div class="a-box" id="card-z20d" style="border-color: rgba(168, 85, 247, 0.4);">
+                <div class="a-label" style="color: var(--accent-purple);">20-Day Z-Score (20 STDV)</div>
+                <div class="a-value" style="color: var(--accent-purple);" id="val-z20d">--</div>
+                <div class="a-sub" id="val-z20d-sub">20-Day Structural Trend Divergence</div>
+            </div>
+
+            <!-- Module A: O-U Snap-Back Profile -->
+            <div class="a-box" id="card-ou" style="border-color: rgba(6, 182, 212, 0.4);">
+                <div class="a-label" id="label-ou-winrate" style="color: var(--accent-cyan);">O-U Snap-Back Win Rate</div>
+                <div class="a-value" style="color: var(--accent-cyan);" id="val-ou-winrate">--</div>
+                <div class="a-sub" id="val-ou-sub">Half-Life &tau;: -- | Avg: -- days</div>
+            </div>
+
+            <!-- Module B: CUSUM Drift & Streak -->
+            <div class="a-box" id="card-cusum" style="border-color: rgba(239, 68, 68, 0.4);">
+                <div class="a-label" style="color: var(--accent-red);">CUSUM Regime Drift</div>
+                <div class="a-value" style="color: var(--accent-red);" id="val-cusum-streak">--</div>
+                <div class="a-sub" id="val-cusum-sub">Drift S+: -- | S-: --</div>
+            </div>
+
+            <!-- Dynamic Betas -->
+            <div class="a-box">
+                <div class="a-label">Kalman Dynamic Betas</div>
+                <div class="a-value" style="font-size: 1.15rem; color: #fff;" id="val-betas">--</div>
+                <div class="a-sub" id="val-betas-sub">Market &perp; Sector sensitivity</div>
+            </div>
+
+            <!-- Move Decomposition -->
+            <div class="a-box">
+                <div class="a-label">Move vs Expected</div>
+                <div class="a-value" style="font-size: 1.15rem;" id="val-move-decomp">--</div>
+                <div class="a-sub" id="val-move-sub">Actual vs &beta;-Model Expected</div>
+            </div>
+        </div>
+
+        <!-- Anomaly Time Series Chart -->
+        <div style="background: #090d16; border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="font-size: 0.95rem; font-weight: 600; color: #e2e8f0;" id="zchart-title">
+                    Quantitative Cockpit: MSFT vs QQQ + IGV
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <!-- View toggle -->
+                    <div style="display: flex; background: #1e293b; border-radius: 5px; border: 1px solid var(--border); overflow: hidden;">
+                        <button id="view-snapback" onclick="switchCockpitView('snapback')"
+                            style="padding: 4px 12px; font-size: 0.74rem; background: var(--accent-cyan); color: #000; border: none; border-radius: 0; font-weight: 600;">
+                            Snap-Back Bands
+                        </button>
+                        <button id="view-cusum" onclick="switchCockpitView('cusum')"
+                            style="padding: 4px 12px; font-size: 0.74rem; background: transparent; color: var(--text-muted); border: none; border-radius: 0;">
+                            CUSUM Drift
+                        </button>
+                        <button id="view-multi" onclick="switchCockpitView('multi')"
+                            style="padding: 4px 12px; font-size: 0.74rem; background: transparent; color: var(--text-muted); border: none; border-radius: 0;">
+                            Multi-Horizon Z
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div style="height: 310px; width: 100%;">
+                <canvas id="anomalyChart"></canvas>
+            </div>
+            <!-- Cockpit Legend Footer -->
+            <div id="chart-legend-footer" style="margin-top: 10px; display: flex; gap: 20px; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                <span style="color: #38bdf8;">● Innovation Z-Score</span>
+                <span style="color: #f59e0b;">-- ±1.8σ Snap-Back Trigger</span>
+                <span style="color: #10b981;">░ ±0.5σ Mean Reversion Target Ribbon</span>
+                <span style="color: #ef4444;">-- ±3.0σ Extreme Disconnect</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 1.5: TARGET ASSET PRICE ACTION & ANOMALY SIGNALS                -->
+    <!-- (Direct visual alignment beneath Relative Anomaly residual chart)      -->
+    <!-- ======================================================================= -->
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header" style="margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h2 id="asset-chart-title" style="display: flex; align-items: center; gap: 8px;">
+                    <span id="asset-chart-ticker" style="color: var(--accent-cyan); font-family: monospace;">MSFT</span> Price Action & Signal Overlays
+                </h2>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                    Daily close price trajectory aligned 1:1 with relative innovation residual shocks.
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                    <div id="asset-chart-latest-close" style="font-size: 1.25rem; font-weight: 700; color: #fff; font-family: monospace;">--</div>
+                    <div id="asset-chart-daily-change" style="font-size: 0.76rem; color: var(--text-muted);">Daily: --</div>
+                </div>
+                <div style="display: flex; background: #1e293b; border-radius: 5px; border: 1px solid var(--border); overflow: hidden;">
+                    <button id="asset-chart-signals-toggle" onclick="toggleAssetSignals()"
+                        style="padding: 5px 12px; font-size: 0.75rem; background: var(--accent-cyan); color: #000; border: none; font-weight: 600; cursor: pointer;">
+                        ● Signals On
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="targetAssetChart"></canvas>
+        </div>
+        <div style="margin-top: 10px; display: flex; gap: 20px; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+            <span style="color: #60a5fa;">— Daily Close Price</span>
+            <span id="asset-legend-bullish" style="color: #10b981;">▲ Green: Bullish Snap-Back (Z &le; -1.8&sigma;)</span>
+            <span id="asset-legend-bearish" style="color: #ef4444;">▼ Red: Bearish Snap-Back (Z &ge; +1.8&sigma;)</span>
+            <span style="color: #c084fc;">■ Purple Markers: Stealth Regime Alert Active</span>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 2: AUXILIARY TEST LAB, BENCHMARK HISTORICALS & OPTIONS EXPLORER -->
+    <!-- (Moved further down so Relative Anomaly Cockpit remains primary focus)  -->
+    <!-- ======================================================================= -->
+    <div id="diagnostics-section" style="margin-top: 60px; border-top: 1px dashed #374151; padding-top: 35px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: #cbd5e1; display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--accent-cyan);">⚙</span> Historical Data & Options Explorer (Diagnostics / Testing Lab)
+                </h2>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                    Raw benchmark bars, annualized 20-day Realized Volatility (&sigma; &times; &radic;252), cached option chains, and direct Polygon endpoint testing sandbox.
+                </div>
+            </div>
+            <div>
+                <span class="badge" style="background: rgba(148, 163, 184, 0.12); color: #94a3b8; border: 1px solid #475569;">
+                    Step 1 Auxiliary Data Layer
+                </span>
+            </div>
+        </div>
+
+        <div class="notice-banner">
+            <div>
+                <strong>Step 1 Data Feeds:</strong> QQQ broad benchmark prices, calculated 20-day Realized Volatility ($\sigma \times \sqrt{252}$), and live option chain cache.
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                Storage: SQLite (data/warehouse.db)
+            </div>
+        </div>
+
+    <div class="metrics-row">
+        <div class="metric-box">
+            <div class="metric-label">QQQ Latest Close</div>
+            <div class="metric-value" id="val-qqq-close">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;" id="val-qqq-ret">Daily Change: --</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-label">QQQ 20-Day Realized Volatility</div>
+            <div class="metric-value" style="color: var(--accent-cyan);" id="val-qqq-rv">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Annualized (&sigma; &times; &radic;252)</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-label">Live Option Contracts Cached</div>
+            <div class="metric-value" style="color: var(--accent-purple);" id="val-opt-count">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;" id="val-opt-expirations">Expirations active</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-label">SQL Warehouse Size</div>
+            <div class="metric-value" style="color: var(--accent-green);" id="val-warehouse-size">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;" id="val-warehouse-rows">-- total rows in SQLite</div>
+        </div>
+    </div>
+
+    <!-- QQQ PRICE & OPTIONS GRID -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-header">
+                <h2>QQQ Historical Price & Realized Volatility Overlay</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-outline" style="font-size: 0.75rem; padding: 4px 10px;" onclick="loadStockData('QQQ')">Reload QQQ</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>QQQ Option Chain</h2>
+                <div>
+                    <select id="contract-filter" onchange="filterContracts()" style="padding: 4px 8px; font-size: 0.75rem; margin-bottom: 0;">
+                        <option value="ALL">All Types</option>
+                        <option value="CALL">Calls Only</option>
+                        <option value="PUT">Puts Only</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table id="options-table">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Type</th>
+                            <th>Strike</th>
+                            <th>Exp Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="options-body">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading live option chain...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.75rem; color: var(--text-muted);">
+                * Click any contract to view price history.
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTION BARS & WAREHOUSE EXPLANATION -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-header">
+                <h2 id="option-chart-title">Selected Option Historical Price</h2>
+                <span id="selected-contract-badge" class="badge badge-cyan">Select a Contract</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="optionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Warehouse Architecture: Local SQL vs API</h2>
+            </div>
+            <div class="explanation-card">
+                <p><strong>Design Resolution:</strong></p>
+                <br>
+                <ul style="margin-left: 18px; line-height: 1.7;">
+                    <li><strong>Rate Limit Protection:</strong> Massive/Polygon Basic plans restrict queries to 5 calls/min. Querying live API on every backtest loop causes 429 errors.</li>
+                    <li><strong>Sub-Millisecond Speed:</strong> SQLite queries in <code>data/warehouse.db</code> run in <strong>0.3ms</strong> vs <strong>350ms+</strong> over the web.</li>
+                    <li><strong>Clean Historical Alignment:</strong> The SQL warehouse synchronizes trading dates across multiple assets automatically, enabling continuous rolling regression without calendar gaps.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE ENDPOINT TESTER -->
+    <div class="card" style="margin-bottom: 30px;">
+        <div class="card-header">
+            <h2>Live Massive / Polygon Endpoint Tester</h2>
+            <span class="badge badge-cyan">Plan: Free / Basic</span>
+        </div>
+        <div class="tester-grid">
+            <div>
+                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Choose Endpoint to Test:</label>
+                <select id="test-endpoint-select" onchange="onEndpointChange()">
+                    <option value="get_previous_close">Stocks: Previous Day Bar [/v2/aggs/ticker/{ticker}/prev]</option>
+                    <option value="get_stock_aggs">Stocks: Aggregate Bars (OHLCV) [/v2/aggs/ticker/{ticker}/...]</option>
+                    <option value="get_all_tickers">Stocks: All Tickers [/v3/reference/tickers]</option>
+                    <option value="get_ticker_overview">Stocks: Ticker Overview [/v3/reference/tickers/QQQ]</option>
+                    <option value="get_indicator_sma">Stocks: Simple Moving Average (SMA) [/v1/indicators/sma/QQQ]</option>
+                    <option value="get_indicator_rsi">Stocks: Relative Strength Index (RSI) [/v1/indicators/rsi/QQQ]</option>
+                    <option value="get_option_contracts">Options: All Contracts [/v3/reference/options/contracts]</option>
+                    <option value="get_market_status">Reference: Market Status [/v1/marketstatus/now]</option>
+                </select>
+
+                <div id="endpoint-params-container" style="margin-top: 10px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Target Ticker:</label>
+                    <input type="text" id="test-param-ticker" value="QQQ">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-success" onclick="runEndpointTest()">Execute Live API Call</button>
+                    <span id="test-status" style="font-size: 0.85rem; align-self: center; color: var(--text-muted);"></span>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Live API Response Inspector:</span>
+                    <span id="response-latency" style="font-size: 0.75rem; color: var(--accent-cyan);">Latency: --</span>
+                </div>
+                <pre id="test-response-viewer">// Select an endpoint and click "Execute Live API Call" to inspect live response...</pre>
+            </div>
+        </div>
+    </div>
+    </div> <!-- END DIAGNOSTICS SECTION -->
+
+    <script>
+        let stockChartInstance = null;
+        let optionChartInstance = null;
+        let anomalyChartInstance = null;
+        let targetAssetChartInstance = null;
+        let showAssetSignals = true;
+        let allContractsData = [];
+        let currentAnomalyHistory = [];
+        let currentAnomalyAsset = 'MSFT';
+        let cockpitView = 'snapback'; // 'snapback' | 'cusum' | 'multi'
+        let modulesState = { ou: true, cusum: true, horizon: false };
+
+        function toggleAssetSignals() {
+            showAssetSignals = !showAssetSignals;
+            const btn = document.getElementById("asset-chart-signals-toggle");
+            if (showAssetSignals) {
+                btn.style.background = 'var(--accent-cyan)';
+                btn.style.color = '#000';
+                btn.innerHTML = '● Signals On';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+                btn.innerHTML = '○ Signals Off';
+            }
+            if (currentAnomalyHistory.length > 0) {
+                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+            }
+        }
+
+        function onSliderInput(val) {
+            val = parseFloat(val);
+            document.getElementById("snapback-threshold").value = val.toFixed(1);
+            document.getElementById("threshold-display-label").innerHTML = `&plusmn;${val.toFixed(1)}&sigma;`;
+            // Immediately re-render charts for live visual response while dragging
+            if (currentAnomalyHistory.length > 0) {
+                renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
+                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+            }
+        }
+
+        function onThresholdChange(val) {
+            val = parseFloat(val);
+            if (isNaN(val) || val < 0.5) val = 1.8;
+            document.getElementById("snapback-threshold").value = val.toFixed(1);
+            document.getElementById("threshold-slider").value = Math.min(Math.max(val, 1.0), 3.0);
+            document.getElementById("threshold-display-label").innerHTML = `&plusmn;${val.toFixed(1)}&sigma;`;
+            runAnomalyAnalysis();
+        }
+
+        function getCurrentThreshold() {
+            const val = parseFloat(document.getElementById("snapback-threshold").value);
+            return isNaN(val) || val < 0.5 ? 1.8 : val;
+        }
+
+        async function init() {
+            await runAnomalyAnalysis();
+            await loadStockData("QQQ");
+            await loadOptionsChain("QQQ");
+            await loadWarehouseStats();
+        }
+
+        function applyPreset(asset, mkt, sec) {
+            document.getElementById("target-asset").value = asset;
+            document.getElementById("market-index").value = mkt;
+            document.getElementById("sector-etf").value = sec;
+            runAnomalyAnalysis();
+        }
+
+        function toggleModule(mod) {
+            modulesState[mod] = !modulesState[mod];
+            const btn = document.getElementById(`toggle-${mod}`);
+            
+            if (mod === 'ou') {
+                const card = document.getElementById("card-ou");
+                if (modulesState.ou) {
+                    btn.style.background = 'var(--accent-cyan)';
+                    btn.style.color = '#000';
+                    btn.innerHTML = '<span>●</span> Module A: Snap-Back Engine (O-U)';
+                    card.style.display = 'block';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--text-muted)';
+                    btn.innerHTML = '<span>○</span> Module A: Snap-Back Engine (O-U)';
+                    card.style.display = 'none';
+                }
+            } else if (mod === 'cusum') {
+                const card = document.getElementById("card-cusum");
+                if (modulesState.cusum) {
+                    btn.style.background = 'var(--accent-purple)';
+                    btn.style.color = '#fff';
+                    btn.innerHTML = '<span>●</span> Module B: CUSUM Regime Shift';
+                    card.style.display = 'block';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--text-muted)';
+                    btn.innerHTML = '<span>○</span> Module B: CUSUM Regime Shift';
+                    card.style.display = 'none';
+                }
+            } else if (mod === 'horizon') {
+                if (modulesState.horizon) {
+                    btn.style.background = 'var(--accent-amber)';
+                    btn.style.color = '#000';
+                    btn.innerHTML = '<span>●</span> Multi-Horizon Z (5d/20d)';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--text-muted)';
+                    btn.innerHTML = '<span>○</span> Multi-Horizon Z (5d/20d)';
+                }
+            }
+
+            if (currentAnomalyHistory.length > 0) {
+                renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
+            }
+        }
+
+        function switchCockpitView(view) {
+            cockpitView = view;
+            const views = ['snapback', 'cusum', 'multi'];
+            views.forEach(v => {
+                const b = document.getElementById(`view-${v}`);
+                if (v === view) {
+                    b.style.background = 'var(--accent-cyan)';
+                    b.style.color = '#000';
+                    b.style.fontWeight = '600';
+                } else {
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--text-muted)';
+                    b.style.fontWeight = 'normal';
+                }
+            });
+
+            // Update footer legend
+            const leg = document.getElementById("chart-legend-footer");
+            const thresh = getCurrentThreshold();
+            if (view === 'snapback') {
+                leg.innerHTML = `
+                    <span style="color: #38bdf8;">● 1-Day Innovation Z-Score</span>
+                    <span style="color: #f59e0b;">-- ±${thresh.toFixed(1)}σ Snap-Back Trigger</span>
+                    <span style="color: #10b981;">░ ±0.5σ Mean Reversion Target Ribbon</span>
+                    <span style="color: #ef4444;">-- ±3.0σ Extreme Disconnect</span>
+                `;
+            } else if (view === 'cusum') {
+                leg.innerHTML = `
+                    <span style="color: #10b981;">● S+ Upper Cumulative Drift</span>
+                    <span style="color: #ef4444;">● S- Lower Cumulative Drift</span>
+                    <span style="color: #c084fc;">-- h=3.8 Regime Alert Barrier</span>
+                `;
+            } else {
+                leg.innerHTML = `
+                    <span style="color: #38bdf8;">● 1-Day Z-Score</span>
+                    <span style="color: #f59e0b;">● 5-Day Cumulative Z-Score</span>
+                    <span style="color: #a855f7;">● 20-Day Structural Z-Score</span>
+                    <span style="color: #4b5563;">-- ±2.0σ Baseline</span>
+                `;
+            }
+
+            if (currentAnomalyHistory.length > 0) {
+                renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
+            }
+        }
+
+        async function runAnomalyAnalysis() {
+            const asset = document.getElementById("target-asset").value.trim().toUpperCase();
+            const mkt = document.getElementById("market-index").value.trim().toUpperCase();
+            const sec = document.getElementById("sector-etf").value.trim().toUpperCase();
+            const threshold = getCurrentThreshold();
+
+            currentAnomalyAsset = asset;
+            document.getElementById("zchart-title").textContent = `Quantitative Cockpit: ${asset} vs ${mkt} + ${sec}`;
+
+            try {
+                const res = await fetch(`/api/anomaly/analyze?asset=${asset}&market=${mkt}&sector=${sec}&threshold=${threshold}`);
+                const data = await res.json();
+
+                if (data.status !== "SUCCESS") {
+                    document.getElementById("cockpit-summary-text").textContent = "Error: " + (data.error || "Failed");
+                    return;
+                }
+
+                const c = data.cockpit;
+                const m = data.latest_metrics;
+                const ou = data.ou_snapback;
+                const cs = data.cusum_drift;
+
+                // 1. Cockpit Header Banner & Badge
+                const badge = document.getElementById("cockpit-status-badge");
+                const summaryBox = document.getElementById("cockpit-summary-box");
+                badge.textContent = c.state;
+                document.getElementById("cockpit-summary-text").textContent = c.summary;
+
+                if (c.badge === "success") {
+                    badge.className = "badge badge-green";
+                    summaryBox.style.background = "rgba(16, 185, 129, 0.12)";
+                    summaryBox.style.borderLeftColor = "var(--accent-green)";
+                } else if (c.badge === "danger") {
+                    badge.className = "badge badge-red";
+                    summaryBox.style.background = "rgba(239, 68, 68, 0.12)";
+                    summaryBox.style.borderLeftColor = "var(--accent-red)";
+                } else if (c.badge === "warning") {
+                    badge.className = "badge badge-amber";
+                    summaryBox.style.background = "rgba(245, 158, 11, 0.12)";
+                    summaryBox.style.borderLeftColor = "var(--accent-amber)";
+                } else {
+                    badge.className = "badge badge-cyan";
+                    summaryBox.style.background = "rgba(6, 182, 212, 0.08)";
+                    summaryBox.style.borderLeftColor = "var(--accent-cyan)";
+                }
+
+                // 2. Multi-Horizon Z-Scores (1 STDV, 5 STDV, 20 STDV)
+                const activeThreshold = ou.threshold || threshold;
+                const z1Color = Math.abs(m.z_score_1d) >= activeThreshold ? (m.z_score_1d > 0 ? "var(--accent-green)" : "var(--accent-red)") : "#fff";
+                document.getElementById("val-z1d").innerHTML = `<span style="color: ${z1Color};">${m.z_score_1d >= 0 ? '+' : ''}${m.z_score_1d.toFixed(2)}&sigma;</span>`;
+                document.getElementById("val-z1d-sub").textContent = `Clean Innovation Shock (${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}%)`;
+
+                const z5Val = typeof m.z_score_5d === 'number' ? m.z_score_5d : 0;
+                const z5Color = Math.abs(z5Val) >= 2.0 ? (z5Val > 0 ? "var(--accent-green)" : "var(--accent-red)") : "var(--accent-amber)";
+                document.getElementById("val-z5d").innerHTML = `<span style="color: ${z5Color};">${z5Val >= 0 ? '+' : ''}${z5Val.toFixed(2)}&sigma;</span>`;
+                document.getElementById("val-z5d-sub").textContent = `Short-Term Residual Momentum`;
+
+                const z20Val = typeof m.z_score_20d === 'number' ? m.z_score_20d : 0;
+                const z20Color = Math.abs(z20Val) >= 2.0 ? (z20Val > 0 ? "var(--accent-green)" : "var(--accent-red)") : "var(--accent-purple)";
+                document.getElementById("val-z20d").innerHTML = `<span style="color: ${z20Color};">${z20Val >= 0 ? '+' : ''}${z20Val.toFixed(2)}&sigma;</span>`;
+                document.getElementById("val-z20d-sub").textContent = `Medium-Term Structural Trend`;
+
+                // 3. Module A: O-U Snap-Back (win rate reflects dynamic threshold)
+                document.getElementById("label-ou-winrate").textContent = `O-U Win Rate @ ±${activeThreshold.toFixed(1)}σ`;
+                document.getElementById("val-ou-winrate").textContent = `${ou.historical_win_rate_pct}%`;
+                document.getElementById("val-ou-sub").textContent = `Half-Life: ${ou.half_life_days}d | Avg: ${ou.avg_recovery_days}d (${ou.total_past_episodes} eps @ ±${activeThreshold.toFixed(1)}σ)`;
+
+                // 4. Module B: CUSUM Drift
+                const streakDir = cs.current_streak_days > 0 ? "Bullish" : (cs.current_streak_days < 0 ? "Bearish" : "Neutral");
+                const streakColor = Math.abs(cs.current_streak_days) >= 4 ? "var(--accent-red)" : "#fff";
+                document.getElementById("val-cusum-streak").innerHTML = `<span style="color: ${streakColor};">${Math.abs(cs.current_streak_days)}d Streak</span>`;
+                document.getElementById("val-cusum-sub").textContent = `S+: ${cs.cusum_positive.toFixed(1)} | S-: ${cs.cusum_negative.toFixed(1)} (Alert: ${cs.alert_status != 0 ? 'ACTIVE' : 'None'})`;
+
+                // 5. Dynamic Betas & Return Decomposition
+                document.getElementById("val-betas").textContent = `β_mkt: ${m.beta_market.toFixed(2)} | β_sec: ${m.beta_sector.toFixed(2)}`;
+                document.getElementById("val-betas-sub").textContent = `Kalman α: ${m.alpha >= 0 ? '+' : ''}${m.alpha.toFixed(4)}`;
+
+                const actualSign = m.asset_return_pct >= 0 ? '+' : '';
+                const expSign = m.expected_return_pct >= 0 ? '+' : '';
+                document.getElementById("val-move-decomp").textContent = `Act: ${actualSign}${m.asset_return_pct}% | Exp: ${expSign}${m.expected_return_pct}%`;
+                document.getElementById("val-move-sub").textContent = `Residual: ${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}% (${m.date})`;
+
+                // 6. Target Asset Price Header & Aligned Chart
+                const latestClose = m.asset_close ? `$${m.asset_close.toFixed(2)}` : "--";
+                const dailyRet = m.asset_return_pct !== undefined ? `${m.asset_return_pct >= 0 ? '+' : ''}${m.asset_return_pct}%` : "--";
+                document.getElementById("asset-chart-ticker").textContent = asset;
+                document.getElementById("asset-chart-latest-close").textContent = latestClose;
+                document.getElementById("asset-chart-daily-change").innerHTML = `Daily: <span style="color: ${m.asset_return_pct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 600;">${dailyRet}</span>`;
+
+                currentAnomalyHistory = data.history;
+                renderAnomalyChart(data.history, asset);
+                renderTargetAssetChart(data.history, asset);
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderAnomalyChart(history, asset) {
+            const ctx = document.getElementById("anomalyChart").getContext("2d");
+            if (anomalyChartInstance) anomalyChartInstance.destroy();
+
+            const labels = history.map(h => h.date);
+
+            if (cockpitView === 'snapback') {
+                // VIEW 1: Snap-Back Bands with dynamic threshold
+                const thr = getCurrentThreshold();
+                const zValues = history.map(h => h.z_1d);
+                const pointColors = zValues.map(z => {
+                    if (z >= thr) return "#10b981";
+                    if (z <= -thr) return "#ef4444";
+                    return "#38bdf8";
+                });
+                const pointRadii = zValues.map(z => Math.abs(z) >= thr ? 5 : 0);
+
+                const snapDatasets = [
+                    // +3σ and -3σ Extreme Boundaries
+                    {
+                        label: "+3.0σ Extreme",
+                        data: history.map(() => 3.0),
+                        borderColor: "rgba(239, 68, 68, 0.6)",
+                        borderDash: [2, 2],
+                        borderWidth: 1.2,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: "-3.0σ Extreme",
+                        data: history.map(() => -3.0),
+                        borderColor: "rgba(239, 68, 68, 0.6)",
+                        borderDash: [2, 2],
+                        borderWidth: 1.2,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    // Dynamic Snap-Back Trigger Thresholds
+                    {
+                        label: `+${thr.toFixed(1)}σ Snap-Back Trigger`,
+                        data: history.map(() => thr),
+                        borderColor: "rgba(245, 158, 11, 0.85)",
+                        borderDash: [4, 4],
+                        borderWidth: 1.4,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: `-${thr.toFixed(1)}σ Snap-Back Trigger`,
+                        data: history.map(() => -thr),
+                        borderColor: "rgba(245, 158, 11, 0.85)",
+                        borderDash: [4, 4],
+                        borderWidth: 1.4,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    // Shaded Mean Reversion Target Ribbon (+0.5σ to -0.5σ)
+                    {
+                        label: "+0.5σ Target Ribbon",
+                        data: history.map(() => 0.5),
+                        borderColor: "rgba(16, 185, 129, 0.3)",
+                        backgroundColor: "rgba(16, 185, 129, 0.08)",
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: "+1"
+                    },
+                    {
+                        label: "-0.5σ Target Ribbon",
+                        data: history.map(() => -0.5),
+                        borderColor: "rgba(16, 185, 129, 0.3)",
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    // Zero line
+                    {
+                        label: "Mean (0)",
+                        data: history.map(() => 0.0),
+                        borderColor: "#374151",
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    // 1-Day Innovation Z-Score
+                    {
+                        label: `${asset} 1-Day Z-Score`,
+                        data: zValues,
+                        borderColor: "#38bdf8",
+                        borderWidth: 1.8,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: "#fff",
+                        pointRadius: pointRadii,
+                        tension: 0.1,
+                        fill: false,
+                        order: 0
+                    }
+                ];
+
+                if (modulesState.horizon) {
+                    snapDatasets.push({
+                        label: "5-Day Cumulative Z",
+                        data: history.map(h => h.z_5d),
+                        borderColor: "#f59e0b",
+                        borderDash: [3, 3],
+                        borderWidth: 1.6,
+                        pointRadius: 0,
+                        tension: 0.15,
+                        fill: false
+                    });
+                    snapDatasets.push({
+                        label: "20-Day Structural Z",
+                        data: history.map(h => h.z_20d),
+                        borderColor: "#a855f7",
+                        borderDash: [5, 5],
+                        borderWidth: 1.6,
+                        pointRadius: 0,
+                        tension: 0.2,
+                        fill: false
+                    });
+                }
+
+                anomalyChartInstance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels,
+                        datasets: snapDatasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: "index", intersect: false },
+                        scales: {
+                            x: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af", maxTicksLimit: 12 } },
+                            y: {
+                                grid: { color: "#1f2937" },
+                                ticks: { color: "#9ca3af" },
+                                suggestedMin: -3.8,
+                                suggestedMax: 3.8,
+                                title: { display: true, text: "Standardized Z-Score (σ)", color: "#6b7280", font: { size: 10 } }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: "#e5e7eb",
+                                    filter: item => !["-3.0σ Extreme", `-${thr.toFixed(1)}σ Snap-Back Trigger`, "-0.5σ Target Ribbon", "Mean (0)"].includes(item.text),
+                                    boxWidth: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: (ctx) => {
+                                        const row = history[ctx[0].dataIndex];
+                                        const isTrigger = Math.abs(row.z_1d) >= thr;
+                                        return [
+                                            `Z-Score: ${row.z_1d}σ`,
+                                            `Residual Return: ${row.residual_pct}%`,
+                                            `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`,
+                                            isTrigger ? `⚠ SNAP-BACK ZONE (|Z| ≥ ${thr.toFixed(1)}σ)` : `✓ Normal co-movement`,
+                                            `5-Day Z: ${row.z_5d}σ | 20-Day Z: ${row.z_20d}σ`
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } else if (cockpitView === 'cusum') {
+                // VIEW 2: CUSUM Drift Accumulation
+                const sPos = history.map(h => h.cusum_pos);
+                const sNeg = history.map(h => h.cusum_neg);
+
+                anomalyChartInstance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: "Regime Shift Threshold (h=3.8)",
+                                data: history.map(() => 3.8),
+                                borderColor: "#c084fc",
+                                borderDash: [4, 4],
+                                borderWidth: 1.5,
+                                pointRadius: 0,
+                                fill: false
+                            },
+                            {
+                                label: "S+ Upper Drift Accumulation",
+                                data: sPos,
+                                borderColor: "#10b981",
+                                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                                borderWidth: 1.8,
+                                pointRadius: 0,
+                                fill: true,
+                                tension: 0.1
+                            },
+                            {
+                                label: "S- Lower Drift Accumulation",
+                                data: sNeg,
+                                borderColor: "#ef4444",
+                                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                borderWidth: 1.8,
+                                pointRadius: 0,
+                                fill: true,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: "index", intersect: false },
+                        scales: {
+                            x: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af", maxTicksLimit: 12 } },
+                            y: {
+                                grid: { color: "#1f2937" },
+                                ticks: { color: "#9ca3af" },
+                                suggestedMin: 0,
+                                suggestedMax: 6.0,
+                                title: { display: true, text: "CUSUM Accumulated Drift (S)", color: "#6b7280", font: { size: 10 } }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: "#e5e7eb", boxWidth: 12 } },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: (ctx) => {
+                                        const row = history[ctx[0].dataIndex];
+                                        const alertStr = row.regime_alert != 0 ? "⚠ ACTIVE REGIME SHIFT ALERT" : "✓ Normal drift level";
+                                        return [
+                                            `S+ Upper Drift: ${row.cusum_pos}`,
+                                            `S- Lower Drift: ${row.cusum_neg}`,
+                                            `Consecutive Streak: ${Math.abs(row.streak)} days ${row.streak >= 0 ? 'Bullish' : 'Bearish'}`,
+                                            alertStr
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } else {
+                // VIEW 3: Multi-Horizon Z-Scores (1d, 5d, 20d)
+                anomalyChartInstance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: "1-Day Instantaneous Z",
+                                data: history.map(h => h.z_1d),
+                                borderColor: "#38bdf8",
+                                borderWidth: 1.5,
+                                pointRadius: 0,
+                                tension: 0.1
+                            },
+                            {
+                                label: "5-Day Cumulative Z (Short-Term)",
+                                data: history.map(h => h.z_5d),
+                                borderColor: "#f59e0b",
+                                borderWidth: 1.8,
+                                pointRadius: 0,
+                                tension: 0.15
+                            },
+                            {
+                                label: "20-Day Cumulative Z (Structural)",
+                                data: history.map(h => h.z_20d),
+                                borderColor: "#a855f7",
+                                borderWidth: 2.0,
+                                pointRadius: 0,
+                                tension: 0.2
+                            },
+                            {
+                                label: "+2.0σ Threshold",
+                                data: history.map(() => 2.0),
+                                borderColor: "#4b5563",
+                                borderDash: [4, 4],
+                                borderWidth: 1,
+                                pointRadius: 0
+                            },
+                            {
+                                label: "-2.0σ Threshold",
+                                data: history.map(() => -2.0),
+                                borderColor: "#4b5563",
+                                borderDash: [4, 4],
+                                borderWidth: 1,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: "index", intersect: false },
+                        scales: {
+                            x: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af", maxTicksLimit: 12 } },
+                            y: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af" }, suggestedMin: -3.5, suggestedMax: 3.5 }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: "#e5e7eb",
+                                    filter: item => item.text !== "-2.0σ Threshold",
+                                    boxWidth: 12
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderTargetAssetChart(history, asset) {
+            const canvas = document.getElementById("targetAssetChart");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            if (targetAssetChartInstance) targetAssetChartInstance.destroy();
+
+            const thresh = getCurrentThreshold();
+            const labels = history.map(h => h.date);
+            const prices = history.map(h => h.asset_close);
+
+            // Signal markers on the price chart dynamically calibrated to threshold
+            const pointColors = history.map(h => {
+                if (!showAssetSignals) return "transparent";
+                if (h.regime_alert != 0) return "#c084fc"; // Regime Alert Active
+                if (h.z_1d <= -thresh) return "#10b981";    // Bullish Oversold Snap-Back (Z <= -thresh)
+                if (h.z_1d >= thresh) return "#ef4444";     // Bearish Overbought Snap-Back (Z >= +thresh)
+                return "transparent";
+            });
+
+            const pointRadii = history.map(h => {
+                if (!showAssetSignals) return 0;
+                if (h.regime_alert != 0 || Math.abs(h.z_1d) >= thresh) return 5;
+                return 0;
+            });
+
+            const pointStyles = history.map(h => {
+                if (h.regime_alert != 0) return "rectRot";
+                if (h.z_1d <= -thresh) return "triangle";
+                if (h.z_1d >= thresh) return "triangle";
+                return "circle";
+            });
+
+            // Update Section 1.5 legend text dynamically
+            const assetLegendBullish = document.getElementById("asset-legend-bullish");
+            const assetLegendBearish = document.getElementById("asset-legend-bearish");
+            if (assetLegendBullish) assetLegendBullish.innerHTML = `▲ Green: Bullish Snap-Back (Z &le; -${thresh.toFixed(1)}&sigma;)`;
+            if (assetLegendBearish) assetLegendBearish.innerHTML = `▼ Red: Bearish Snap-Back (Z &ge; +${thresh.toFixed(1)}&sigma;)`;
+
+            targetAssetChartInstance = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: `${asset} Close Price ($)`,
+                            data: prices,
+                            borderColor: "#3b82f6",
+                            backgroundColor: "rgba(59, 130, 246, 0.08)",
+                            borderWidth: 2,
+                            fill: true,
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: "#fff",
+                            pointBorderWidth: 1.5,
+                            pointRadius: pointRadii,
+                            pointStyle: pointStyles,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    scales: {
+                        x: {
+                            grid: { color: "#1f2937" },
+                            ticks: { color: "#9ca3af", maxTicksLimit: 12 }
+                        },
+                        y: {
+                            grid: { color: "#1f2937" },
+                            ticks: {
+                                color: "#93c5fd",
+                                callback: val => "$" + val.toFixed(0)
+                            },
+                            title: { display: true, text: `${asset} Price ($)`, color: "#60a5fa", font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: "#e5e7eb", boxWidth: 12 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${asset} Close: $${Number(ctx.raw).toFixed(2)}`,
+                                afterBody: (ctx) => {
+                                    const row = history[ctx[0].dataIndex];
+                                    const lines = [
+                                        `Daily Return: ${row.asset_return_pct >= 0 ? '+' : ''}${row.asset_return_pct}%`,
+                                        `Relative Z-Score: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
+                                        `5-Day Z: ${row.z_5d}σ | 20-Day Z: ${row.z_20d}σ`,
+                                        `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`
+                                    ];
+                                    if (row.regime_alert != 0) {
+                                        lines.push("⚠ STEALTH REGIME SHIFT ACTIVE (Drift Alert)");
+                                    } else if (row.z_1d <= -thresh) {
+                                        lines.push(`▲ BULLISH SNAP-BACK ZONE (Z ≤ -${thresh.toFixed(1)}σ)`);
+                                    } else if (row.z_1d >= thresh) {
+                                        lines.push(`▼ BEARISH SNAP-BACK ZONE (Z ≥ +${thresh.toFixed(1)}σ)`);
+                                    }
+                                    return lines;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function triggerSync() {
+            const btn = event.target;
+            btn.textContent = "Syncing...";
+            try {
+                const res = await fetch("/api/warehouse/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ticker: "QQQ" })
+                });
+                const data = await res.json();
+                alert(`Sync Complete!\nBars cached: ${data.bars_synced}\nOption contracts cached: ${data.options_synced}`);
+                await loadWarehouseStats();
+                await loadStockData("QQQ");
+                await loadOptionsChain("QQQ");
+            } catch (e) {
+                alert("Sync failed: " + e.message);
+            } finally {
+                btn.textContent = "Sync Warehouse";
+            }
+        }
+
+        async function loadWarehouseStats() {
+            try {
+                const res = await fetch("/api/warehouse/stats");
+                const stats = await res.json();
+                const totalRows = (stats.stock_bars || 0) + (stats.option_contracts || 0) + (stats.realized_volatility || 0) + (stats.option_bars || 0);
+                document.getElementById("val-warehouse-size").textContent = `${stats.db_size_kb || 0} KB`;
+                document.getElementById("val-warehouse-rows").textContent = `${totalRows} rows in SQLite`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadStockData(ticker) {
+            try {
+                const res = await fetch(`/api/stock/aggs?ticker=${ticker}`);
+                const data = await res.json();
+                const results = data.results || [];
+                if (!results.length) return;
+
+                const labels = results.map(r => r.trade_date || new Date(r.timestamp_ms || r.t).toISOString().slice(0, 10));
+                const closes = results.map(r => r.close || r.c);
+                const rvs = results.map(r => ((r.rv_20d || 0) * 100));
+
+                const latestClose = closes[closes.length - 1];
+                const prevClose = closes.length > 1 ? closes[closes.length - 2] : latestClose;
+                const dailyRet = ((latestClose - prevClose) / prevClose * 100).toFixed(2);
+                const latestRV = rvs[rvs.length - 1] ? rvs[rvs.length - 1].toFixed(1) : "--";
+
+                document.getElementById("val-qqq-close").textContent = `$${latestClose.toFixed(2)}`;
+                document.getElementById("val-qqq-ret").textContent = `Daily Change: ${dailyRet >= 0 ? '+' : ''}${dailyRet}%`;
+                document.getElementById("val-qqq-rv").textContent = `${latestRV}%`;
+
+                renderStockChart(labels, closes, rvs, ticker);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderStockChart(labels, closes, rvs, ticker) {
+            const ctx = document.getElementById("stockChart").getContext("2d");
+            if (stockChartInstance) stockChartInstance.destroy();
+
+            stockChartInstance = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${ticker} Close Price ($)`,
+                            data: closes,
+                            borderColor: "#38bdf8",
+                            backgroundColor: "rgba(56, 189, 248, 0.08)",
+                            yAxisID: "yPrice",
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: "20-Day Realized Volatility (%)",
+                            data: rvs,
+                            borderColor: "#f59e0b",
+                            borderDash: [4, 4],
+                            yAxisID: "yVol",
+                            borderWidth: 1.8,
+                            pointRadius: 0,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    scales: {
+                        x: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af", maxTicksLimit: 12 } },
+                        yPrice: { type: "linear", position: "left", grid: { color: "#1f2937" }, ticks: { color: "#38bdf8" } },
+                        yVol: { type: "linear", position: "right", grid: { drawOnChartArea: false }, ticks: { color: "#f59e0b" } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: "#e5e7eb" } }
+                    }
+                }
+            });
+        }
+
+        async function loadOptionsChain(underlying) {
+            try {
+                const res = await fetch(`/api/options/contracts?underlying=${underlying}`);
+                const data = await res.json();
+                allContractsData = data.results || [];
+
+                document.getElementById("val-opt-count").textContent = allContractsData.length;
+                const expirations = [...new Set(allContractsData.map(c => c.expiration_date))];
+                document.getElementById("val-opt-expirations").textContent = `${expirations.length} distinct expirations`;
+
+                filterContracts();
+
+                if (allContractsData.length > 0) {
+                    selectContract(allContractsData[0].ticker);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function filterContracts() {
+            const filterVal = document.getElementById("contract-filter").value;
+            const tbody = document.getElementById("options-body");
+            tbody.innerHTML = "";
+
+            const filtered = allContractsData.filter(c => {
+                if (filterVal === "CALL") return (c.contract_type || "").toLowerCase() === "call";
+                if (filterVal === "PUT") return (c.contract_type || "").toLowerCase() === "put";
+                return true;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">No contracts matching filter</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const tr = document.createElement("tr");
+                tr.id = `row-${c.ticker}`;
+                const isCall = (c.contract_type || "").toLowerCase() === "call";
+                tr.innerHTML = `
+                    <td style="font-family: monospace; font-size: 0.78rem;">${c.ticker}</td>
+                    <td class="${isCall ? 'tag-call' : 'tag-put'}">${(c.contract_type || '').toUpperCase()}</td>
+                    <td>$${parseFloat(c.strike_price).toFixed(2)}</td>
+                    <td>${c.expiration_date}</td>
+                `;
+                tr.onclick = () => selectContract(c.ticker);
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function selectContract(ticker) {
+            document.querySelectorAll("#options-body tr").forEach(r => r.classList.remove("active-contract"));
+            const targetRow = document.getElementById(`row-${ticker}`);
+            if (targetRow) targetRow.classList.add("active-contract");
+
+            document.getElementById("selected-contract-badge").textContent = ticker;
+            document.getElementById("option-chart-title").textContent = `Option Price: ${ticker}`;
+
+            try {
+                const res = await fetch(`/api/options/aggs?ticker=${ticker}`);
+                const data = await res.json();
+                const bars = data.results || [];
+                renderOptionChart(bars, ticker);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderOptionChart(bars, ticker) {
+            const ctx = document.getElementById("optionChart").getContext("2d");
+            if (optionChartInstance) optionChartInstance.destroy();
+
+            if (!bars.length) return;
+
+            const labels = bars.map(b => b.trade_date || new Date(b.timestamp_ms || b.t).toISOString().slice(0, 10));
+            const closes = bars.map(b => b.close || b.c);
+
+            optionChartInstance = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "Option Close Price ($)",
+                            data: closes,
+                            borderColor: "#a855f7",
+                            backgroundColor: "rgba(168, 85, 247, 0.15)",
+                            borderWidth: 2,
+                            fill: true,
+                            pointRadius: 3,
+                            tension: 0.15
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: "#1f2937" }, ticks: { color: "#9ca3af" } },
+                        y: { grid: { color: "#1f2937" }, ticks: { color: "#c084fc" } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: "#e5e7eb" } }
+                    }
+                }
+            });
+        }
+
+        function onEndpointChange() {
+            const val = document.getElementById("test-endpoint-select").value;
+            const paramContainer = document.getElementById("endpoint-params-container");
+            if (val === "get_market_status") {
+                paramContainer.style.display = "none";
+            } else {
+                paramContainer.style.display = "block";
+            }
+        }
+
+        async function runEndpointTest() {
+            const method = document.getElementById("test-endpoint-select").value;
+            const ticker = document.getElementById("test-param-ticker").value.trim() || "QQQ";
+            const viewer = document.getElementById("test-response-viewer");
+            const statusEl = document.getElementById("test-status");
+            const latencyEl = document.getElementById("response-latency");
+
+            statusEl.textContent = "Querying live API...";
+            viewer.textContent = "Calling Polygon API...";
+
+            const startTime = performance.now();
+            let params = {};
+            if (method.includes("stock") || method.includes("prev") || method.includes("overview") || method.includes("indicator")) {
+                params = { ticker: ticker };
+            } else if (method === "get_option_contracts") {
+                params = { underlying_ticker: ticker };
+            }
+
+            try {
+                const res = await fetch("/api/test/endpoint", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ method: method, params: params })
+                });
+                const elapsed = (performance.now() - startTime).toFixed(1);
+                latencyEl.textContent = `Latency: ${elapsed}ms`;
+                const data = await res.json();
+                statusEl.textContent = "Live 200 OK";
+                viewer.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                statusEl.textContent = "Failed";
+                viewer.textContent = "Error executing request: " + e.message;
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

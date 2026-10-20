@@ -1,0 +1,154 @@
+---
+import ImageMod from "@/layouts/components/ImageMod.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+
+interface Props {
+  lead_generation: any;
+}
+
+const { lead_generation } = Astro.props;
+---
+
+<section class="section-box bg-transparent my-0 pb-0">
+  <div class="container-sm">
+    <div class="section-container pb-20">
+      <div class="section-intro centralize">
+        <h2
+          class="title hasHighlight  "
+          set:html={lead_generation.title}
+        />
+      </div>
+      <div class="section-content">
+        <div class="flex flex-col-reverse lg:flex-row gap-x-20 gap-y-10">
+          <div class="lg:w-6/12">
+            <h3 class="text-h5-sm font-bold mb-7">
+              {lead_generation.subtitle}
+            </h3>
+            <div
+              class="space-y-4"
+              set:html={markdownify(lead_generation.content, true)}
+            />
+            <ul class="green-tick-list [&>li]:mb-8 mt-10">
+              {lead_generation.list.map((item: string) => (
+                <li set:html={markdownify(item)} />
+              ))}
+            </ul>
+          </div>
+          <div class="lg:w-6/12">
+            <div class="bg-light rounded-4xl corner-squircle p-10 xl:px-7.5 xl:py-10">
+              <ImageMod
+                src={lead_generation.image}
+                width={307}
+                height={190}
+                alt="ebook"
+                class="w-full max-w-76.75 mx-auto mb-12"
+              />
+              <form id="lead-form" novalidate class="">
+                <div class="form-control">
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Name"
+                    class="form-input w-full mb-5"
+                    required
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    class="form-input w-full mb-5"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    id="lead-submit"
+                    class="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <span id="lead-submit-label">Get Free Checklist</span>
+                    <span id="lead-submit-loading" class="hidden">Submitting...</span>
+                  </button>
+                  <div
+                    id="lead-form-success"
+                    class="hidden mt-4 text-green-500 font-medium text-sm text-center"
+                  >
+                    ✅ Free Checklist requested successfully!
+                  </div>
+                  <div
+                    id="lead-form-error"
+                    class="hidden mt-4 text-red-500 font-medium text-sm text-center"
+                  >
+                    ⚠️ <span id="lead-form-error-text">Something went wrong.</span>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr class="h-px bg-linear-to-r from-transparent from-10% via-white/50 to-90% to-transparent border-0" />
+</section>
+
+<script>
+  const form = document.getElementById("lead-form") as HTMLFormElement | null;
+  const submitBtn = document.getElementById("lead-submit") as HTMLButtonElement | null;
+  const submitLabel = document.getElementById("lead-submit-label");
+  const submitLoading = document.getElementById("lead-submit-loading");
+  const successEl = document.getElementById("lead-form-success");
+  const errorEl = document.getElementById("lead-form-error");
+  const errorText = document.getElementById("lead-form-error-text");
+
+  function setLoading(loading: boolean) {
+    if (!submitBtn || !submitLabel || !submitLoading) return;
+    submitBtn.disabled = loading;
+    submitLabel.classList.toggle("hidden", loading);
+    submitLoading.classList.toggle("hidden", !loading);
+  }
+
+  function showSuccess() {
+    successEl?.classList.remove("hidden");
+    errorEl?.classList.add("hidden");
+    form?.reset();
+  }
+
+  function showError(msg?: string) {
+    errorEl?.classList.remove("hidden");
+    successEl?.classList.add("hidden");
+    if (errorText && msg) errorText.textContent = msg;
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Hide previous status
+    successEl?.classList.add("hidden");
+    errorEl?.classList.add("hidden");
+
+    const formData = new FormData(form);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
+        }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (res.ok && json.success) {
+        showSuccess();
+      } else {
+        showError(json.error ?? "Something went wrong. Please try again.");
+      }
+    } catch {
+      showError("Network error — please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
