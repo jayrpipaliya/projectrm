@@ -452,6 +452,8 @@ class AssetReturnBacktestEngine:
             stock_move_pct = round((s_exit - ep["s_entry"]) / ep["s_entry"] * 100.0, 2)
             trades.append({
                 "date": ep["date"],
+                "signal_z": round(float(ep.get("signal_z", 0.0)), 2),
+                "is_bullish": ep.get("is_bullish", True),
                 "signal_type": "BULLISH_SNAPBACK" if ep["is_bullish"] else "BEARISH_SNAPBACK",
                 "action": ep["action"],
                 "entry_price": round(ep["s_entry"], 2),
