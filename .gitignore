@@ -16,3 +16,6 @@ scratch/
 Thumbs.db
 
 .vercel
+
+# Database backups
+data/*_backup.db

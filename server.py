@@ -1023,8 +1023,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 item["order_spec"] = {
                     "action": action,
                     "underlying": t,
-                    "target_strike": strike_est,
-                    "contract_tenor_dte": tenor,
+                    "execution_instrument": "Equity Shares (MOC)",
                     "holding_horizon_days": hold,
                     "execution_type": "MOC (Market-On-Close) 3:45–3:58 PM EST",
                     "reason": f"Z-score {z_1d:+.2f}σ breached {thresh:.1f}σ barrier by {abs(abs(z_1d)-thresh):.2f}σ" if is_active else f"{dist:.2f}σ away from trigger"
@@ -1193,6 +1192,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
                 for tr in trades:
                     tr["gap_since_prior_days"] = date_to_gap.get(tr["trade_date"], None)
+                    ep = float(tr.get("underlying_entry", 0.0) or 0.0)
+                    xp = float(tr.get("strike", 0.0) or 0.0)
+                    tr["entry_price"] = ep
+                    tr["exit_price"] = xp
+                    tr["stock_move_dollar"] = round(xp - ep, 2)
+                    tr["stock_move_pct"] = round(((xp - ep) / ep * 100.0) if ep > 0 else 0.0, 2)
+                    tr["captured_move_pct"] = round(float(tr.get("pnl_pct", 0.0) or 0.0), 2)
             else:
                 avg_interval_cal_days = 0.0
                 avg_interval_trading_sessions = 0.0
@@ -1200,6 +1206,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 max_gap = 0
                 for tr in trades:
                     tr["gap_since_prior_days"] = None
+                    ep = float(tr.get("underlying_entry", 0.0) or 0.0)
+                    xp = float(tr.get("strike", 0.0) or 0.0)
+                    tr["entry_price"] = ep
+                    tr["exit_price"] = xp
+                    tr["stock_move_dollar"] = round(xp - ep, 2)
+                    tr["stock_move_pct"] = round(((xp - ep) / ep * 100.0) if ep > 0 else 0.0, 2)
+                    tr["captured_move_pct"] = round(float(tr.get("pnl_pct", 0.0) or 0.0), 2)
 
             wins = [t for t in trades if t.get("pnl_pct", 0.0) > 0]
             win_rate_pct = round((len(wins) / total_count * 100.0), 1) if total_count > 0 else 0.0

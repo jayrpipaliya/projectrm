@@ -448,16 +448,28 @@ class AssetReturnBacktestEngine:
                     loss_cause = "TREND_CONTINUATION"
 
             dollar_pnl = round(10000.0 * (ret_pct / 100.0), 2)
+            stock_move_dollar = round(s_exit - ep["s_entry"], 2)
+            stock_move_pct = round((s_exit - ep["s_entry"]) / ep["s_entry"] * 100.0, 2)
             trades.append({
                 "date": ep["date"],
                 "signal_type": "BULLISH_SNAPBACK" if ep["is_bullish"] else "BEARISH_SNAPBACK",
                 "action": ep["action"],
                 "entry_price": round(ep["s_entry"], 2),
                 "exit_price": round(s_exit, 2),
+                "underlying_entry": round(ep["s_entry"], 2),
+                "strike": round(s_exit, 2),
+                "stock_move_dollar": stock_move_dollar,
+                "stock_move_pct": stock_move_pct,
+                "captured_move_pct": round(ret_pct, 2),
                 "holding_sessions": h_avail,
+                "holding_dte": h_avail,
+                "contract_dte": 0,
                 "pnl_rec_pct": round(ret_pct, 2),
+                "pnl_pct": round(ret_pct, 2),
                 "dollar_rec": dollar_pnl,
+                "dollar_pnl": dollar_pnl,
                 "win_rec": bool(ret_pct > 0),
+                "is_win": bool(ret_pct > 0),
                 "mfe_pct": round(mfe, 2),
                 "mae_pct": round(mae, 2),
                 "loss_cause": loss_cause

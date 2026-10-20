@@ -1425,12 +1425,6 @@
                 <a class="nav-item" id="side-nav-gold-ledger" href="#gold-ledger" onclick="switchActiveView('gold-ledger'); return false;">
                     <span style="color: #f23645 !important; font-weight: 700;">Rare Edge</span>
                 </a>
-                <a class="nav-item" id="side-nav-tenor-sweep" href="#tenor-sweep" onclick="switchActiveView('tenor-sweep'); return false;">
-                    <span style="color: #c084fc !important; font-weight: 700;">Tri-Surface Edge</span>
-                </a>
-                <a class="nav-item" id="side-nav-income-strategy" href="#income-strategy" onclick="switchActiveView('income-strategy'); return false;">
-                    <span style="color: #34d399 !important; font-weight: 700;">Cadence Edge</span>
-                </a>
                 <a class="nav-item" id="side-nav-price-action" href="#price-action" onclick="switchActiveView('price-action'); return false;">
                     <span style="color: #ffffff !important; font-weight: 700;">Atlas Edge</span>
                 </a>
@@ -1513,12 +1507,6 @@
             </button>
             <button class="tool-tab-btn" id="tab-btn-gold-ledger" onclick="switchActiveView('gold-ledger')">
                 <span style="color: #f23645 !important; font-weight: 700;">Rare Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-tenor-sweep" onclick="switchActiveView('tenor-sweep')">
-                <span style="color: #c084fc !important; font-weight: 700;">Tri-Surface Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-income-strategy" onclick="switchActiveView('income-strategy')">
-                <span style="color: #34d399 !important; font-weight: 700;">Cadence Edge</span>
             </button>
             <button class="tool-tab-btn" id="tab-btn-price-action" onclick="switchActiveView('price-action')">
                 <span style="color: #ffffff !important; font-weight: 700;">Atlas Edge</span>
@@ -1909,7 +1897,7 @@
                         <div class="playbook-col-text mode-retail">Instead of guessing which expiration date (DTE) or strike to buy, or when to take profits, this master registry has already <strong>backtested and locked in the winning formula</strong> for each stock on your watchlist. Right before market close (at 3:55 PM EST), the scanner lights up if any stock just triggered an official, high-win-rate trade.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>3D Champion Triplet (&sigma;* &times; Tenor* &times; Hold H*)</strong> across all 21 core watchlist stocks. Continually monitors incoming market close bars against live Kalman innovation thresholds.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>Champion Setup (&sigma;* &times; Tenor* &times; Hold H*)</strong> across all 21 core watchlist stocks. Continually monitors incoming market close bars against live Kalman innovation thresholds.
                         </div>
                     </div>
                     <div class="playbook-col">
@@ -1942,7 +1930,7 @@
                     </button>
                     <button id="btn-ledger-sync-benchmarks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerBenchmarks()" title="High-speed sync of all 12 market and sector benchmark ETFs">Sharpen Benchmarks
                     </button>
-                    <button id="btn-sync-gold-ledger" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncGoldLedgerAll()" title="Full 675-triplet 3D optimization surface recalibration for all assets">Sharpen Surfaces
+                    <button id="btn-sync-gold-ledger" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncGoldLedgerAll()" title="Recalibrate optimal trigger barriers (σ*) and holding horizons (H*) for all watchlist assets">Calibrate Barriers
                     </button>
                 </div>
             </div>
@@ -2011,16 +1999,16 @@
                             <th style="width: 50px;">Rank</th>
                             <th>Asset & Theme</th>
                             <th>Sector Pair</th>
-                            <th>Champion Triplet (&sigma;* &bull; Tenor* &bull; H*)</th>
+                            <th>Optimal Execution (&sigma;* &bull; H* Sessions)</th>
                             <th>Live Signal State</th>
                             <th>Current Z-Score</th>
-                            <th>Barrier Dist</th>
+                            <th>Barrier Proximity</th>
                             <th>Profit Factor</th>
                             <th>Win Rate %</th>
-                            <th>Avg ROI %</th>
-                            <th>Theta Drag</th>
+                            <th>Avg Move %</th>
+                            <th>Signal Cadence</th>
                             <th>Walk-Forward Status</th>
-                            <th style="text-align: right; min-width: 140px;">Action</th>
+                            <th style="text-align: right; min-width: 130px;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="gold-ledger-body">
@@ -2083,16 +2071,14 @@
                             <tr>
                                 <th>Entry Date</th>
                                 <th>Ticker</th>
-                                <th>Action Signal</th>
+                                <th>Direction</th>
                                 <th>Shock Z</th>
-                                <th>Entry Stock Px</th>
-                                <th>Target Strike</th>
-                                <th>Option Tenor</th>
-                                <th>Exit Horizon</th>
-                                <th>Entry Opt Px</th>
-                                <th>Exit Opt Px</th>
-                                <th>Return ROI %</th>
-                                <th>Dollar P&L</th>
+                                <th>Stock Entry ($)</th>
+                                <th>Stock Exit ($)</th>
+                                <th>Hold (Sessions)</th>
+                                <th>Stock Move ($)</th>
+                                <th>Captured Move %</th>
+                                <th>Dollar Return ($10k)</th>
                                 <th>Inter-Trade Gap</th>
                                 <th style="text-align: right;">Outcome</th>
                             </tr>
@@ -2109,503 +2095,7 @@
         </section>
 
         <!-- =================================================================== -->
-        <!-- SECTION 1.9: 3D GLOBAL TRI-FACTOR SURFACE OPTIMUM & BLUEPRINT       -->
-        <!-- (Joint optimization of Trigger Barrier σ × Contract Tenor × Hold H) -->
-        <!-- =================================================================== -->
-        <section id="tenor-sweep-section" class="panel tool-view" style="margin-top: 24px;">
-
-            <!-- Executive Module Playbook -->
-            <div class="module-playbook-card theme-purple" id="playbook-tenor-sweep" style="border-color: rgba(168, 85, 247, 0.35);">
-                <div class="playbook-header">
-                    <div class="playbook-title">
-                        <span style="color: #c084fc;"></span>
-                        <span style="color: #c084fc;">Tri-Surface Edge Playbook</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <span class="playbook-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">Surface Geometry &bull; Joint Optimum</span>
-                        <div class="mode-toggle-pill">
-                            <button class="mode-pill-btn toggle-btn-retail active" onclick="setPlaybookMode('tenor-sweep', 'retail')">Plain English</button>
-                            <span class="mode-pill-divider">/</span>
-                            <button class="mode-pill-btn toggle-btn-quant" onclick="setPlaybookMode('tenor-sweep', 'quant')">The Quant Answer</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="playbook-grid">
-                    <div class="playbook-col">
-                        <div class="playbook-col-label" style="color: #c084fc;">
-                            <span>What This Module Does</span>
-                        </div>
-                        <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">Option traders often lose money because <strong>theta decay bleeds their options dry</strong> before the stock moves, or they pick the wrong expiration date. This 3D engine tests thousands of combinations of trigger barriers, contract expirations (15 to 60 DTE), and holding days. It plots a <strong>3D topographic heat-map</strong> showing you where the real money is made so you never buy dead options.
-                        </div>
-                        <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Computes an unconstrained 3D combinatorial grid sweep across <strong>Trigger Barrier (&sigma; &isin; [1.0, 3.0])</strong>, <strong>Contract Maturity (DTE Tenor &isin; [15, 60])</strong>, and <strong>Exit Holding Horizon (H &isin; [5, 25])</strong> using Walk-Forward out-of-sample cross-validation.
-                        </div>
-                    </div>
-                    <div class="playbook-col">
-                        <div class="playbook-col-label" style="color: #c084fc;">
-                            <span>How to Profit & Trade It</span>
-                        </div>
-                        <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">
-                            <strong>Find the optimal profit plateaus.</strong> Spin the 3D surface and look for smooth, broad purple hilltops—not narrow jagged needles. If a stock generates high win rates across 30, 45, and 60 DTE, that's a safe, robust strategy. If it only works on one specific day, it's a curve-fit trap. Choose the contract DTE and holding days located right in the center of the optimal zone.
-                        </div>
-                        <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Analyzes the topological Riemannian curvature and gradient $\nabla \text{ROI}(\sigma, \text{DTE}, H)$ of the tri-factor response surface. High second-order parameter stability $(\partial^2 \text{ROI}/\partial \theta^2 \approx 0)$ ensures the strategy does not suffer from dimensional overfitting. Execution targets contract tenor where Black-Scholes Theta decay $\Theta = -\frac{S\sigma\phi(d_1)}{2\sqrt{\tau}}$ is sublinear relative to Delta accretion $\Delta \cdot \kappa(\mu - S_t)$.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title" style="display: flex; align-items: center; gap: 8px;">
-                        <span>Tri-Surface Edge</span>
-                        <span class="tag-pill" style="font-size: 0.72rem; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">Tri-Factor Surface Optimization</span>
-                    </h2>
-                    
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 6px; background: #16171a; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: var(--radius-sm); padding: 5px 12px;">
-                        <span style="font-size: 0.70rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Data Horizon:</span>
-                        <span style="font-size: 0.80rem; color: #c084fc; font-family: var(--font-mono); font-weight: 700;">5Y (1,255 Bars &bull; 2021&ndash;2026)</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px; background: #16171a; border: 1px solid rgba(8, 153, 129, 0.4); border-radius: var(--radius-sm); padding: 5px 12px;">
-                        <span style="font-size: 0.70rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Engine Search:</span>
-                        <span id="tenor-active-config-badge" style="font-size: 0.80rem; color: #c084fc; font-family: var(--font-headings); font-weight: 700;">Global Joint (σ* × Tenor* × H*)</span>
-                    </div>
-                    <button id="btn-run-tenor-sweep" class="action-pill" onclick="runContractTenorSweep()" style="padding: 6px 16px; font-weight: 700; font-size: 0.80rem; background: #a855f7; border: 1px solid #a855f7; color: #ffffff; cursor: pointer;">Run 3D Global Optimum
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tenor Idle Banner (Shown on startup, hidden after run) -->
-            <div id="tenor-idle-banner" style="padding: 14px 18px; background: #16171a; border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.15rem;"></span>
-                    <div>
-                        <div style="font-weight: 700; color: #ffffff; font-size: 0.84rem;">3D Global Optimum Engine Ready</div>
-                        <div style="font-size: 0.74rem; color: var(--text-muted);">Simultaneous multi-parameter optimization across all Entry Barriers (&plusmn;1.4&sigma; to &plusmn;3.0&sigma;), Option Expirations (7d to 90d), and Holding Horizons (1 to 21 sessions) with causal Walk-Forward validation.</div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Tenor KPI Summary Cards -->
-            <div class="metric-cards-row" style="margin-bottom: 16px;">
-                <div class="stat-card-sm">
-                    <div class="stat-card-label" style="color: #c084fc;" id="tenor-kpi-pf-lbl">Highest Profit Factor</div>
-                    <div class="stat-card-value" style="color: #ffffff;" id="tenor-kpi-pf">--</div>
-                    <div class="stat-card-sub" id="tenor-kpi-pf-sub">Gross Win / Gross Loss</div>
-                </div>
-                <div class="stat-card-sm">
-                    <div class="stat-card-label" style="color: #c084fc;" id="tenor-kpi-wr-lbl">Highest Win Rate</div>
-                    <div class="stat-card-value" style="color: #ffffff;" id="tenor-kpi-wr">--</div>
-                    <div class="stat-card-sub" id="tenor-kpi-wr-sub">Historical % Winning Trades</div>
-                </div>
-                <div class="stat-card-sm">
-                    <div class="stat-card-label" style="color: #c084fc;" id="tenor-kpi-roi-lbl">Highest Avg ROI</div>
-                    <div class="stat-card-value" style="color: #ffffff;" id="tenor-kpi-roi">--</div>
-                    <div class="stat-card-sub" id="tenor-kpi-roi-sub">Per Trade Expected Return</div>
-                </div>
-                <div class="stat-card-sm">
-                    <div class="stat-card-label" style="color: #c084fc;" id="tenor-kpi-theta-lbl">Lowest Theta Drag</div>
-                    <div class="stat-card-value" style="color: #ffffff;" id="tenor-kpi-theta">--</div>
-                    <div class="stat-card-sub" id="tenor-kpi-theta-sub">Est. Decay Over Holding Horizon</div>
-                </div>
-            </div>
-
-            <!-- 3D Global Execution Blueprint Card (Displayed when in 3D Mode) -->
-            <div id="tenor-3d-blueprint" style="display: none; margin-bottom: 16px; padding: 18px 22px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(20, 20, 26, 0.98) 100%); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: var(--radius-sm);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        
-                        <div>
-                            <div style="font-weight: 800; color: #ffffff; font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
-                                <span>Unified Trade Execution Blueprint</span>
-                                <span id="bp-status-badge" class="tag-pill" style="font-size: 0.68rem; padding: 2px 8px; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc;">ROBUST CONFIRMED</span>
-                            </div>
-                            <div style="font-size: 0.74rem; color: var(--text-muted);">Joint optimum discovered across all multi-factor parameter surfaces &bull; Pre-calculated causal Walk-Forward validated
-                            </div>
-                        </div>
-                    </div>
-                    <div id="bp-sample-info" style="font-size: 0.74rem; color: var(--text-dim); text-align: right; font-family: var(--font-mono);">Evaluated 0 combinations in 0.0s
-                    </div>
-                </div>
-
-                <!-- The 3 Core Execution Pillars -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;">
-                    <!-- Pillar 1: Entry Barrier -->
-                    <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 16px;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">1. Trigger Barrier (Entry)</div>
-                        <div id="bp-val-barrier" style="font-size: 1.55rem; font-weight: 800; color: #c084fc; font-family: var(--font-headings); margin: 3px 0;">±2.4σ</div>
-                        <div id="bp-desc-barrier" style="font-size: 0.72rem; color: var(--text-muted);">Mean-reversion trigger barrier</div>
-                    </div>
-                    <!-- Pillar 2: Contract Tenor -->
-                    <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 16px;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">2. Contract Maturity (Instrument)</div>
-                        <div id="bp-val-tenor" style="font-size: 1.55rem; font-weight: 800; color: #ffffff; font-family: var(--font-headings); margin: 3px 0;">21d DTE</div>
-                        <div id="bp-desc-tenor" style="font-size: 0.72rem; color: var(--text-muted);">Sweet Spot: Optimal Convexity</div>
-                    </div>
-                    <!-- Pillar 3: Exit Horizon -->
-                    <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 16px;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">3. Holding Horizon (Exit)</div>
-                        <div id="bp-val-hold" style="font-size: 1.55rem; font-weight: 800; color: #c084fc; font-family: var(--font-headings); margin: 3px 0;">5 Sessions</div>
-                        <div id="bp-desc-hold" style="font-size: 0.72rem; color: var(--text-muted);">Optimal snap-back exit horizon</div>
-                    </div>
-                    <!-- Expected Edge Metrics -->
-                    <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 16px;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Expected Edge & Stability</div>
-                        <div id="bp-val-edge" style="font-size: 1.30rem; font-weight: 800; color: #ffffff; font-family: var(--font-headings); margin: 3px 0;">4.60x PF | 52.4% WR</div>
-                        <div id="bp-desc-edge" style="font-size: 0.72rem; color: var(--text-muted);">Avg ROI: +42.0% &bull; Theta Drag: -16.9%</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2D Global Parameter Surface Heatmap Grid -->
-            <div style="margin-bottom: 20px; background: var(--bg-card-inner); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 16px;">
-                <div style="font-size: 0.84rem; font-weight: 700; color: #ffffff; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div>
-                        <span style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 0.92rem;">2D Global Parameter Surface Heatmap</span>
-                            <span class="tag-pill" style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.5);">Tri-Factor Projection</span>
-                        </span>
-                        <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">Trigger Barrier (&sigma;) vs. Contract Maturity (DTE Tenor) &bull; Projected at each combination's optimal holding duration &bull; Click any cell to load in Trade Log
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.70rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Surface Metric:</span>
-                        <div class="pill-tab-group">
-                            <button id="btn-hm-pf" class="pill-tab active" onclick="setHeatmapMetric('profit_factor')">Profit Factor</button>
-                            <button id="btn-hm-wr" class="pill-tab" onclick="setHeatmapMetric('win_rate')">Win Rate %</button>
-                            <button id="btn-hm-roi" class="pill-tab" onclick="setHeatmapMetric('roi')">Avg ROI %</button>
-                            <button id="btn-hm-pnl" class="pill-tab" onclick="setHeatmapMetric('pnl')">Total PnL</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-container" style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
-                    <table class="fin-table" id="surface-grid-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                        <thead id="surface-grid-header">
-                            <tr>
-                                <th style="width: 110px; background: #16171a;">Barrier (&sigma;)</th>
-                                <th>7d Weekly</th>
-                                <th>10d</th>
-                                <th>14d Bi-Wk</th>
-                                <th>21d</th>
-                                <th>35d Mthly</th>
-                                <th>45d</th>
-                                <th>60d Ext</th>
-                                <th>90d Qtr</th>
-                            </tr>
-                        </thead>
-                        <tbody id="surface-grid-body">
-                            <tr>
-                                <td colspan="9" style="text-align: center; color: var(--text-dim); padding: 25px;">Click " Run 3D Global Optimum" above to compute and display Profit Factor surface heatmap...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Top Ranked Parameter Triplets Matrix Table -->
-            <div style="font-size: 0.84rem; font-weight: 700; color: #ffffff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="display: flex; align-items: center; gap: 6px;">
-                    <span>Top Ranked Tri-Factor Blueprint Configurations</span>
-                    <span class="tag-pill" style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.5);">Ranked by Robust Efficiency</span>
-                </span>
-                <span style="font-size: 0.72rem; color: var(--text-dim);">Sorted by Score &bull; Walk-Forward Validated</span>
-            </div>
-            <div class="table-container" style="max-height: 420px; overflow-y: auto; margin-bottom: 16px;">
-                <table class="fin-table" id="tenor-matrix-table">
-                    <thead>
-                        <tr>
-                            <th>Contract Tenor (DTE)</th>
-                            <th id="th-tenor-hold-col">Optimal Hold (Sessions)</th>
-                            <th>Avg Entry Prem ($)</th>
-                            <th>Win Rate %</th>
-                            <th>Avg ROI %</th>
-                            <th>Total $ PnL (1 Ctr)</th>
-                            <th>Profit Factor</th>
-                            <th>Max Win / Loss %</th>
-                            <th>Est. Theta Drag %</th>
-                            <th>Walk-Forward Validation</th>
-                            <th style="text-align: right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tenor-matrix-body">
-                        <tr>
-                            <td colspan="11" style="text-align: center; color: var(--text-dim); padding: 25px;">Click "Run Tri-Surface Edge" above to measure profitability of 7d, 10d, 14d, 21d, 35d, and 45d option contracts.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Comparison Chart -->
-            <div style="background: var(--bg-card-inner); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px;">
-                <div style="font-size: 0.80rem; font-weight: 700; color: #ffffff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Contract Tenor Performance Trade-Off: Average ROI % vs. Win Rate %</span>
-                    <span style="font-size: 0.70rem; color: var(--text-dim);">Bars = Avg ROI % &bull; Line = Win Rate %</span>
-                </div>
-                <div style="height: 220px; width: 100%;">
-                    <canvas id="tenorComparisonChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Inspect Tenor Trades Sub-Container (Initially hidden) -->
-            <div id="tenor-trades-detail-container" style="display: none; background: #16171a; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-weight: 700; font-size: 0.88rem; color: #ffffff;">Contract Tenor Diagnostics: <span id="tenor-trades-selected-label" style="color: #c084fc;">--</span>
-                        </div>
-                        <div style="font-size: 0.72rem; color: var(--text-muted);">Inspect empirical day-by-day holding duration curve & individual trade episodes.
-                        </div>
-                    </div>
-                    <button class="action-pill" style="font-size: 0.68rem; padding: 2px 8px;" onclick="document.getElementById('tenor-trades-detail-container').style.display='none'">
-                        ✕ Close Detail
-                    </button>
-                </div>
-
-                <!-- Holding Horizon Day-by-Day Sensitivity Matrix -->
-                <div style="margin-bottom: 14px;">
-                    <div style="font-size: 0.74rem; font-weight: 700; color: #ffffff; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                        <span>Holding Duration Sensitivity Curve (1d to Max Tradable Sessions)</span>
-                    </div>
-                    <div class="table-container" style="max-height: 220px; overflow-y: auto;">
-                        <table class="fin-table" id="tenor-curve-table">
-                            <thead>
-                                <tr>
-                                    <th>Hold Sessions</th>
-                                    <th>Win Rate %</th>
-                                    <th>Avg ROI %</th>
-                                    <th>Total $ PnL (1 Ctr)</th>
-                                    <th>Profit Factor</th>
-                                    <th>Total Trades</th>
-                                    <th>Est. Theta Decay %</th>
-                                    <th>Optimal Selection</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tenor-curve-body">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Individual Trades Table -->
-                <div style="font-size: 0.74rem; font-weight: 700; color: #ffffff; text-transform: uppercase; margin-bottom: 6px;">
-                    <span>Individual Historical Trade Episodes</span>
-                </div>
-                <div class="table-container" style="max-height: 300px; overflow-y: auto;">
-                    <table class="fin-table" id="tenor-trades-detail-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Action</th>
-                                <th>Signal Z</th>
-                                <th>Stock Entry</th>
-                                <th>Strike</th>
-                                <th>Entry Opt ($)</th>
-                                <th>Exit Opt ($)</th>
-                                <th>Trade ROI %</th>
-                                <th>1-Ctr PnL ($)</th>
-                                <th>Result</th>
-                                <th>Failure Cause</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tenor-trades-detail-body">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- =================================================================== -->
-        <!-- SECTION 1.95: CADENCE EDGE                                          -->
-        <!-- =================================================================== -->
-        <section id="income-strategy-section" class="panel tool-view">
-            
-            <!-- Executive Module Playbook -->
-            <div class="module-playbook-card theme-emerald" id="playbook-income" style="border-color: rgba(52, 211, 153, 0.35);">
-                <div class="playbook-header">
-                    <div class="playbook-title">
-                        <span style="color: #34d399;"></span>
-                        <span>Cadence Edge Playbook</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <span class="playbook-tag" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4);">High-Frequency Cashflow Engine &bull; 1&ndash;2 Trades/Week</span>
-                        <div class="mode-toggle-pill">
-                            <button class="mode-pill-btn toggle-btn-retail active" onclick="setPlaybookMode('income', 'retail')">Plain English</button>
-                            <span class="mode-pill-divider">/</span>
-                            <button class="mode-pill-btn toggle-btn-quant" onclick="setPlaybookMode('income', 'quant')">The Quant Answer</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="playbook-grid">
-                    <!-- Column 1: What This Module Does -->
-                    <div class="playbook-col">
-                        <div class="playbook-col-label" style="color: #ffffff;">
-                            <span>What This Module Does</span>
-                        </div>
-                        <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">This module finds <strong>high-frequency, reliable options trades</strong> calibrated to trigger <strong>1 to 2 times every week</strong>. While our Rare Edge hunts for rare, massive home runs that take a month to setup, this Cadence Edge lowers the trigger barrier to catch everyday stock price bounces. It provides steady, repeatable trade flow with rapid <strong>1 to 5 session cash turnover</strong> so you aren't stuck waiting weeks for results or losing money to option time decay (theta).
-                        </div>
-                        <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Implements an expanded Ornstein-Uhlenbeck mean-reversion surface calibrated at lower entry barrier thresholds (&plusmn;1.4&sigma; &le; z &le; &plusmn;2.0&sigma;) to maximize trade arrival frequency (&lambda; &ge; 1.0&ndash;2.8 events/week). By strictly constraining holding duration to rapid snap-back windows (H* &le; 1&ndash;7 sessions) and pairing them with short-tenor ATM options, the system suppresses cumulative theta drag while maintaining positive mathematical expectancy (Profit Factor &ge; 1.50&ndash;2.18x) and walk-forward cross-validation.
-                        </div>
-                    </div>
-
-                    <!-- Column 2: How to Profit & Trade It -->
-                    <div class="playbook-col">
-                        <div class="playbook-col-label" style="color: #ffffff;">
-                            <span>How to Profit & Trade It</span>
-                        </div>
-                        <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">Select 2 to 4 names from the <strong>Weekly Cashflow Basket</strong> (e.g. Microsoft, Starbucks, and CrowdStrike). When a stock's live indicator reaches the entry barrier, buy an At-The-Money (ATM) Call or Put using the specified contract expiration. <strong>Exit strictly within the prescribed holding window (1 to 5 days)</strong> or as soon as the stock mean-reverts back to green. Do not hold long-term &mdash; lock in the quick +10% to +35% option gain and redeploy cash into the next incoming setup.
-                        </div>
-                        <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Monitor real-time Kalman residual z-scores against calibrated income triggers (&sigma;* &isin; [1.4&sigma;, 2.0&sigma;]). Execute synthetic ATM long options on barrier breach (z &le; -&sigma;* buy Call; z &ge; &sigma;* buy Put). Enforce rigid time-stop liquidations at t<sub>0</sub> + H* sessions regardless of P&amp;L, or take early discretionary profit on instantaneous residual zero-crossing (z &to; 0). Diversifying across an uncorrelated 3-asset cluster generates a stationary, non-overlapping weekly cashflow stream of ~4.0 setups/week.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Income KPI Overview Bar -->
-            <div class="metric-cards-row" style="margin-bottom: 16px;">
-                <div class="stat-card-sm" style="border: 1px solid rgba(52, 211, 153, 0.4);">
-                    <div class="stat-card-label" style="color: #34d399;">Live Income Triggers</div>
-                    <div id="income-active-triggers-stat" class="stat-card-value" style="color: #34d399; font-family: var(--font-headings); font-weight: 700;">--</div>
-                    <div class="stat-card-sub">Meeting Entry Barrier Right Now</div>
-                </div>
-                <div class="stat-card-sm" style="border: 1px solid #26272b;">
-                    <div class="stat-card-label" style="color: var(--text-muted);">Weekly Setup Velocity</div>
-                    <div id="income-weekly-velocity-stat" class="stat-card-value" style="color: #ffffff; font-family: var(--font-headings); font-weight: 700;">~3.5 / wk</div>
-                    <div class="stat-card-sub">Expected Flow (Core Basket)</div>
-                </div>
-                <div class="stat-card-sm" style="border: 1px solid #26272b;">
-                    <div class="stat-card-label" style="color: var(--text-muted);">Blended Win Rate</div>
-                    <div id="income-win-rate-stat" class="stat-card-value" style="color: #ffffff; font-family: var(--font-headings); font-weight: 700;">56.4%</div>
-                    <div class="stat-card-sub">1–5 Session Turnover</div>
-                </div>
-                <div class="stat-card-sm" style="border: 1px solid #26272b;">
-                    <div class="stat-card-label" style="color: var(--text-muted);">Blended Profit Factor</div>
-                    <div id="income-profit-factor-stat" class="stat-card-value" style="color: #ffffff; font-family: var(--font-headings); font-weight: 700;">1.85x</div>
-                    <div class="stat-card-sub">Mathematically Confirmed Edge</div>
-                </div>
-            </div>
-
-            <!-- Interactive Weekly Cashflow Basket Simulator -->
-            <div class="panel" style="background: rgba(14, 16, 32, 0.7); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-                    <div>
-                        <h3 style="font-size: 1.05rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px; margin: 0;">
-                            <span style="color: #34d399;"></span>Weekly Cashflow Basket Simulator
-                        </h3>
-                        <p style="font-size: 0.76rem; color: var(--text-muted); margin: 3px 0 0 0;">Toggle assets to customize your Cadence Edge portfolio. Shows combined trade velocity, win rate, and profit factor.
-                        </p>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="action-pill" style="font-size: 0.7rem; padding: 4px 10px;" onclick="selectAllIncomeBasket(true)">Select All</button>
-                        <button class="action-pill" style="font-size: 0.7rem; padding: 4px 10px; border-color: #34d399; color: #34d399;" onclick="selectCoreIncomeBasket()">Recommended Core 4</button>
-                        <button class="action-pill" style="font-size: 0.7rem; padding: 4px 10px;" onclick="selectAllIncomeBasket(false)">Clear</button>
-                    </div>
-                </div>
-
-                <!-- Checkbox pill group -->
-                <div id="income-basket-toggles" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
-                    <!-- Dynamically generated pills -->
-                </div>
-
-                <!-- Basket Projected Summary Strip -->
-                <div style="background: #0B0C17; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 14px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Selected Assets</div>
-                        <div id="sim-selected-count" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono); margin-top: 2px;">4 Tickers</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Projected Trade Flow</div>
-                        <div id="sim-weekly-flow" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono); margin-top: 2px;">~5.0 / week</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Blended Win Rate</div>
-                        <div id="sim-win-rate" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono); margin-top: 2px;">56.2%</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Blended Profit Factor</div>
-                        <div id="sim-profit-factor" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono); margin-top: 2px;">2.05x</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Avg Holding Duration</div>
-                        <div id="sim-avg-hold" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono); margin-top: 2px;">3.8 Sessions</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Master Cadence Edge Leaderboard Table -->
-            <div class="panel">
-                <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
-                    <div>
-                        <h2 class="panel-title" style="display: flex; align-items: center; gap: 8px;">
-                            <span>Cadence Edge Setups (High Trade Velocity)</span>
-                            <span id="income-table-count-badge" class="badge-subtle" style="font-size: 0.72rem; color: #34d399; border-color: rgba(52, 211, 153, 0.4);">24 Setups</span>
-                        </h2>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Ranked by Annual Trade Flow &times; Profit Factor. Designed for predictable weekly payouts with short turnaround.
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <button id="btn-cadence-scan" class="action-pill" onclick="runCadenceEdgeScan()" style="padding: 6px 16px; font-weight: 700; font-size: 0.78rem; background: #089981; color: #ffffff; border: 1px solid #089981; cursor: pointer; box-shadow: 0 2px 8px rgba(8, 153, 129, 0.35);" title="Search all Cadence Edge setups for active 3:45 PM - 4:00 PM MOC income signals and std dev (σ) proximity to barrier"><span>Search for the Cadence Edge</span></button>
-                        <input type="text" id="income-table-filter" placeholder="Search ticker or theme..." style="width: 170px; padding: 4px 8px; font-size: 0.75rem; background: #0B0C17; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #fff;" oninput="filterIncomeTable(this.value)">
-                        <button class="action-pill" onclick="fetchWeeklyIncomeData()">⟳ Refresh Live Signals</button>
-                    </div>
-                </div>
-
-                <!-- PRE-CLOSE 3:45-4:00 PM CADENCE EDGE EXECUTION BANNER -->
-                <div id="cadence-execution-banner" style="display: none; margin-top: 14px; margin-bottom: 12px; border-radius: var(--radius-sm); padding: 14px 18px; border: 1px solid rgba(52, 211, 153, 0.4); background: linear-gradient(135deg, rgba(8, 153, 129, 0.12) 0%, rgba(18, 18, 20, 0.98) 100%); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 1.25rem;" id="cadence-banner-icon"></span>
-                            <div>
-                                <span style="font-weight: 800; font-size: 0.88rem; color: #34d399;" id="cadence-banner-title">Cadence Edge 3:45–4:00 PM MOC Execution Screener</span>
-                                <span id="cadence-banner-badge" class="tag-pill" style="font-size: 0.68rem; font-weight: 800; margin-left: 8px; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4);">WINDOW: 3:45–3:58 PM EST</span>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.74rem; font-family: var(--font-mono); color: var(--text-dim);" id="cadence-scan-time">Scanned: --</div>
-                    </div>
-                    <div id="cadence-banner-content" style="font-size: 0.82rem; color: #fff; line-height: 1.6;">Evaluating standard deviation (&sigma;) proximity to income trigger barriers across all calibrated weekly setups...</div>
-                </div>
-
-                <div class="table-container" style="max-height: 520px; overflow-y: auto;">
-                    <table class="fin-table" id="income-strategy-table">
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Asset / Theme</th>
-                                <th>Benchmark</th>
-                                <th>Income Barrier</th>
-                                <th>Tenor (DTE)</th>
-                                <th>Max Hold</th>
-                                <th>Trade Flow / Wk</th>
-                                <th>Win Rate</th>
-                                <th>Avg ROI</th>
-                                <th>Profit Factor</th>
-                                <th>Live Residual Z</th>
-                                <th>Live Signal</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="income-strategy-tbody">
-                            <tr><td colspan="13" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading Cadence Edge Setups...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- =================================================================== -->
-        <!-- SECTION 1.10: DYNAMIC SIMULATED ATM OPTION TRADES LOG               -->
+        <!-- SECTION 1.10: DYNAMIC SIMULATED ASSET TRADES LOG (DOSSIER EDGE)      -->               -->
         <!-- (Interactive log filtered by Trigger σ, Contract Tenor, & Hold H)   -->
         <!-- =================================================================== -->
         <section id="trades-log-section" class="panel tool-view">
@@ -2680,18 +2170,11 @@
                         </select>
                     </div>
 
-                    <!-- Contract Tenor Selector -->
-                    <div class="trades-filter-box">
+                    <!-- Contract Tenor Selector (Hidden in Pure Equity Mode) -->
+                    <div class="trades-filter-box" style="display: none;">
                         <span style="font-size: 0.70rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Contract Tenor:</span>
                         <select id="trades-filter-tenor" class="trades-filter-select" style="color: #ffffff;" onchange="onTradesFilterParamChange()">
-                            <option value="7">7d Weekly</option>
-                            <option value="10">10d</option>
-                            <option value="14">14d Bi-Weekly</option>
-                            <option value="21" selected>21d</option>
-                            <option value="35">35d Monthly</option>
-                            <option value="45">45d</option>
-                            <option value="60">60d</option>
-                            <option value="90">90d Quarterly</option>
+                            <option value="21" selected>21d Equity Base</option>
                         </select>
                     </div>
 
@@ -2715,7 +2198,7 @@
                     </div>
 
                     <!-- Sync to 3D Champion Button -->
-                    <button id="btn-sync-to-optimal" class="action-pill" style="border-color: #36373d; color: #ffffff; font-weight: 600;" onclick="syncTradesLogToOptimal()" title="Load 3D Champion Triplet (σ*, Tenor*, H*) discovered by Tri-Surface Edge">Sync to 3D Champion (σ*, Tenor*, H*)
+                    <button id="btn-sync-to-optimal" class="action-pill" style="border-color: #36373d; color: #ffffff; font-weight: 600;" onclick="syncTradesLogToOptimal()" title="Load Champion Setup (σ*, Tenor*, H*) discovered by Parameter Optimizer">Sync to Champion (σ*, H* Hold)
                     </button>
 
                     <!-- Earnings Blackout Toggle -->
@@ -2758,19 +2241,17 @@
                 <table class="fin-table" id="trades-only-table">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">Entry Date</th>
-                            <th style="width: 120px;">Action</th>
-                            <th style="width: 80px;">Signal Z</th>
-                            <th style="width: 90px;">Stock Entry</th>
-                            <th style="width: 95px;">Exit Price ($)</th>
-                            <th style="width: 105px;">Holding Horizon</th>
-                            <th style="width: 90px;">Entry Price ($)</th>
-                            <th style="width: 90px;">Asset PnL %</th>
+                            <th style="width: 95px;">Entry Date</th>
+                            <th style="width: 110px;">Direction</th>
+                            <th style="width: 85px;">Signal Z</th>
+                            <th style="width: 95px;">Stock Entry ($)</th>
+                            <th style="width: 95px;">Stock Exit ($)</th>
                             <th style="width: 95px;">Hold Horizon</th>
-                            <th style="width: 90px;">Trade ROI</th>
-                            <th style="width: 100px;">1-Ctr PnL</th>
-                            <th style="width: 110px;">Excursion</th>
-                            <th>Outcome & Diagnostics</th>
+                            <th style="width: 95px;">Stock Move ($)</th>
+                            <th style="width: 110px;">Captured Move %</th>
+                            <th style="width: 110px;">Dollar Return ($10k)</th>
+                            <th style="width: 115px;">Max Excursion</th>
+                            <th style="text-align: right;">Diagnostics</th>
                         </tr>
                     </thead>
                     <tbody id="trades-only-body">
@@ -2888,58 +2369,16 @@
                 </div>
             </div>
 
-            <!-- QQQ Benchmark Price & Option Chain Table -->
-            <div class="grid-2col" id="options-section">
-                <!-- Benchmark Price Chart -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title" id="diag-chart-title">QQQ Price & 20D Realized Volatility</h2>
-                        <button id="btn-diag-reload-ticker" class="action-pill" onclick="runDiagnosticsTickerQuery()">Reload QQQ</button>
-                    </div>
-                    <div style="height: 310px; width: 100%;">
-                        <canvas id="stockChart"></canvas>
-                    </div>
+            <!-- Benchmark Price & 20D Realized Volatility Panel -->
+            <div class="panel" id="benchmark-chart-panel" style="margin-bottom: 20px;">
+                <div class="panel-header">
+                    <h2 class="panel-title" id="diag-chart-title">Asset Benchmark Price & 20D Realized Volatility</h2>
+                    <button id="btn-diag-reload-ticker" class="action-pill" onclick="runDiagnosticsTickerQuery()">Reload Benchmark</button>
                 </div>
-
-                <!-- Option Chain Table (Transaction-style) -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title" id="diag-options-title">QQQ Option Chain</h2>
-                        <div class="pill-tab-group">
-                            <button id="opt-filter-all" class="pill-tab active" onclick="setContractFilter('ALL')">All</button>
-                            <button id="opt-filter-call" class="pill-tab" onclick="setContractFilter('CALL')">Calls</button>
-                            <button id="opt-filter-put" class="pill-tab" onclick="setContractFilter('PUT')">Puts</button>
-                        </div>
-                    </div>
-                    <div class="table-container" style="max-height: 310px; overflow-y: auto;">
-                        <table class="fin-table" id="options-table">
-                            <thead>
-                                <tr>
-                                    <th>Contract Ticker</th>
-                                    <th>Type</th>
-                                    <th>Strike</th>
-                                    <th>Expiration</th>
-                                </tr>
-                            </thead>
-                            <tbody id="options-body">
-                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 25px;">Lab is idle. Click " Load Diagnostic Edge" above to query option chain.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div style="height: 320px; width: 100%;">
+                    <canvas id="stockChart"></canvas>
                 </div>
             </div>
-
-            <!-- Option Detail Chart & SQLite Architecture Card -->
-            <div class="grid-2col">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title" id="option-chart-title">Selected Option Historical Price</h2>
-                        <span id="selected-contract-badge" class="tag-pill tag-blue">Select a Contract</span>
-                    </div>
-                    <div style="height: 270px; width: 100%;">
-                        <canvas id="optionChart"></canvas>
-                    </div>
-                </div>
 
                 <div class="panel">
                     <div class="panel-header">
@@ -3050,33 +2489,20 @@
                     </div>
                 </div>
 
-                <!-- Tool 3: Tri-Surface Edge -->
-                <div class="tool-card" style="border-color: rgba(168, 85, 247, 0.4);" onclick="switchActiveView('tenor-sweep')">
+                <!-- Tool 3: Atlas Edge -->
+                <div class="tool-card" onclick="switchActiveView('price-action')">
                     <div class="tool-card-icon"></div>
                     <div class="tool-card-content">
                         <div class="tool-card-title">
-                            <span style="color: #c084fc; font-weight: 700;">Tri-Surface Edge</span>
-                            <span class="tool-key-badge" style="border-color: rgba(168, 85, 247, 0.4); color: #c084fc;">Key 3</span>
+                            <span style="color: #ffffff; font-weight: 700;">Atlas Edge</span>
+                            <span class="tool-key-badge">Key 3</span>
                         </div>
-                        <div class="tool-card-desc">Interactive 3D tri-factor surface &amp; slice heatmap simultaneously optimizing barrier &sigma;*, maturity tenor*, and exit holding period.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tool 4: Cadence Edge -->
-                <div class="tool-card" style="border-color: rgba(52, 211, 153, 0.3);" onclick="switchActiveView('income-strategy')">
-                    <div class="tool-card-icon" style="color: #34d399;"></div>
-                    <div class="tool-card-content">
-                        <div class="tool-card-title">
-                            <span style="color: #34d399; font-weight: 700;">Cadence Edge</span>
-                            <span class="tool-key-badge" style="border-color: rgba(52, 211, 153, 0.4); color: #34d399;">Key 4</span>
-                        </div>
-                        <div class="tool-card-desc">High-frequency, positive-EV cashflow engine calibrated for 1 to 2 clean option trade setups per week with rapid 1&ndash;5 session capital turnover.
+                        <div class="tool-card-desc">Target asset daily close trajectory aligned with Kalman relative innovation shocks and CUSUM regime drift shading.
                         </div>
                     </div>
                 </div>
 
-                <!-- Tool 5: Atlas Edge -->
+                <!-- Tool 4: Dossier Edge -->
                 <div class="tool-card" onclick="switchActiveView('price-action')">
                     <div class="tool-card-icon"></div>
                     <div class="tool-card-content">
@@ -3095,7 +2521,7 @@
                     <div class="tool-card-content">
                         <div class="tool-card-title">
                             <span style="color: #ffffff; font-weight: 700;">Dossier Edge</span>
-                            <span class="tool-key-badge">Key 6</span>
+                            <span class="tool-key-badge">Key 4</span>
                         </div>
                         <div class="tool-card-desc">Dynamic simulated ATM option execution ledger with Black-Scholes theta decay and post-mortem failure cause analytics.
                         </div>
@@ -3108,7 +2534,7 @@
                     <div class="tool-card-content">
                         <div class="tool-card-title">
                             <span style="color: #ffffff; font-weight: 700;">Diagnostic Edge</span>
-                            <span class="tool-key-badge">Key 7</span>
+                            <span class="tool-key-badge">Key 5</span>
                         </div>
                         <div class="tool-card-desc">Raw benchmark historical bars, SQLite database status, annualized realized volatility (&sigma;&times;&radic;252), and Polygon live API tester.
                         </div>
@@ -3119,7 +2545,7 @@
             <div class="tools-hub-footer" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-dim);">
                 <div style="display: flex; gap: 14px; align-items: center;">
                     <span><strong style="color: #a1a1aa;">⌘K / Ctrl+K</strong> Toggle Hub</span>
-                    <span><strong style="color: #a1a1aa;">1 &ndash; 7</strong> Direct Jump</span>
+                    <span><strong style="color: #a1a1aa;">1 &ndash; 5</strong> Direct Jump</span>
                     <span><strong style="color: #a1a1aa;">ESC</strong> Close</span>
                 </div>
                 <div>
@@ -3139,14 +2565,7 @@
             <span class="mobile-nav-icon" style="color: #f23645;"></span>
             <span style="color: #f23645 !important; font-weight: 700;">Rare</span>
         </button>
-        <button class="mobile-nav-btn" id="mob-btn-tenor-sweep" onclick="switchActiveView('tenor-sweep')">
-            <span class="mobile-nav-icon" style="color: #c084fc;"></span>
-            <span style="color: #c084fc !important; font-weight: 700;">Tri-Surface</span>
-        </button>
-        <button class="mobile-nav-btn" id="mob-btn-income-strategy" onclick="switchActiveView('income-strategy')">
-            <span class="mobile-nav-icon" style="color: #34d399;"></span>
-            <span style="color: #34d399 !important; font-weight: 700;">Cadence</span>
-        </button>
+        
         <button class="mobile-nav-btn" id="mob-btn-price-action" onclick="switchActiveView('price-action')">
             <span class="mobile-nav-icon"></span>
             <span style="color: #ffffff !important;">Atlas</span>
@@ -3185,18 +2604,14 @@
         const VIEW_SECTIONS = {
             'cockpit': 'cockpit-section',
             'gold-ledger': 'gold-ledger-section',
-            'tenor-sweep': 'tenor-sweep-section',
             'price-action': 'price-action-section',
             'trades-log': 'trades-log-section',
-            'diagnostics': 'diagnostics-section',
-            'income-strategy': 'income-strategy-section'
+            'diagnostics': 'diagnostics-section'
         };
 
         const VIEW_TITLES = {
             'cockpit': 'Dynamic Edge',
             'gold-ledger': 'Rare Edge',
-            'tenor-sweep': 'Tri-Surface Edge',
-            'income-strategy': 'Cadence Edge',
             'price-action': 'Atlas Edge',
             'trades-log': 'Dossier Edge',
             'diagnostics': 'Diagnostic Edge'
@@ -3268,8 +2683,6 @@
                 const viewBadgeColors = {
                     'cockpit': { color: '#2962ff', border: 'rgba(41, 98, 255, 0.4)' },
                     'gold-ledger': { color: '#f23645', border: 'rgba(242, 54, 69, 0.4)' },
-                    'tenor-sweep': { color: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' },
-                    'income-strategy': { color: '#34d399', border: 'rgba(52, 211, 153, 0.4)' },
                     'price-action': { color: '#ffffff', border: '#363a45' },
                     'trades-log': { color: '#ffffff', border: '#363a45' },
                     'diagnostics': { color: '#ffffff', border: '#363a45' }
@@ -3334,9 +2747,7 @@
                 window.dispatchEvent(new Event('resize'));
             }, 60);
 
-            if (viewId === 'income-strategy') {
-                fetchWeeklyIncomeData();
-            }
+
         }
 
         function toggleToolsHub(show) {
@@ -3379,11 +2790,9 @@
             if (!isTyping || isModalOpen) {
                 if (e.key === '1') switchActiveView('cockpit');
                 else if (e.key === '2') switchActiveView('gold-ledger');
-                else if (e.key === '3') switchActiveView('tenor-sweep');
-                else if (e.key === '4') switchActiveView('income-strategy');
-                else if (e.key === '5') switchActiveView('price-action');
-                else if (e.key === '6') switchActiveView('trades-log');
-                else if (e.key === '7') switchActiveView('diagnostics');
+                else if (e.key === '3') switchActiveView('price-action');
+                else if (e.key === '4') switchActiveView('trades-log');
+                else if (e.key === '5') switchActiveView('diagnostics');
             }
         });
 
@@ -4119,11 +3528,10 @@
             const ef = data.earnings_filter || {};
             const excludedBadge = document.getElementById("earnings-excluded-badge");
             if (excludedBadge) {
-                if (ef.enabled && ef.excluded_trades_count >0) {
+                if (ef.enabled && ef.excluded_trades_count > 0) {
                     excludedBadge.style.display = "inline-block";
                     excludedBadge.textContent = `${ef.excluded_trades_count} Earnings Trades Blocked`;
                     excludedBadge.className = "tag-pill tag-yellow";
-                    excludedBadge.title = `Corporate earnings blackout: blocked trades on/day after earnings announcements.`;
                 } else if (!ef.enabled) {
                     excludedBadge.style.display = "inline-block";
                     excludedBadge.textContent = "Earnings Filter: OFF";
@@ -4143,24 +3551,23 @@
             if (winRateEl) winRateEl.textContent = `${data.win_rate_pct || 0}%`;
             if (avgRoiEl) {
                 const roi = data.avg_roi_pct || 0;
-                avgRoiEl.innerHTML = `<span style="color: ${roi >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</span>`;
+                avgRoiEl.innerHTML = `<span style="color: ${roi >= 0 ? '#34d399' : '#f23645'};">${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%</span>`;
             }
             if (bullBearEl) {
-                bullBearEl.textContent = `B:${data.bull_win_rate_pct || 0}% / S:${data.bear_win_rate_pct || 0}%`;
+                bullBearEl.textContent = `Long:${data.bull_win_rate_pct || 0}% / Short:${data.bear_win_rate_pct || 0}%`;
             }
             if (paramEl) {
                 const tUsed = (data.threshold_used || 2.4).toFixed(1);
-                const cUsed = data.contract_dte || 21;
                 const hUsed = data.holding_horizon_days || 5;
-                paramEl.textContent = `\u00B1${tUsed}\u03C3 \u2022 ${cUsed}d DTE @ ${hUsed}s`;
+                paramEl.textContent = `±${tUsed}σ @ ${hUsed}s Hold`;
             }
             if (pnlEl) {
                 const totDol = data.total_dollar || 0;
-                pnlEl.innerHTML = `<span style="color: ${totDol >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">${totDol >= 0 ? '+$' : '-$'}${Math.abs(totDol).toFixed(2)}</span>`;
+                pnlEl.innerHTML = `<span style="color: ${totDol >= 0 ? '#34d399' : '#f23645'}; font-weight:800;">${totDol >= 0 ? '+$' : '-$'}${Math.abs(totDol).toFixed(0)}</span>`;
             }
 
             if (!activeDynamicTrades.length) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 30px;">No trade episodes fired at &plusmn;${(data.threshold_used || 2.4).toFixed(1)}&sigma;. Try selecting a lower standard deviation threshold.
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 30px;">No trade episodes fired at ±${(data.threshold_used || 2.4).toFixed(1)}σ. Try selecting a lower standard deviation threshold.
                 </td></tr>`;
                 return;
             }
@@ -4170,47 +3577,43 @@
 
             reversedTrades.forEach(t => {
                 const tr = document.createElement("tr");
-                const isCall = t.is_bullish || (t.action && t.action.includes("CALL"));
-                const actionBadge = `<span class="tag-pill ${isCall ? 'tag-green' : 'tag-red'}">${isCall ? 'BUY CALL' : 'BUY PUT'}</span>`;
+                const isLong = t.is_bullish || (t.action && t.action.includes("LONG")) || (t.action && t.action.includes("CALL"));
+                const actionBadge = `<span class="tag-pill ${isLong ? 'tag-green' : 'tag-red'}" style="font-weight:800; font-size:0.68rem; padding: 2px 7px;">${isLong ? 'LONG ASSET' : 'SHORT ASSET'}</span>`;
 
-                const isWin = t.result === "WIN" || t.pnl_pct >0;
-                const pnlColor = isWin ? "#c084fc" : "#787b86";
-                const dollarColor = (t.dollar_pnl || 0) >= 0 ? "var(--accent-green)" : "var(--accent-red)";
+                const entryP = Number(t.entry_price || t.underlying_entry || 0);
+                const exitP = Number(t.exit_price || t.strike || 0);
+                const moveDollar = t.stock_move_dollar != null ? Number(t.stock_move_dollar) : (exitP - entryP);
+                const capMovePct = t.captured_move_pct != null ? Number(t.captured_move_pct) : Number(t.pnl_pct || 0);
+                const isWin = t.result === "WIN" || capMovePct > 0 || (t.dollar_pnl || 0) > 0;
+
+                const roiColor = capMovePct >= 0 ? "#34d399" : "#f23645";
+                const moveColor = moveDollar >= 0 ? "#34d399" : "#f23645";
+                const dollarColor = (t.dollar_pnl || 0) >= 0 ? "#34d399" : "#f23645";
 
                 let failureTag = "";
                 if (isWin) {
-                    failureTag = `<span class="tag-pill tag-green" style="font-size: 0.68rem;">PROFITABLE</span>`;
+                    failureTag = `<span class="tag-pill tag-green" style="font-size: 0.68rem; font-weight:800;">PROFITABLE</span>`;
                 } else {
-                    if (t.failure_cause === "REGIME_DRIFT") {
-                        failureTag = `<span class="tag-pill tag-red" style="font-size: 0.68rem;">REGIME DRIFT</span>`;
-                    } else if (t.failure_cause === "THETA_BLEED") {
-                        failureTag = `<span class="tag-pill tag-yellow" style="font-size: 0.68rem;">THETA BLEED</span>`;
-                    } else if (t.failure_cause === "WHIPSAW") {
-                        failureTag = `<span class="tag-pill tag-purple" style="font-size: 0.68rem;">WHIPSAW</span>`;
-                    } else {
-                        failureTag = `<span class="tag-pill tag-red" style="font-size: 0.68rem;">LOSS</span>`;
-                    }
+                    const cause = t.failure_cause || t.loss_cause || "REGIME_DRIFT";
+                    failureTag = `<span class="tag-pill tag-red" style="font-size: 0.68rem; font-weight:700;">${cause.replace('_', ' ')}</span>`;
                 }
 
-                const tenorVal = t.contract_dte || data.contract_dte || 21;
                 const holdVal = t.holding_sessions || t.holding_dte || data.holding_horizon_days || 5;
 
                 tr.innerHTML = `
                     <td style="font-family: var(--font-mono); font-size: 0.76rem; color: #fff;">${t.date}</td>
                     <td>${actionBadge}</td>
-                    <td style="font-family: var(--font-mono); font-weight: 700; color: ${isCall ? 'var(--accent-green)' : 'var(--accent-red)'};">${t.signal_z >= 0 ? '+' : ''}${t.signal_z.toFixed(2)}\u03C3</td>
-                    <td style="font-family: var(--font-mono); color: #cbd5e1;">$${Number(t.underlying_entry).toFixed(2)}</td>
-                    <td style="font-family: var(--font-mono); font-weight: 600; color: #ffffff;">$${Number(t.strike).toFixed(2)}</td>
-                    <td style="font-family: var(--font-headings); font-weight: 600; color: #d1d4dc; font-size: 0.74rem;">${tenorVal}d DTE</td>
-                    <td style="font-family: var(--font-mono); color: #94a3b8;">$${Number(t.entry_option_price).toFixed(2)}</td>
-                    <td style="font-family: var(--font-mono); color: #94a3b8;">$${Number(t.exit_option_price).toFixed(2)}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: ${isLong ? '#34d399' : '#f23645'};">${t.signal_z >= 0 ? '+' : ''}${t.signal_z.toFixed(2)}&sigma;</td>
+                    <td style="font-family: var(--font-mono); color: #cbd5e1;">$${entryP.toFixed(2)}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: #ffffff;">$${exitP.toFixed(2)}</td>
                     <td style="font-family: var(--font-headings); font-size: 0.74rem; color: #d1d4dc; font-weight: 600;">${holdVal}s</td>
-                    <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor};">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct.toFixed(1)}%</td>
-                    <td style="font-family: var(--font-mono); font-weight: 700; color: ${dollarColor};">${(t.dollar_pnl || 0) >= 0 ? '+$' : '-$'}${Math.abs(t.dollar_pnl || 0).toFixed(2)}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: ${moveColor};">${moveDollar >= 0 ? '+' : ''}$${moveDollar.toFixed(2)}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 800; color: ${roiColor};">${capMovePct >= 0 ? '+' : ''}${capMovePct.toFixed(2)}%</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: ${dollarColor};">${(t.dollar_pnl || 0) >= 0 ? '+$' : '-$'}${Math.abs(t.dollar_pnl || 0).toFixed(0)}</td>
                     <td style="font-family: var(--font-mono); font-size: 0.72rem;">
-                        <span style="color: var(--accent-green);">+${(t.mfe_pct || 0).toFixed(1)}%</span> / <span style="color: var(--accent-red);">${(t.mae_pct || 0).toFixed(1)}%</span>
+                        <span style="color: #34d399;">+${(t.mfe_pct || 0).toFixed(1)}%</span> / <span style="color: #f23645;">${(t.mae_pct || 0).toFixed(1)}%</span>
                     </td>
-                    <td>${failureTag}</td>
+                    <td style="text-align: right;">${failureTag}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -5405,23 +4808,43 @@
                 const z = r.current_z || 0.0;
                 const thresh = r.threshold || 2.0;
 
-                const pfColor = pf >= 2.0 ? '#ffffff' : (pf >= 1.3 ? '#f23645' : '#787b86');
-                const roiColor = roi >= 0 ? '#ffffff' : '#f23645';
-                const zColor = Math.abs(z) >= thresh ? '#f23645' : '#787b86';
+                const isTriggered = Math.abs(z) >= thresh;
+                const isBull = z <= -thresh;
+                const isBear = z >= thresh;
+
+                // Sharp, high-contrast, mathematically correct colors
+                let zColor = '#ffffff';
+                let signalBadge = `<span class="tag-pill" style="font-size:0.66rem; font-weight:600; background:rgba(255,255,255,0.06); color:#94a3b8; border:1px solid #36373d;">MONITORING</span>`;
+                let proximityHtml = `<span style="color:#cbd5e1; font-family:var(--font-mono);">${(thresh - Math.abs(z)).toFixed(2)}&sigma; away</span>`;
+
+                if (isBull) {
+                    zColor = '#34d399';
+                    signalBadge = `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.22); color:#34d399; border:1px solid #089981; box-shadow:0 0 8px rgba(52,211,153,0.3);">LONG ASSET (BUY)</span>`;
+                    proximityHtml = `<span style="color:#34d399; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(Math.abs(z) - thresh).toFixed(2)}&sigma;)</span>`;
+                } else if (isBear) {
+                    zColor = '#f23645';
+                    signalBadge = `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:800; background:rgba(242,54,69,0.22); color:#f23645; border:1px solid #f23645; box-shadow:0 0 8px rgba(242,54,69,0.3);">SHORT ASSET (SELL)</span>`;
+                    proximityHtml = `<span style="color:#f23645; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(Math.abs(z) - thresh).toFixed(2)}&sigma;)</span>`;
+                }
+
+                const pfColor = pf >= 2.0 ? '#ffffff' : (pf >= 1.3 ? '#fcd34d' : '#94a3b8');
+                const roiColor = roi >= 0 ? '#34d399' : '#f23645';
 
                 let valStyle = "background: rgba(255,255,255,0.06); color: #ffffff; border: 1px solid rgba(255,255,255,0.15);";
                 if (r.validation_status === "MILD_DEGRADATION") valStyle = "background: rgba(255,255,255,0.06); color: #d1d4dc; border: 1px solid #36373d;";
                 else if (r.validation_status === "OVERFITTED_WARNING") valStyle = "background: rgba(242,54,69,0.15); color: #f23645; border: 1px solid #f23645;";
 
-                const rowBg = r.is_active 
-                    ? "background: rgba(242, 54, 69, 0.10); border-left: 3px solid #f23645;" 
-                    : (isChampTop ? "background: rgba(242, 54, 69, 0.08); border-left: 3px solid #f23645;" : "");
+                const rowBg = isTriggered 
+                    ? (isBull ? "background: rgba(8, 153, 129, 0.08); border-left: 3px solid #34d399;" : "background: rgba(242, 54, 69, 0.08); border-left: 3px solid #f23645;")
+                    : (isChampTop ? "background: rgba(255, 255, 255, 0.03); border-left: 3px solid #38bdf8;" : "");
+
+                const tradesYr = r.trades_per_year || Math.round((r.trades_count || 32) / 2.7);
 
                 return `
-                    <tr style="cursor: pointer; ${rowBg}" onclick="onGoldLedgerRowClick('${r.ticker}')" title="Click to inspect complete 5-year trade firing history & cadence for ${r.ticker}">
+                    <tr style="cursor: pointer; ${rowBg}" onclick="onGoldLedgerRowClick('${r.ticker}')" title="Click to inspect complete trade firing history & cadence for ${r.ticker}">
                         <td>
                             ${isChampTop 
-                                ? '<span class="tag-pill" style="background: rgba(242,54,69,0.2); color:#f23645; border:1px solid #f23645; font-size:0.62rem; font-weight:800; padding:1px 5px;">#1 BEST</span>' 
+                                ? '<span class="tag-pill" style="background: rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8; font-size:0.62rem; font-weight:800; padding:1px 5px;">#1 BEST</span>' 
                                 : `<span style="font-family:var(--font-mono); font-weight:700; color:var(--text-dim);">#${idx + 1}</span>`}
                         </td>
                         <td>
@@ -5433,19 +4856,17 @@
                         </td>
                         <td>
                             <div style="font-family: var(--font-headings); font-weight: 800; color: #ffffff; font-size: 0.88rem; letter-spacing: -0.01em;">
-                                ${r.threshold_label || `±${thresh.toFixed(1)}σ`} • ${r.tenor_label || `${r.contract_dte}d`} @ ${r.holding_label || `${r.holding_days}s`}
+                                ±${thresh.toFixed(1)}&sigma; &bull; ${r.holding_days || 5}s Hold
                             </div>
                         </td>
                         <td>
-                            <span class="tag-pill tag-waiting-barrier" style="font-family: var(--font-headings) !important; font-weight: 700; font-size: 0.66rem; padding: 2px 7px; letter-spacing: -0.01em; ${r.is_active ? 'background: rgba(242,54,69,0.2); color: #f23645; border: 1px solid #f23645;' : 'background: rgba(255,255,255,0.05); color: #787b86; border: 1px solid #36373d;'}">
-                                ${r.signal_action || 'WAITING FOR BARRIER'}
-                            </span>
+                            ${signalBadge}
                         </td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${zColor}; font-size: 0.88rem;">
+                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${zColor}; font-size: 0.92rem;">
                             ${z >= 0 ? '+' : ''}${z.toFixed(2)}&sigma;
                         </td>
-                        <td style="font-family: var(--font-mono); font-size: 0.78rem; color: #cbd5e1;">
-                            ${r.dist_to_barrier !== undefined ? `${r.dist_to_barrier.toFixed(2)}&sigma;` : '--'}
+                        <td>
+                            ${proximityHtml}
                         </td>
                         <td style="font-family: var(--font-mono); font-weight: 800; color: ${pfColor}; font-size: 0.90rem;">
                             ${pf.toFixed(2)}x
@@ -5456,8 +4877,8 @@
                         <td style="font-family: var(--font-mono); font-weight: 700; color: ${roiColor}; font-size: 0.88rem;">
                             ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%
                         </td>
-                        <td style="font-family: var(--font-mono); color: #787b86; font-size: 0.78rem;">
-                            -${(r.est_theta_decay_pct || 0).toFixed(1)}%
+                        <td style="font-family: var(--font-mono); color: #cbd5e1; font-size: 0.78rem;">
+                            ~${tradesYr} / yr
                         </td>
                         <td>
                             <span class="tag-pill" style="font-size: 0.65rem; padding: 2px 6px; ${valStyle}">
@@ -5465,8 +4886,8 @@
                             </span>
                         </td>
                         <td style="text-align: right; white-space: nowrap;">
-                            <button class="action-pill" style="font-size: 0.68rem; padding: 3px 8px; color: #f23645; border-color: rgba(242,54,69,0.5);"
-                                onclick="event.stopPropagation(); loadChampionToCockpit('${r.ticker}', '${r.market}', '${r.sector}', ${thresh}, ${r.contract_dte}, ${r.holding_days})">Load Cockpit
+                            <button class="action-pill" style="font-size: 0.68rem; padding: 3px 8px; color: #38bdf8; border-color: rgba(56,189,248,0.5);"
+                                onclick="event.stopPropagation(); loadChampionToCockpit('${r.ticker}', '${r.market}', '${r.sector}', ${thresh}, 21, ${r.holding_days || 5})">Load Cockpit
                             </button>
                         </td>
                     </tr>
@@ -5565,23 +4986,29 @@
             if (!tbody) return;
 
             if (!trades || trades.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="14" style="text-align:center; color:var(--text-dim); padding:25px;">No trade episodes found for selected asset.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color:var(--text-dim); padding:25px;">No trade episodes found for selected asset.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = trades.map(tr => {
-                const isBull = tr.action === "BUY ATM CALL";
-                const actBadge = isBull
-                    ? `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.18); color:#34d399; border:1px solid #089981;">CALL</span>`
-                    : `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:800; background:rgba(242,54,69,0.15); color:#f23645; border:1px solid #f23645;">PUT</span>`;
+                const isLong = (tr.action && tr.action.includes("LONG")) || tr.action === "BUY ATM CALL";
+                const actBadge = isLong
+                    ? `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.20); color:#34d399; border:1px solid #089981;">LONG</span>`
+                    : `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:800; background:rgba(242,54,69,0.18); color:#f23645; border:1px solid #f23645;">SHORT</span>`;
 
-                const pnlSign = tr.pnl_pct > 0 ? "+" : "";
-                const isWin = tr.is_win || tr.pnl_pct > 0 || tr.dollar_pnl > 0;
-                const roiColor = tr.pnl_pct > 0 ? "#34d399" : "#f23645";
-                const dollarColor = tr.dollar_pnl >= 0 ? "#34d399" : "#f23645";
+                const entryP = Number(tr.entry_price || tr.underlying_entry || 0);
+                const exitP = Number(tr.exit_price || tr.strike || 0);
+                const moveDollar = tr.stock_move_dollar != null ? Number(tr.stock_move_dollar) : (exitP - entryP);
+                const capMovePct = tr.captured_move_pct != null ? Number(tr.captured_move_pct) : Number(tr.pnl_pct || 0);
+                const isWin = tr.is_win || capMovePct > 0 || (tr.dollar_pnl || 0) > 0;
+
+                const roiColor = capMovePct > 0 ? "#34d399" : "#f23645";
+                const moveColor = moveDollar >= 0 ? "#34d399" : "#f23645";
+                const dollarColor = (tr.dollar_pnl || 0) >= 0 ? "#34d399" : "#f23645";
+
                 const outcomeBadge = isWin
                     ? `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.18); color:#34d399; border:1px solid #089981;">WIN</span>`
-                    : `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:700;">${(tr.loss_cause && tr.loss_cause !== 'UNKNOWN') ? tr.loss_cause : (tr.mae_pct <= -4.0 ? 'REGIME_DRIFT' : 'THETA_BLEED')}</span>`;
+                    : `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:700;">${(tr.loss_cause && tr.loss_cause !== 'UNKNOWN') ? tr.loss_cause : 'REGIME_DRIFT'}</span>`;
 
                 const gapStr = tr.gap_since_prior_days != null
                     ? `${tr.gap_since_prior_days}d gap`
@@ -5594,15 +5021,13 @@
                         <td style="font-family:var(--font-mono); font-size:0.75rem; color:#fff;">${tr.trade_date}</td>
                         <td><strong style="color:#ffffff; font-family:var(--font-mono); font-size:0.88rem;">${tr.ticker}</strong></td>
                         <td>${actBadge}</td>
-                        <td style="font-family:var(--font-mono); font-weight:700; color:${isBull ? '#34d399' : '#f23645'};">${zFormatted}&sigma;</td>
-                        <td style="font-family:var(--font-mono);">$${Number(tr.underlying_entry).toFixed(2)}</td>
-                        <td style="font-family:var(--font-mono); color:#ffffff;">$${Number(tr.strike).toFixed(1)}</td>
-                        <td style="font-family:var(--font-mono);">${tr.contract_dte}d DTE</td>
-                        <td style="font-family:var(--font-mono);">${tr.holding_sessions}s</td>
-                        <td style="font-family:var(--font-mono);">$${Number(tr.entry_option_price).toFixed(2)}</td>
-                        <td style="font-family:var(--font-mono);">$${Number(tr.exit_option_price).toFixed(2)}</td>
-                        <td style="font-family:var(--font-mono); font-weight:700; color:${roiColor};">${pnlSign}${Number(tr.pnl_pct).toFixed(1)}%</td>
-                        <td style="font-family:var(--font-mono); font-weight:700; color:${dollarColor};">${tr.dollar_pnl >= 0 ? '+' : ''}$${Number(tr.dollar_pnl).toFixed(0)}</td>
+                        <td style="font-family:var(--font-mono); font-weight:700; color:${isLong ? '#34d399' : '#f23645'};">${zFormatted}&sigma;</td>
+                        <td style="font-family:var(--font-mono); color:#cbd5e1;">$${entryP.toFixed(2)}</td>
+                        <td style="font-family:var(--font-mono); color:#ffffff;">$${exitP.toFixed(2)}</td>
+                        <td style="font-family:var(--font-mono);">${tr.holding_sessions || 5}s</td>
+                        <td style="font-family:var(--font-mono); font-weight:600; color:${moveColor};">${moveDollar >= 0 ? '+' : ''}$${moveDollar.toFixed(2)}</td>
+                        <td style="font-family:var(--font-mono); font-weight:800; color:${roiColor};">${capMovePct >= 0 ? '+' : ''}${capMovePct.toFixed(2)}%</td>
+                        <td style="font-family:var(--font-mono); font-weight:700; color:${dollarColor};">${(tr.dollar_pnl || 0) >= 0 ? '+' : ''}$${Number(tr.dollar_pnl || 0).toFixed(0)}</td>
                         <td style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted);">${gapStr}</td>
                         <td style="text-align:right;">${outcomeBadge}</td>
                     </tr>
@@ -5640,1109 +5065,8 @@
         // =====================================================================
         // SECTION 1.86: WEEKLY SESSION INCOME STRATEGY (CASHFLOW FLOW ENGINE)
         // =====================================================================
-                // =====================================================================
-        // SECTION 1.86: CADENCE EDGE SCANNER & PROXIMITY RADAR
-        // =====================================================================
-        async function runCadenceEdgeScan() {
-            const btn = document.getElementById("btn-cadence-scan");
-            const banner = document.getElementById("cadence-execution-banner");
-            const bannerTitle = document.getElementById("cadence-banner-title");
-            const bannerIcon = document.getElementById("cadence-banner-icon");
-            const bannerBadge = document.getElementById("cadence-banner-badge");
-            const bannerTime = document.getElementById("cadence-scan-time");
-            const bannerContent = document.getElementById("cadence-banner-content");
-            const origText = btn ? btn.innerHTML : "";
 
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<span>Searching Cadence Edge...</span>`;
-            }
-            showNotificationToast("Scanning Cadence Edge setups for 3:45 PM MOC triggers & σ barrier proximity...", "info");
 
-            try {
-                const res = await fetch("/api/ledger/cadence-scan");
-                const data = await res.json();
-
-                if (data.status !== "SUCCESS") {
-                    throw new Error(data.error || "Cadence Edge scan failed");
-                }
-
-                if (banner) banner.style.display = "block";
-                if (bannerTime) bannerTime.textContent = `Scanned at ${data.timestamp || new Date().toLocaleTimeString()}`;
-
-                const firing = data.signals_firing || [];
-                const closest = data.closest_candidates || [];
-
-                if (firing.length > 0) {
-                    if (bannerIcon) bannerIcon.textContent = "";
-                    if (bannerTitle) bannerTitle.innerHTML = `<span style="color:#34d399;">ACTIVE 3:45–4:00 PM CADENCE SIGNALS DETECTED (${firing.length} ASSETS)</span>`;
-                    if (bannerBadge) {
-                        bannerBadge.className = "tag-pill tag-green";
-                        bannerBadge.style.cssText = "background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4);";
-                        bannerBadge.textContent = "EXECUTE MOC 3:45–3:58 PM EST";
-                    }
-
-                    let firingCardsHtml = `<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">`;
-                    firing.forEach(f => {
-                        const o = f.order_spec || {};
-                        const dirColor = o.action === "BUY ATM CALL" ? "#34d399" : "#f23645";
-                        const zFormatted = (f.current_z >= 0 ? '+' : '') + Number(f.current_z).toFixed(2);
-                        firingCardsHtml += `
-                            <div style="background:#16171a; border:1px solid ${dirColor}; border-radius:4px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                                <div>
-                                    <div style="font-weight:800; font-size:0.88rem; color:#fff;">
-                                        <span style="color:${dirColor}; font-weight:900;">${o.action}</span> &bull; ${f.ticker} (Strike $${o.target_strike})
-                                    </div>
-                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Cadence Tenor: <strong style="color:#34d399;">${o.contract_tenor_dte}d DTE</strong> &bull; Exit Horizon: <strong style="color:#d1d4dc;">${o.holding_horizon_days} Sessions</strong> &bull; Current Z: <strong style="color:#fff;">${zFormatted}&sigma;</strong> vs Income Barrier <strong style="color:#fff;">&plusmn;${Number(f.threshold).toFixed(1)}&sigma;</strong>
-                                    </div>
-                                    <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Execution Window: <strong>3:45 PM &ndash; 3:58 PM EST (Market-On-Close)</strong> &bull; Annual Flow: ~${f.trades_per_week || 1.0}/wk &bull; PF ${f.profit_factor}x, WR ${f.win_rate_pct}%, ROI +${f.avg_roi_pct}%
-                                    </div>
-                                </div>
-                                <button class="action-pill btn-primary" onclick="loadIncomeSetupIntoCockpit('${f.ticker}', '${f.market}', '${f.sector}', ${f.threshold}, ${f.contract_dte}, ${f.holding_days})" style="font-size:0.75rem; padding:5px 12px; background:#089981; border-color:#089981;">Load Cockpit
-                                </button>
-                            </div>
-                        `;
-                    });
-                    firingCardsHtml += `</div>`;
-                    if (bannerContent) bannerContent.innerHTML = firingCardsHtml;
-
-                    showNotificationToast(`⚠ ${firing.length} Cadence Edge Pre-Close Signals Firing!`, "warning");
-                } else {
-                    const totalScanned = data.total_scanned || (data.income_setups ? data.income_setups.length : 12);
-                    if (bannerIcon) bannerIcon.textContent = "";
-                    if (bannerTitle) bannerTitle.innerHTML = `<span style="color:#ffffff;">NO 3:45 PM CADENCE SIGNALS FIRING &bull; CANDIDATES RANKED BY &sigma; BARRIER PROXIMITY</span>`;
-                    if (bannerBadge) {
-                        bannerBadge.className = "tag-pill";
-                        bannerBadge.style.cssText = "background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4);";
-                        bannerBadge.textContent = "PROXIMITY RADAR ACTIVE";
-                    }
-
-                    let closestHtml = `<div style="font-size:0.80rem; color:var(--text-secondary);">`;
-                    closestHtml += `All ${totalScanned} Cadence Edge setups are currently within trigger boundaries. No Market-On-Close (MOC) entries required right now.<br>`;
-                    closestHtml += `<div style="margin-top:6px; font-size:0.76rem; color:var(--text-dim);">Closest setups approaching income barrier trigger (ranked by standard deviation &sigma; proximity):</div>`;
-                    closestHtml += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
-                    closest.forEach(c => {
-                        const zFormatted = (c.current_z >= 0 ? '+' : '') + Number(c.current_z).toFixed(2);
-                        closestHtml += `
-                            <div style="background:#131518; border:1px solid rgba(52,211,153,0.3); border-radius:4px; padding:6px 12px; font-size:0.75rem; display:flex; align-items:center; gap:8px;">
-                                <div>
-                                    <strong style="color:#ffffff;">${c.ticker}</strong> <span style="color:var(--text-muted); font-size:0.70rem;">(${c.theme || ''})</span>: 
-                                    Z = <strong style="color:#fff;">${zFormatted}&sigma;</strong> &bull; Proximity: <strong style="color:#34d399;">${Number(c.dist_to_barrier).toFixed(2)}&sigma; away</strong> from &plusmn;${Number(c.threshold).toFixed(1)}&sigma;
-                                </div>
-                                <button class="action-pill" style="font-size: 0.65rem; padding: 2px 6px; border-color: rgba(52, 211, 153, 0.4); color: #34d399;" onclick="loadIncomeSetupIntoCockpit('${c.ticker}', '${c.market}', '${c.sector}', ${c.threshold}, ${c.contract_dte}, ${c.holding_days})">Load</button>
-                            </div>
-                        `;
-                    });
-                    closestHtml += `</div></div>`;
-                    if (bannerContent) bannerContent.innerHTML = closestHtml;
-
-                    showNotificationToast(`Cadence Edge scan complete: Closest candidates ranked by σ barrier proximity.`, "success");
-                }
-
-                if (data.income_setups) {
-                    currentIncomeSetups = data.income_setups;
-                    renderIncomeTable(currentIncomeSetups);
-                    const activeEl = document.getElementById("income-active-triggers-stat");
-                    if (activeEl) activeEl.textContent = `${firing.length} Active`;
-                }
-
-            } catch (err) {
-                showNotificationToast(`Cadence Edge scan error: ${err.message}`, "error");
-                if (banner) banner.style.display = "block";
-                if (bannerContent) bannerContent.innerHTML = `<span style="color:var(--accent-red);">Scan error: ${err.message}</span>`;
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText || `<span>Search for the Cadence Edge</span>`;
-                }
-            }
-        }
-
-let currentIncomeSetups = [];
-        let selectedIncomeBasket = new Set(['MSFT', 'CRWD', 'SBUX', 'MCD']);
-        let currentIncomeSearchFilter = '';
-
-        async function fetchWeeklyIncomeData() {
-            const tbody = document.getElementById("income-strategy-tbody");
-            try {
-                const res = await fetch("/api/ledger/income");
-                const data = await res.json();
-                if (data.status !== "SUCCESS") {
-                    if (tbody) tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; color:var(--accent-red); padding:20px;">Failed to load Cadence Edge Setups: ${data.error || 'Unknown error'}</td></tr>`;
-                    return;
-                }
-
-                currentIncomeSetups = data.income_setups || [];
-                const s = data.summary || {};
-
-                // Update Overview KPIs
-                const activeEl = document.getElementById("income-active-triggers-stat");
-                const flowEl = document.getElementById("income-weekly-velocity-stat");
-                const wrEl = document.getElementById("income-win-rate-stat");
-                const pfEl = document.getElementById("income-profit-factor-stat");
-                const badgeEl = document.getElementById("income-table-count-badge");
-
-                if (activeEl) activeEl.textContent = `${s.active_signals_count || 0} Active`;
-                if (flowEl) flowEl.textContent = `~${(s.avg_trades_per_week * 4 || 3.5).toFixed(1)} / wk`;
-                if (wrEl) wrEl.textContent = `${(s.avg_win_rate_pct || 56.4).toFixed(1)}%`;
-                if (pfEl) pfEl.textContent = `${(s.avg_profit_factor || 1.85).toFixed(2)}x`;
-                if (badgeEl) badgeEl.textContent = `${currentIncomeSetups.length} Setups Calibrated`;
-
-                renderIncomeBasketToggles();
-                renderIncomeTable(currentIncomeSetups);
-                updateBasketSimulation();
-
-            } catch (err) {
-                console.error("Error fetching income setups:", err);
-                if (tbody) tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; color:var(--accent-red); padding:20px;">Connection error loading income setups.</td></tr>`;
-            }
-        }
-
-        function renderIncomeBasketToggles() {
-            const container = document.getElementById("income-basket-toggles");
-            if (!container) return;
-
-            const uniqueTickers = [];
-            const seen = new Set();
-            currentIncomeSetups.forEach(s => {
-                if (!seen.has(s.ticker)) {
-                    seen.add(s.ticker);
-                    uniqueTickers.push(s);
-                }
-            });
-
-            container.innerHTML = uniqueTickers.map(item => {
-                const isSelected = selectedIncomeBasket.has(item.ticker);
-                const activeBorder = isSelected ? "border-color: #34d399; background: rgba(52, 211, 153, 0.15); color: #fff;" : "border-color: rgba(255,255,255,0.12); background: #0E1020; color: #a1a1aa;";
-                const checkIcon = isSelected ? `<span style="color:#34d399; font-weight:800;">✓</span>` : `<span style="color:var(--text-dim);">○</span>`;
-                return `
-                    <button class="preset-pill" style="${activeBorder} padding: 4px 10px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="toggleIncomeBasketTicker('${item.ticker}')">
-                        ${checkIcon}
-                        <strong>${item.ticker}</strong>
-                        <span style="font-size: 0.68rem; opacity: 0.85;">(~${item.trades_per_week || 1.0}/wk)</span>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        function toggleIncomeBasketTicker(ticker) {
-            if (selectedIncomeBasket.has(ticker)) {
-                if (selectedIncomeBasket.size >1) {
-                    selectedIncomeBasket.delete(ticker);
-                } else {
-                    showNotificationToast("Select at least 1 asset in your income basket", "warning");
-                    return;
-                }
-            } else {
-                selectedIncomeBasket.add(ticker);
-            }
-            renderIncomeBasketToggles();
-            updateBasketSimulation();
-        }
-
-        function selectAllIncomeBasket(select) {
-            if (select) {
-                currentIncomeSetups.forEach(s =>selectedIncomeBasket.add(s.ticker));
-            } else {
-                selectedIncomeBasket.clear();
-                selectedIncomeBasket.add('MSFT');
-            }
-            renderIncomeBasketToggles();
-            updateBasketSimulation();
-        }
-
-        function selectCoreIncomeBasket() {
-            selectedIncomeBasket = new Set(['MSFT', 'CRWD', 'SBUX', 'MCD']);
-            renderIncomeBasketToggles();
-            updateBasketSimulation();
-            showNotificationToast("Loaded Core 4 Flow Basket (MSFT + CRWD + SBUX + MCD)", "success");
-        }
-
-        function updateBasketSimulation() {
-            const countEl = document.getElementById("sim-selected-count");
-            const flowEl = document.getElementById("sim-weekly-flow");
-            const wrEl = document.getElementById("sim-win-rate");
-            const pfEl = document.getElementById("sim-profit-factor");
-            const holdEl = document.getElementById("sim-avg-hold");
-
-            const activeSetups = [];
-            const seen = new Set();
-            currentIncomeSetups.forEach(s => {
-                if (selectedIncomeBasket.has(s.ticker) && !seen.has(s.ticker)) {
-                    seen.add(s.ticker);
-                    activeSetups.push(s);
-                }
-            });
-
-            if (countEl) countEl.textContent = `${activeSetups.length} Tickers`;
-
-            if (activeSetups.length === 0) {
-                if (flowEl) flowEl.textContent = "0.0 / week";
-                if (wrEl) wrEl.textContent = "--%";
-                if (pfEl) pfEl.textContent = "--x";
-                if (holdEl) holdEl.textContent = "--";
-                return;
-            }
-
-            const totalTradesYr = activeSetups.reduce((acc, s) =>acc + (s.trades_count || 0), 0);
-            const weeklyTrades = totalTradesYr / 52.0;
-
-            const weightedWr = activeSetups.reduce((acc, s) =>acc + (s.win_rate_pct * (s.trades_count || 1)), 0) / Math.max(1, totalTradesYr);
-            const weightedPf = activeSetups.reduce((acc, s) =>acc + (s.profit_factor * (s.trades_count || 1)), 0) / Math.max(1, totalTradesYr);
-            const weightedHold = activeSetups.reduce((acc, s) =>acc + (s.holding_days * (s.trades_count || 1)), 0) / Math.max(1, totalTradesYr);
-
-            if (flowEl) flowEl.textContent = `~${weeklyTrades.toFixed(1)} / week`;
-            if (wrEl) wrEl.textContent = `${weightedWr.toFixed(1)}%`;
-            if (pfEl) pfEl.textContent = `${weightedPf.toFixed(2)}x`;
-            if (holdEl) holdEl.textContent = `${weightedHold.toFixed(1)} Sessions`;
-        }
-
-        function renderIncomeTable(setups) {
-            const tbody = document.getElementById("income-strategy-tbody");
-            if (!tbody) return;
-
-            if (!setups || setups.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:24px; color:var(--text-muted);">No income setups found matching criteria.</td></tr>`;
-                return;
-            }
-
-            const filtered = setups.filter(s => {
-                if (!currentIncomeSearchFilter) return true;
-                const q = currentIncomeSearchFilter.toLowerCase();
-                return s.ticker.toLowerCase().includes(q) ||
-                       (s.theme && s.theme.toLowerCase().includes(q)) ||
-                       (s.market && s.market.toLowerCase().includes(q)) ||
-                       (s.sector && s.sector.toLowerCase().includes(q)) ||
-                       (s.signal_action && s.signal_action.toLowerCase().includes(q));
-            });
-
-            tbody.innerHTML = filtered.map((item, idx) => {
-                const zVal = item.current_z || 0.0;
-                const zFormatted = (zVal >= 0 ? '+' : '') + Number(zVal).toFixed(2);
-                const zColor = Math.abs(zVal) >= item.threshold ? (zVal <= -item.threshold ? '#34d399' : '#f87171') : '#ffffff';
-                const actionBadgeClass = item.is_active ? 'tag-green' : '';
-                const badgeInlineStyle = item.is_active ? '' : 'background: rgba(255,255,255,0.06); color: #787b86; border: 1px solid #36373d;';
-
-                return `
-                    <tr>
-                        <td style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">#${idx + 1}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <strong style="color: #ffffff; font-family: var(--font-mono); font-size: 0.92rem;">${item.ticker}</strong>
-                                <span style="font-size: 0.72rem; color: var(--text-muted);">${item.theme || ''}</span>
-                            </div>
-                        </td>
-                        <td style="font-family: var(--font-mono); font-size: 0.78rem; color: #a1a1aa;">${item.market} / ${item.sector}</td>
-                        <td style="font-family: var(--font-headings); font-weight: 700; color: #ffffff;">&plusmn;${Number(item.threshold).toFixed(1)}&sigma;</td>
-                        <td style="font-family: var(--font-headings); font-weight: 700; color: #ffffff;">${item.contract_dte}d DTE</td>
-                        <td style="font-family: var(--font-headings); font-weight: 600; color: #d1d4dc;">${item.holding_days} Sess</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: #ffffff;">~${item.trades_per_week || (item.trades_count / 52).toFixed(1)}/wk <span style="font-size:0.68rem; color:var(--text-dim);">(${item.trades_count}/yr)</span></td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: #ffffff;">${Number(item.win_rate_pct).toFixed(1)}%</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: #34d399;">+${Number(item.avg_roi_pct).toFixed(1)}%</td>
-                        <td style="font-family: var(--font-mono); font-weight: 800; color: #ffffff;">${Number(item.profit_factor).toFixed(2)}x</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${Math.abs(zVal) >= item.threshold ? '#34d399' : '#787b86'}; font-size: 0.86rem;">${zFormatted}&sigma;</td>
-                        <td><span class="tag-pill ${actionBadgeClass} tag-waiting-barrier" style="font-family: var(--font-headings) !important; font-weight: 700; font-size: 0.68rem; letter-spacing: -0.01em; ${badgeInlineStyle}">${item.action_badge || item.signal_action || 'WAITING FOR BARRIER'}</span></td>
-                        <td>
-                            <button class="action-pill" style="font-size: 0.68rem; padding: 2px 8px; border-color: rgba(52, 211, 153, 0.4); color: #34d399;" onclick="loadIncomeSetupIntoCockpit('${item.ticker}', '${item.market}', '${item.sector}', ${item.threshold}, ${item.contract_dte}, ${item.holding_days})">Load 
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function filterIncomeTable(q) {
-            currentIncomeSearchFilter = q;
-            renderIncomeTable(currentIncomeSetups);
-        }
-
-        function loadIncomeSetupIntoCockpit(ticker, market, sector, threshold, dte, hold) {
-            document.getElementById("target-asset").value = ticker;
-            document.getElementById("market-index").value = market;
-            document.getElementById("sector-etf").value = sector;
-            updateTrifectaDisplay();
-
-            window.currentStockOptimalThreshold = threshold;
-            window.currentStockOptimalHorizon = hold;
-
-            document.getElementById("snapback-threshold").value = threshold.toFixed(1);
-            document.getElementById("threshold-slider").value = Math.min(Math.max(threshold, 1.0), 3.0);
-            const lbl = document.getElementById("threshold-display-label");
-            if (lbl) {
-                lbl.innerHTML = `&plusmn;${threshold.toFixed(1)}&sigma; (Cadence Edge)`;
-                lbl.style.color = "#34d399";
-            }
-
-            const sel = document.getElementById("all-measured-stocks-select");
-            if (sel) sel.value = ticker;
-
-            switchActiveView('cockpit');
-            runAnomalyAnalysis(true);
-            showNotificationToast(`Loaded ${ticker} Cadence Edge Strategy (&plusmn;${threshold.toFixed(1)}&sigma; &bull; ${dte}d DTE @ ${hold} Sessions) into Dynamic Edge`, "success");
-        }
-
-        // =====================================================================
-        // SECTION 1.9: 2D PARAMETER SURFACE HEATMAP GRID (PROFIT FACTOR VIEW)
-        // =====================================================================
-        let currentHeatmapMetric = 'profit_factor';
-
-        function setHeatmapMetric(metric) {
-            currentHeatmapMetric = metric;
-            const btnPf = document.getElementById("btn-hm-pf");
-            const btnWr = document.getElementById("btn-hm-wr");
-            const btnRoi = document.getElementById("btn-hm-roi");
-            const btnPnl = document.getElementById("btn-hm-pnl");
-            if (btnPf) btnPf.classList.toggle("active", metric === "profit_factor");
-            if (btnWr) btnWr.classList.toggle("active", metric === "win_rate");
-            if (btnRoi) btnRoi.classList.toggle("active", metric === "roi");
-            if (btnPnl) btnPnl.classList.toggle("active", metric === "pnl");
-
-            if (window.last3DOptimumResult && window.last3DOptimumResult.surface_grid) {
-                render3DHeatmapGrid(window.last3DOptimumResult.surface_grid, metric);
-            }
-        }
-
-        function render3DHeatmapGrid(surfaceGrid, metric = 'profit_factor') {
-            if (!surfaceGrid) return;
-            const thead = document.getElementById("surface-grid-header");
-            const tbody = document.getElementById("surface-grid-body");
-            if (!thead || !tbody) return;
-
-            const tenors = surfaceGrid.tenors || [];
-            const rows = surfaceGrid.rows || [];
-
-            thead.innerHTML = `
-                <tr>
-                    <th style="width: 110px; background: #16171a;">Barrier (&sigma;)</th>
-                    ${tenors.map(t => {
-                        const label = t <= 10 ? `${t}d Wkly` : (t <= 14 ? `${t}d Bi-Wk` : (t <= 35 ? `${t}d Mthly` : (t <= 60 ? `${t}d Ext` : `${t}d Qtr`)));
-                        return `<th style="text-align: center; min-width: 95px;">${label}</th>`;
-                    }).join('')}
-                </tr>
-            `;
-
-            tbody.innerHTML = rows.map(row => {
-                const threshLabel = `<strong style="font-family: var(--font-headings); font-weight: 700; color: #c084fc; font-size: 0.88rem;">${row.threshold_label}</strong>`;
-                const cells = (row.cells || []).map(c => {
-                    if (c.trades_count === 0) {
-                        return `
-                            <td style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); text-align: center; color: var(--text-dim); font-size: 0.72rem; padding: 10px 4px;">
-                                --
-                            </td>
-                        `;
-                    }
-
-                    const isChamp = c.is_champion;
-                    const pf = c.profit_factor || 0;
-                    const wr = c.win_rate_pct || 0;
-                    const roi = c.avg_roi_pct || 0;
-                    const pnl = c.total_dollar || 0;
-
-                    let mainVal = `${pf.toFixed(2)}x`;
-                    let mainColor = pf >= 2.0 ? '#c084fc' : (pf >= 1.3 ? '#ffffff' : (pf >= 1.0 ? '#d1d4dc' : '#f87171'));
-
-                    if (metric === 'win_rate') {
-                        mainVal = `${wr.toFixed(0)}%`;
-                        mainColor = wr >= 60 ? '#c084fc' : (wr >= 45 ? '#ffffff' : '#f87171');
-                    } else if (metric === 'roi') {
-                        mainVal = `${roi >= 0 ? '+' : ''}${roi.toFixed(0)}%`;
-                        mainColor = roi >= 0 ? '#c084fc' : '#f87171';
-                    } else if (metric === 'pnl') {
-                        mainVal = `${pnl >= 0 ? '+$' : '-$'}${Math.abs(Math.round(pnl)).toLocaleString()}`;
-                        mainColor = pnl >= 0 ? '#c084fc' : '#f87171';
-                    }
-
-                    let bg = "rgba(255, 255, 255, 0.02)";
-                    let border = "1px solid var(--border-subtle)";
-                    if (isChamp) {
-                        bg = "rgba(168, 85, 247, 0.28)";
-                        border = "2px solid #c084fc";
-                    } else if (pf >= 3.5) {
-                        bg = "rgba(168, 85, 247, 0.20)";
-                    } else if (pf >= 2.0) {
-                        bg = "rgba(168, 85, 247, 0.12)";
-                    } else if (pf >= 1.3) {
-                        bg = "rgba(168, 85, 247, 0.06)";
-                    } else if (pf < 1.0) {
-                        bg = "rgba(242, 54, 69, 0.08)";
-                    }
-
-                    const champBadge = isChamp ? `<div style="margin-bottom: 2px;"><span class="tag-pill" style="font-size:0.58rem; font-weight:800; padding:1px 5px; background:rgba(168,85,247,0.25); color:#c084fc; border:1px solid #c084fc; box-shadow: 0 0 8px rgba(168,85,247,0.4);">CHAMPION</span></div>` : "";
-
-                    return `
-                        <td style="background: ${bg}; border: ${border}; text-align: center; font-family: var(--font-mono); padding: 8px 4px; cursor: pointer; transition: all 0.15s ease;"
-                            onclick="setTradesLogParams(${c.threshold}, ${c.contract_dte}, ${c.optimal_holding_days})"
-                            title="Click to load: ±${c.threshold.toFixed(1)}σ • ${c.contract_dte}d DTE @ ${c.optimal_holding_days} Sessions (PF: ${pf.toFixed(2)}x, WR: ${wr}%, ROI: ${roi}%) into Trade Log">
-                            ${champBadge}
-                            <div style="font-weight: 800; color: ${mainColor}; font-size: 0.90rem;">
-                                ${mainVal}
-                            </div>
-                            <div style="font-size: 0.66rem; color: var(--text-dim); margin-top: 2px;">Hold ${c.optimal_holding_days}s &bull; ${wr.toFixed(0)}% WR
-                            </div>
-                            <div style="font-size: 0.60rem; color: ${c.efficiency_ratio >= 0.8 ? '#c084fc' : '#787b86'}; margin-top: 1px;">
-                                ${c.trades_count} trds &bull; ${c.efficiency_ratio}x OOS
-                            </div>
-                        </td>
-                    `;
-                }).join('');
-
-                return `<tr><td style="padding: 10px 14px; font-weight: 700; background: var(--bg-card-inner); border: 1px solid var(--border-subtle);">${threshLabel}</td>${cells}</tr>`;
-            }).join('');
-        }
-
-        // =====================================================================
-        // SECTION 1.9B: 3D GLOBAL TRI-FACTOR OPTIMIZATION (σ*, Tenor*, Horizon*)
-        // =====================================================================
-        let activeTenorSweepData = null;
-        let tenorComparisonChartInstance = null;
-
-        async function runContractTenorSweep() {
-            const asset = (document.getElementById("target-asset")?.value || currentAnomalyAsset || "NVDA").trim().toUpperCase();
-            const mkt = (document.getElementById("market-index")?.value || "QQQ").trim().toUpperCase();
-            const sec = (document.getElementById("sector-etf")?.value || "SMH").trim().toUpperCase();
-
-            // Update badge immediately
-            const activeTenorBadge = document.getElementById("tenor-active-config-badge");
-            if (activeTenorBadge) {
-                activeTenorBadge.innerHTML = `<span style="color:#c084fc; font-weight:800;">3D Global Optimum Engine</span> &bull; Full Tri-Factor Joint Search`;
-            }
-
-            const btn = document.getElementById("btn-run-tenor-sweep");
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<span>⏳ Optimizing 3D Surface...</span>`;
-            }
-
-            const tbody = document.getElementById("tenor-matrix-body");
-            if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #c084fc; padding: 30px;">
-                    <span style="display:inline-block; animation: spin 1s linear infinite; margin-right: 8px;">⏳</span>Simulating 3D Joint Surface (Threshold &sigma; &times; Contract Tenor &times; Holding Horizon) with causal Walk-Forward validation for ${asset}...
-                </td></tr>`;
-            }
-
-            try {
-                const url = `/api/optimizer/3d-optimum?ticker=${asset}&market=${mkt}&sector=${sec}&filter_earnings=${filterEarningsState}`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<span>Run 3D Global Optimum</span>`;
-                }
-
-                if (data.status !== "SUCCESS") {
-                    if (tbody) {
-                        tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--accent-red); padding: 25px;">Simulation failed: ${data.error || 'Unknown error'}
-                        </td></tr>`;
-                    }
-                    return;
-                }
-
-                window.last3DOptimumResult = data;
-                render3DGlobalOptimum(data);
-                showNotificationToast(`3D Global Optimum computed (${data.total_evaluated} triplets in ${data.elapsed_seconds}s) for ${asset}`, "success");
-
-                // Auto-sync the Simulated ATM Option Trades Log with the Champion Triplet
-                if (data.champion_triplet) {
-                    const c = data.champion_triplet;
-                    setTradesLogParams(c.threshold, c.contract_dte, c.holding_horizon, true);
-                }
-            } catch (err) {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<span>Run 3D Global Optimum</span>`;
-                }
-                if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--accent-red); padding: 25px;">Network error: ${err.message}
-                    </td></tr>`;
-                }
-            }
-        }
-
-        function render3DGlobalOptimum(data) {
-            activeTenorSweepData = data;
-            const triplets = data.ranked_triplets || [];
-            const champ = data.champion_triplet || {};
-            const topPf = data.top_profit_factor_triplet || champ;
-            const topWr = data.top_win_rate_triplet || champ;
-
-            // Hide Idle Banner
-            const banner = document.getElementById("tenor-idle-banner");
-            if (banner) banner.style.display = "none";
-
-            // Show and populate Blueprint Card
-            const bpCard = document.getElementById("tenor-3d-blueprint");
-            if (bpCard) {
-                bpCard.style.display = "block";
-                const isRobust = champ.validation_status === "ROBUST_CONFIRMED";
-                const bpBadge = document.getElementById("bp-status-badge");
-                if (bpBadge) {
-                    bpBadge.textContent = champ.validation_status ? champ.validation_status.replace('_', ' ') : "ROBUST CONFIRMED";
-                    bpBadge.className = "tag-pill";
-                    bpBadge.style.background = isRobust ? "rgba(168, 85, 247, 0.2)" : "rgba(242, 54, 69, 0.2)";
-                    bpBadge.style.color = isRobust ? "#c084fc" : "#f23645";
-                    bpBadge.style.borderColor = isRobust ? "#c084fc" : "#f23645";
-                }
-                document.getElementById("bp-sample-info").innerHTML = `
-                    Evaluated <strong>${data.total_evaluated}</strong> combinations in <strong>${data.elapsed_seconds}s</strong><br>
-                    <span style="color:var(--text-dim);font-size:0.68rem;">Train: ${data.in_sample_period || '65%'} &bull; Test: ${data.out_of_sample_period || '35%'}</span>
-                `;
-                document.getElementById("bp-val-barrier").textContent = champ.threshold_label || "--";
-                document.getElementById("bp-desc-barrier").textContent = `Signal entries: ${champ.trades_count || 0} historical events`;
-
-                document.getElementById("bp-val-tenor").textContent = champ.tenor_label || "--";
-                document.getElementById("bp-desc-tenor").textContent = champ.profile || "Sweet Spot: Optimal Convexity";
-
-                document.getElementById("bp-val-hold").textContent = champ.holding_label || "--";
-                document.getElementById("bp-desc-hold").textContent = `Mean-reversion snap-back horizon`;
-
-                document.getElementById("bp-val-edge").textContent = `${champ.profit_factor ? champ.profit_factor.toFixed(2) : '--'}x PF | ${champ.win_rate_pct ? champ.win_rate_pct.toFixed(1) : '--'}% WR`;
-                document.getElementById("bp-desc-edge").innerHTML = `Avg ROI: <strong style="color:#c084fc;">${champ.avg_roi_pct >= 0 ? '+' : ''}${champ.avg_roi_pct}%</strong> &bull; Theta: <span style="color:#d1d4dc;">-${champ.est_theta_decay_pct}%</span> &bull; OOS Eff: <strong style="color:#ffffff;">${champ.efficiency_ratio}x</strong>`;
-            }
-
-            // Update KPI Cards for 3D Mode
-            document.getElementById("tenor-kpi-pf-lbl").textContent = "Global Highest Profit Factor";
-            document.getElementById("tenor-kpi-pf").style.fontFamily = "var(--font-headings)";
-            document.getElementById("tenor-kpi-pf").textContent = `${topPf.threshold_label} • ${topPf.tenor_label} (${topPf.profit_factor.toFixed(2)}x)`;
-            document.getElementById("tenor-kpi-pf-sub").textContent = `Hold ${topPf.holding_label} • Tot PnL: +$${topPf.total_dollar.toLocaleString()}`;
-
-            document.getElementById("tenor-kpi-wr-lbl").textContent = "Global Highest Win Rate";
-            document.getElementById("tenor-kpi-wr").style.fontFamily = "var(--font-headings)";
-            document.getElementById("tenor-kpi-wr").textContent = `${topWr.threshold_label} • ${topWr.tenor_label} (${topWr.win_rate_pct.toFixed(1)}%)`;
-            document.getElementById("tenor-kpi-wr-sub").textContent = `Hold ${topWr.holding_label} • ${topWr.trades_count} trades`;
-
-            document.getElementById("tenor-kpi-roi-lbl").textContent = "Champion Triplet Expected Return";
-            document.getElementById("tenor-kpi-roi").style.fontFamily = "var(--font-headings)";
-            document.getElementById("tenor-kpi-roi").textContent = `${champ.threshold_label} • ${champ.tenor_label} (${champ.avg_roi_pct >= 0 ? '+' : ''}${champ.avg_roi_pct.toFixed(1)}%)`;
-            document.getElementById("tenor-kpi-roi-sub").textContent = `Max Win: +${champ.max_win_roi}% • Max Loss: ${champ.max_loss_roi}%`;
-
-            document.getElementById("tenor-kpi-theta-lbl").textContent = "Champion Theta Decay";
-            document.getElementById("tenor-kpi-theta").style.fontFamily = "var(--font-headings)";
-            document.getElementById("tenor-kpi-theta").textContent = `-${champ.est_theta_decay_pct.toFixed(1)}%`;
-            document.getElementById("tenor-kpi-theta-sub").textContent = `Holding for ${champ.holding_label}`;
-
-            // Render Table Header
-            const thead = document.querySelector("#tenor-matrix-table thead");
-            if (thead) {
-                thead.innerHTML = `
-                    <tr>
-                        <th style="width: 60px;">Rank</th>
-                        <th>Entry Barrier (&sigma;*)</th>
-                        <th>Contract Tenor</th>
-                        <th>Optimal Hold</th>
-                        <th>Avg Prem ($)</th>
-                        <th>Win Rate %</th>
-                        <th>Avg ROI %</th>
-                        <th>Profit Factor</th>
-                        <th>Total $ PnL</th>
-                        <th>Est. Theta Drag</th>
-                        <th>Walk-Forward Validation</th>
-                        <th style="text-align: right; min-width: 170px;">Actions</th>
-                    </tr>
-                `;
-            }
-
-            // Render Matrix Table Body
-            const tbody = document.getElementById("tenor-matrix-body");
-            if (!tbody) return;
-
-            if (triplets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--text-dim); padding: 25px;">No viable 3D combinations found.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = triplets.map((r, idx) => {
-                const roiColor = r.avg_roi_pct >= 0 ? "#c084fc" : "#f23645";
-                const pnlColor = r.total_dollar >= 0 ? "#ffffff" : "#f23645";
-                const pfColor = r.profit_factor >= 2.0 ? "#c084fc" : "#ffffff";
-                const isChampion = idx === 0;
-
-                // Win rate display with OOS info
-                let winDisplay = `${r.win_rate_pct.toFixed(1)}%`;
-                if (typeof r.oos_win_rate_pct === "number") {
-                    winDisplay += `<span style="font-size: 0.65rem; color: var(--text-dim); display: block;" title="IS: ${r.is_sample_win_rate_pct}% (${r.is_sample_trades} trds) ->OOS: ${r.oos_win_rate_pct}% (${r.oos_trades} trds)">OOS: ${r.oos_win_rate_pct.toFixed(0)}% (${r.oos_trades} trds)</span>`;
-                }
-
-                // Walk forward validation badge
-                let valHtml = `<span style="color: var(--text-dim); font-size: 0.72rem;">--</span>`;
-                if (r.validation_status) {
-                    let valStyle = "background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);";
-                    if (r.validation_status === "MILD_DEGRADATION") valStyle = "background: rgba(255, 255, 255, 0.06); color: #d1d4dc; border: 1px solid #36373d;";
-                    else if (r.validation_status === "OVERFITTED_WARNING") valStyle = "background: rgba(242, 54, 69, 0.15); color: #f23645; border: 1px solid #f23645;";
-                    valHtml = `<span class="tag-pill" style="font-size: 0.65rem; padding: 2px 6px; ${valStyle}" title="In-Sample: ${r.is_sample_win_rate_pct}% | Out-of-Sample: ${r.oos_win_rate_pct}% | Efficiency: ${r.efficiency_ratio}x">${r.validation_status.replace('_', ' ')} (${r.efficiency_ratio}x)</span>`;
-                }
-
-                const rowBg = isChampion ? "background: rgba(168, 85, 247, 0.12); border-left: 3px solid #c084fc;" : "";
-
-                return `
-                    <tr style="cursor: pointer; ${rowBg}" onclick="inspect3DTripletTrades(${idx})">
-                        <td>
-                            ${isChampion ? '<span class="tag-pill" style="font-size:0.65rem; font-weight:800; padding:2px 6px; background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid #c084fc;">#1 BEST</span>' : `<span style="font-family:var(--font-mono); font-weight:700; color:var(--text-dim);">#${r.rank}</span>`}
-                        </td>
-                        <td>
-                            <strong style="color: #c084fc; font-family: var(--font-headings); font-weight: 700; font-size: 0.90rem;">${r.threshold_label}</strong>
-                            <span style="font-size: 0.66rem; color: var(--text-dim); display: block;">Entry Barrier</span>
-                        </td>
-                        <td>
-                            <strong style="color: #ffffff; font-family: var(--font-headings); font-weight: 700; font-size: 0.88rem;">${r.tenor_label}</strong>
-                            <span style="font-size: 0.66rem; color: var(--text-dim); display: block;">${r.profile}</span>
-                        </td>
-                        <td style="font-family: var(--font-headings);">
-                            <span style="font-weight: 700; color: #fff; font-family: var(--font-headings);">${r.holding_label}</span>
-                            <span style="font-size: 0.62rem; color: #c084fc; display: block; font-weight: 700;">OPTIMAL H*</span>
-                        </td>
-                        <td style="font-family: var(--font-mono); color: #cbd5e1;">$${r.avg_entry_price.toFixed(2)}</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: #ffffff;">${winDisplay}</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${roiColor}; font-size: 0.88rem;">${r.avg_roi_pct >= 0 ? '+' : ''}${r.avg_roi_pct.toFixed(1)}%</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${pfColor}; font-size: 0.88rem;">${r.profit_factor.toFixed(2)}x</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor}; font-size: 0.88rem;">${r.total_dollar >= 0 ? '+$' : '-$'}${Math.abs(r.total_dollar).toLocaleString()}</td>
-                        <td style="font-family: var(--font-mono); color: #787b86; font-size: 0.78rem;">-${r.est_theta_decay_pct.toFixed(1)}%</td>
-                        <td>
-                            ${valHtml}
-                        </td>
-                        <td style="text-align: right; white-space: nowrap;">
-                            <button class="action-pill" style="font-size: 0.68rem; padding: 2px 8px; color: #c084fc; border-color: rgba(168,85,247,0.4); margin-right: 4px;" onclick="event.stopPropagation(); setTradesLogParams(${r.threshold}, ${r.contract_dte}, ${r.holding_horizon})" title="Load this triplet into Dossier Edge below">Load in Dossier Edge
-                            </button>
-                            <button class="action-pill" style="font-size: 0.68rem; padding: 2px 8px;" onclick="event.stopPropagation(); inspect3DTripletTrades(${idx})" title="Inspect trade episodes for this configuration">Diagnostics
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            render3DComparisonChart(triplets);
-            if (data.surface_grid) {
-                render3DHeatmapGrid(data.surface_grid, currentHeatmapMetric);
-            }
-        }
-
-        function inspect3DTripletTrades(tripletIndex) {
-            if (!activeTenorSweepData || !activeTenorSweepData.ranked_triplets) return;
-            const item = activeTenorSweepData.ranked_triplets[tripletIndex];
-            if (!item) return;
-
-            const container = document.getElementById("tenor-trades-detail-container");
-            const labelEl = document.getElementById("tenor-trades-selected-label");
-            const curveBody = document.getElementById("tenor-curve-body");
-            const tbody = document.getElementById("tenor-trades-detail-body");
-
-            if (labelEl) {
-                labelEl.innerHTML = `<strong style="font-family:var(--font-headings);">#${item.rank} Triplet:</strong> <span style="font-family:var(--font-headings); font-weight:700;">${item.threshold_label} Barrier &bull; ${item.tenor_label} Option &bull; ${item.holding_label} Hold</span> (WR: ${item.win_rate_pct}% | Avg ROI: ${item.avg_roi_pct}% | PF: ${item.profit_factor}x | ${item.validation_status})`;
-            }
-
-            // In 3D mode, the sensitivity curve table displays summary stats for the selected triplet
-            if (curveBody) {
-                curveBody.innerHTML = `
-                    <tr style="background: rgba(168, 85, 247, 0.12); border: 2px solid #c084fc; font-family: var(--font-mono);">
-                        <td style="font-weight: 700; color: #c084fc;">${item.holding_label}</td>
-                        <td style="font-weight: 700; color: #fff;">${item.win_rate_pct.toFixed(1)}%</td>
-                        <td style="font-weight: 700; color: ${item.avg_roi_pct >= 0 ? '#c084fc' : '#ffffff'};">${item.avg_roi_pct >= 0 ? '+' : ''}${item.avg_roi_pct.toFixed(1)}%</td>
-                        <td style="font-weight: 700; color: ${item.total_dollar >= 0 ? '#c084fc' : '#ffffff'};">${item.total_dollar >= 0 ? '+$' : '-$'}${Math.abs(item.total_dollar).toLocaleString()}</td>
-                        <td style="color: ${item.profit_factor >= 1.5 ? '#c084fc' : '#fff'};">${item.profit_factor.toFixed(2)}x</td>
-                        <td style="color: var(--text-secondary);">${item.trades_count}</td>
-                        <td style="color: #787b86;">-${item.est_theta_decay_pct.toFixed(1)}%</td>
-                        <td>
-                            <span class="tag-pill" style="font-size: 0.65rem; font-weight: 800; background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #c084fc;">3D GLOBAL OPTIMUM</span>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            // Populate individual trades
-            const trades = item.trades || [];
-            if (tbody) {
-                if (trades.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-dim); padding: 15px;">No trades.</td></tr>`;
-                } else {
-                    const reversed = [...trades].reverse();
-                    tbody.innerHTML = reversed.map(t => {
-                        const isWin = t.result === "WIN";
-                        const pnlColor = isWin ? "#c084fc" : "#787b86";
-                        return `
-                            <tr>
-                                <td style="font-family: var(--font-mono); font-size: 0.76rem;">${t.date}</td>
-                                <td style="font-weight: 700; color: ${t.is_bullish ? '#ffffff' : '#c084fc'}; font-size: 0.74rem;">${t.action}</td>
-                                <td style="font-family: var(--font-mono); font-size: 0.76rem;">${t.signal_z >= 0 ? '+' : ''}${t.signal_z.toFixed(2)}&sigma;</td>
-                                <td style="font-family: var(--font-mono); color: #fff;">$${Number(t.underlying_entry).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono); color: #cbd5e1;">$${Number(t.strike).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono);">$${Number(t.entry_option_price).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono);">$${Number(t.exit_option_price).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor};">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct.toFixed(1)}%</td>
-                                <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor};">${t.dollar_pnl >= 0 ? '+$' : '-$'}${Math.abs(t.dollar_pnl).toFixed(2)}</td>
-                                <td><span class="tag-pill" style="font-size: 0.65rem; font-weight: 700; ${isWin ? 'background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc;' : 'background: rgba(255, 255, 255, 0.06); color: #787b86; border: 1px solid #36373d;'}">${t.result}</span></td>
-                                <td style="font-size: 0.72rem; color: var(--text-muted);">${t.failure_cause || '--'}</td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
-            }
-
-            if (container) {
-                container.style.display = "block";
-                container.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            }
-        }
-
-        function render3DComparisonChart(triplets) {
-            const ctx = document.getElementById("tenorComparisonChart");
-            if (!ctx) return;
-            if (tenorComparisonChartInstance) tenorComparisonChartInstance.destroy();
-
-            const top8 = triplets.slice(0, 8);
-            const labels = top8.map(r => `#${r.rank}: ${r.threshold_label} • ${r.tenor_label} • ${r.holding_label}`);
-            const rois = top8.map(r =>r.avg_roi_pct);
-            const winRates = top8.map(r =>r.win_rate_pct);
-
-            tenorComparisonChartInstance = new Chart(ctx.getContext("2d"), {
-                type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: "bar",
-                            label: "Avg Trade ROI (%)",
-                            data: rois,
-                            backgroundColor: rois.map(v =>v >= 40 ? "rgba(8, 153, 129, 0.65)" : "rgba(56, 189, 248, 0.55)"),
-                            borderColor: rois.map(v =>v >= 40 ? "#c084fc" : "#a855f7"),
-                            borderWidth: 1.5,
-                            borderRadius: 4,
-                            yAxisID: "yRoi",
-                            order: 2
-                        },
-                        {
-                            type: "line",
-                            label: "Win Rate (%)",
-                            data: winRates,
-                            borderColor: "#ffffff",
-                            backgroundColor: "#ffffff",
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            tension: 0.2,
-                            yAxisID: "yWin",
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: "index", intersect: false },
-                    scales: {
-                        x: { grid: { color: "#2a2e39" }, ticks: { color: "#a1a1aa", font: { size: 10 } } },
-                        yRoi: {
-                            type: "linear",
-                            position: "left",
-                            grid: { color: "#2a2e39" },
-                            ticks: { color: "#c084fc" },
-                            title: { display: true, text: "Average ROI %", color: "#c084fc", font: { size: 10 } }
-                        },
-                        yWin: {
-                            type: "linear",
-                            position: "right",
-                            grid: { drawOnChartArea: false },
-                            ticks: { color: "#ffffff" },
-                            suggestedMin: 30,
-                            suggestedMax: 100,
-                            title: { display: true, text: "Win Rate %", color: "#ffffff", font: { size: 10 } }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: "#d1d4dc", font: { size: 11 } } }
-                    }
-                }
-            });
-        }
-
-        function renderContractTenorSweep(data) {
-            activeTenorSweepData = data;
-            const rows = data.sweep_rows || [];
-            const isDynamic = data.mode === "dynamic";
-
-            // Restore table header for tenor sweep mode
-            const thead = document.querySelector("#tenor-matrix-table thead");
-            if (thead) {
-                thead.innerHTML = `
-                    <tr>
-                        <th>Contract Tenor (DTE)</th>
-                        <th id="th-tenor-hold-col">${isDynamic ? 'Optimal Hold (Sessions)' : 'Benchmark Hold (Sessions)'}</th>
-                        <th>Avg Entry Prem ($)</th>
-                        <th>Win Rate %</th>
-                        <th>Avg ROI %</th>
-                        <th>Total $ PnL (1 Ctr)</th>
-                        <th>Profit Factor</th>
-                        <th>Max Win / Loss %</th>
-                        <th>Est. Theta Drag %</th>
-                        <th>Walk-Forward Validation</th>
-                        <th style="text-align: right;">Action</th>
-                    </tr>
-                `;
-            }
-
-            // Restore KPI Card Labels
-            document.getElementById("tenor-kpi-pf-lbl").textContent = "Highest Profit Factor";
-            document.getElementById("tenor-kpi-wr-lbl").textContent = "Highest Win Rate";
-            document.getElementById("tenor-kpi-roi-lbl").textContent = "Highest Avg ROI";
-            document.getElementById("tenor-kpi-theta-lbl").textContent = "Lowest Theta Drag";
-
-            // Hide Idle Banner
-            const banner = document.getElementById("tenor-idle-banner");
-            if (banner) banner.style.display = "none";
-
-            // Hide 3D blueprint card if returning from 3D mode
-            const bpCard = document.getElementById("tenor-3d-blueprint");
-            if (bpCard) bpCard.style.display = "none";
-
-            // Update Tested Config Badge
-            const configBadge = document.getElementById("tenor-active-config-badge");
-            if (configBadge) {
-                const modeLabel = isDynamic ? "Dynamic Walk-Forward H*" : `Uniform ${data.horizon_used || 5}d Hold`;
-                configBadge.textContent = `${data.ticker}: ±${(data.threshold_used || 1.8).toFixed(1)}σ • ${modeLabel}`;
-            }
-
-            // Update KPI Cards
-            const bestPf = data.best_profit_factor_tenor;
-            const bestWr = data.best_win_rate_tenor;
-            const bestRoi = data.best_roi_tenor;
-
-            if (bestPf) {
-                document.getElementById("tenor-kpi-pf").textContent = `${bestPf.label} (${bestPf.profit_factor}x)`;
-                document.getElementById("tenor-kpi-pf-sub").textContent = `Tot PnL: +$${bestPf.total_dollar.toLocaleString()} @ ${bestPf.holding_days}d hold`;
-            }
-            if (bestWr) {
-                document.getElementById("tenor-kpi-wr").textContent = `${bestWr.label} (${bestWr.win_rate_pct}%)`;
-                document.getElementById("tenor-kpi-wr-sub").textContent = `${bestWr.trades_count} trades @ ${bestWr.holding_days}d hold`;
-            }
-            if (bestRoi) {
-                document.getElementById("tenor-kpi-roi").textContent = `${bestRoi.label} (${bestRoi.avg_roi_pct >= 0 ? '+' : ''}${bestRoi.avg_roi_pct}%)`;
-                document.getElementById("tenor-kpi-roi-sub").textContent = `Max Win: +${bestRoi.max_win_roi}% @ ${bestRoi.holding_days}d hold`;
-            }
-
-            const lowestTheta = rows[rows.length - 1];
-            if (lowestTheta) {
-                document.getElementById("tenor-kpi-theta").textContent = `${lowestTheta.label} (-${lowestTheta.est_theta_decay_pct}%)`;
-                document.getElementById("tenor-kpi-theta-sub").textContent = `Holding for ${lowestTheta.holding_days} sessions`;
-            }
-
-            // Render Matrix Table
-            const tbody = document.getElementById("tenor-matrix-body");
-            if (!tbody) return;
-
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-dim); padding: 25px;">No trade episodes found at this threshold.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = rows.map((r, idx) => {
-                const roiColor = r.avg_roi_pct >= 0 ? "#c084fc" : "#f23645";
-                const pnlColor = r.total_dollar >= 0 ? "#ffffff" : "#f23645";
-                const pfColor = r.profit_factor >= 2.0 ? "#c084fc" : "#ffffff";
-
-                // Hold label
-                let holdHtml = `<span style="font-family: var(--font-headings); font-weight: 700; color: #fff;">${r.holding_days} Sessions</span>`;
-                if (isDynamic) {
-                    holdHtml += `<span style="font-size: 0.62rem; color: #c084fc; display: block; font-weight: 700;">OPTIMAL H*</span>`;
-                }
-                if (r.is_capped) {
-                    holdHtml += `<span class="tag-pill tag-amber" style="font-size: 0.60rem; display: block; margin-top: 2px;">Capped by Expiry</span>`;
-                }
-
-                // Win rate display with OOS info
-                let winDisplay = `${r.win_rate_pct.toFixed(1)}%`;
-                if (isDynamic && r.walk_forward && typeof r.walk_forward.oos_win_rate_pct === "number") {
-                    winDisplay += `<span style="font-size: 0.65rem; color: var(--text-dim); display: block;" title="IS: ${r.walk_forward.in_sample_win_rate_pct}% (${r.walk_forward.in_sample_trades} trds) ->OOS: ${r.walk_forward.oos_win_rate_pct}% (${r.walk_forward.oos_trades} trds)">OOS: ${r.walk_forward.oos_win_rate_pct.toFixed(0)}% (${r.walk_forward.oos_trades} trds)</span>`;
-                }
-
-                // Walk forward validation badge
-                let valHtml = `<span style="color: var(--text-dim); font-size: 0.72rem;">Uniform Bench</span>`;
-                if (isDynamic && r.walk_forward) {
-                    const wf = r.walk_forward;
-                    let valStyle = "background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);";
-                    if (wf.validation_status === "MILD_DEGRADATION") valStyle = "background: rgba(255, 255, 255, 0.06); color: #d1d4dc; border: 1px solid #36373d;";
-                    else if (wf.validation_status === "OVERFITTED_WARNING") valStyle = "background: rgba(242, 54, 69, 0.15); color: #f23645; border: 1px solid #f23645;";
-                    valHtml = `<span class="tag-pill" style="font-size: 0.65rem; padding: 2px 6px; ${valStyle}" title="In-Sample: ${wf.in_sample_win_rate_pct}% | Out-of-Sample: ${wf.oos_win_rate_pct}% | Efficiency: ${wf.efficiency_ratio}x">${wf.validation_status.replace('_', ' ')} (${wf.efficiency_ratio}x)</span>`;
-                }
-
-                return `
-                    <tr style="cursor: pointer;" onclick="inspectTenorTrades(${r.contract_dte})">
-                        <td>
-                            <strong style="color: #ffffff; font-family: var(--font-mono); font-size: 0.88rem;">${r.label}</strong>
-                            <span style="font-size: 0.68rem; color: var(--text-dim); display: block;">${r.contract_dte <= 10 ? 'Weekly Expiry' : (r.contract_dte <= 21 ? 'Bi-Weekly/3W' : (r.contract_dte <= 45 ? 'Monthly Series' : (r.contract_dte <= 60 ? 'Extended Tenor' : 'Quarterly / LEAPS')))}</span>
-                        </td>
-                        <td style="font-family: var(--font-mono);">
-                            ${holdHtml}
-                        </td>
-                        <td style="font-family: var(--font-mono); color: #cbd5e1;">$${r.avg_entry_price.toFixed(2)}</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: #ffffff;">${winDisplay}</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${roiColor}; font-size: 0.88rem;">${r.avg_roi_pct >= 0 ? '+' : ''}${r.avg_roi_pct.toFixed(1)}%</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor}; font-size: 0.88rem;">${r.total_dollar >= 0 ? '+$' : '-$'}${Math.abs(r.total_dollar).toLocaleString()}</td>
-                        <td style="font-family: var(--font-mono); font-weight: 700; color: ${pfColor}; font-size: 0.88rem;">${r.profit_factor.toFixed(2)}x</td>
-                        <td style="font-family: var(--font-mono); font-size: 0.74rem;">
-                            <span style="color: #c084fc;">+${r.max_win_roi.toFixed(0)}%</span> / 
-                            <span style="color: #ffffff;">${r.max_loss_roi.toFixed(0)}%</span>
-                        </td>
-                        <td style="font-family: var(--font-mono); color: #787b86; font-size: 0.78rem;">-${r.est_theta_decay_pct.toFixed(1)}%</td>
-                        <td>
-                            ${valHtml}
-                        </td>
-                        <td style="text-align: right;">
-                            <button class="action-pill" style="font-size: 0.68rem; padding: 2px 8px;" onclick="event.stopPropagation(); inspectTenorTrades(${r.contract_dte})">Inspect Diagnostics
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            renderTenorComparisonChart(rows);
-        }
-
-        function renderTenorComparisonChart(rows) {
-            const ctx = document.getElementById("tenorComparisonChart");
-            if (!ctx) return;
-            if (tenorComparisonChartInstance) tenorComparisonChartInstance.destroy();
-
-            const labels = rows.map(r => `${r.label} (${r.holding_days}d)`);
-            const rois = rows.map(r =>r.avg_roi_pct);
-            const winRates = rows.map(r =>r.win_rate_pct);
-
-            tenorComparisonChartInstance = new Chart(ctx.getContext("2d"), {
-                type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: "bar",
-                            label: "Avg Trade ROI (%)",
-                            data: rois,
-                            backgroundColor: rois.map(v =>v >= 50 ? "rgba(8, 153, 129, 0.65)" : "rgba(56, 189, 248, 0.55)"),
-                            borderColor: rois.map(v =>v >= 50 ? "#c084fc" : "#a855f7"),
-                            borderWidth: 1.5,
-                            borderRadius: 4,
-                            yAxisID: "yRoi",
-                            order: 2
-                        },
-                        {
-                            type: "line",
-                            label: "Win Rate (%)",
-                            data: winRates,
-                            borderColor: "#ffffff",
-                            backgroundColor: "#ffffff",
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            tension: 0.2,
-                            yAxisID: "yWin",
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: "index", intersect: false },
-                    scales: {
-                        x: { grid: { color: "#2a2e39" }, ticks: { color: "#a1a1aa" } },
-                        yRoi: {
-                            type: "linear",
-                            position: "left",
-                            grid: { color: "#2a2e39" },
-                            ticks: { color: "#c084fc" },
-                            title: { display: true, text: "Average ROI %", color: "#c084fc", font: { size: 10 } }
-                        },
-                        yWin: {
-                            type: "linear",
-                            position: "right",
-                            grid: { drawOnChartArea: false },
-                            ticks: { color: "#ffffff" },
-                            suggestedMin: 30,
-                            suggestedMax: 100,
-                            title: { display: true, text: "Win Rate %", color: "#ffffff", font: { size: 10 } }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: "#d1d4dc", font: { size: 11 } } }
-                    }
-                }
-            });
-        }
-
-        function inspectTenorTrades(contractDte) {
-            if (!activeTenorSweepData || !activeTenorSweepData.sweep_rows) return;
-            const tenorRow = activeTenorSweepData.sweep_rows.find(r =>r.contract_dte === contractDte);
-            if (!tenorRow) return;
-
-            const container = document.getElementById("tenor-trades-detail-container");
-            const labelEl = document.getElementById("tenor-trades-selected-label");
-            const curveBody = document.getElementById("tenor-curve-body");
-            const tbody = document.getElementById("tenor-trades-detail-body");
-
-            if (labelEl) labelEl.textContent = `${tenorRow.label} (Hold: ${tenorRow.holding_days} Sessions | WR: ${tenorRow.win_rate_pct}% | Avg ROI: ${tenorRow.avg_roi_pct}%)`;
-
-            // 1. Populate Holding Duration Sensitivity Curve
-            const curve = tenorRow.horizon_curve || [];
-            if (curveBody) {
-                if (curve.length === 0) {
-                    curveBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 15px;">No curve data available.</td></tr>`;
-                } else {
-                    curveBody.innerHTML = curve.map(c => {
-                        const isOptimal = c.hold_days === tenorRow.holding_days;
-                        const rowBg = isOptimal ? "rgba(8, 153, 129, 0.12)" : "transparent";
-                        const rowBorder = isOptimal ? "2px solid #c084fc" : "1px solid var(--border-subtle)";
-                        const roiCol = c.avg_roi_pct >= 0 ? "#c084fc" : "#ffffff";
-                        const pnlCol = c.total_dollar >= 0 ? "#c084fc" : "#ffffff";
-
-                        return `
-                            <tr style="background: ${rowBg}; border: ${rowBorder}; font-family: var(--font-mono);">
-                                <td style="font-weight: 700; color: ${isOptimal ? '#c084fc' : '#fff'};">${c.hold_days} Sessions</td>
-                                <td style="font-weight: 700; color: #fff;">${c.win_rate_pct.toFixed(1)}%</td>
-                                <td style="font-weight: 700; color: ${roiCol};">${c.avg_roi_pct >= 0 ? '+' : ''}${c.avg_roi_pct.toFixed(1)}%</td>
-                                <td style="font-weight: 700; color: ${pnlCol};">${c.total_dollar >= 0 ? '+$' : '-$'}${Math.abs(c.total_dollar).toLocaleString()}</td>
-                                <td style="color: ${c.profit_factor >= 1.5 ? '#c084fc' : '#fff'};">${c.profit_factor.toFixed(2)}x</td>
-                                <td style="color: var(--text-secondary);">${c.trades_count}</td>
-                                <td style="color: #f59e0b;">-${c.est_theta_decay_pct.toFixed(1)}%</td>
-                                <td>
-                                    ${isOptimal ? '<span class="tag-pill" style="font-size: 0.65rem; font-weight: 800; background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #c084fc;">OPTIMAL HOLD</span>' : '<span style="color: var(--text-dim); font-size: 0.68rem;">Candidate</span>'}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
-            }
-
-            // 2. Populate Individual Historical Trades Table
-            const trades = tenorRow.trades || [];
-            if (tbody) {
-                if (trades.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-dim); padding: 15px;">No trades.</td></tr>`;
-                } else {
-                    const reversed = [...trades].reverse();
-                    tbody.innerHTML = reversed.map(t => {
-                        const isWin = t.result === "WIN";
-                        const pnlColor = isWin ? "#c084fc" : "#787b86";
-                        return `
-                            <tr>
-                                <td style="font-family: var(--font-mono); font-size: 0.76rem;">${t.date}</td>
-                                <td style="font-weight: 700; color: ${t.is_bullish ? '#ffffff' : '#c084fc'}; font-size: 0.74rem;">${t.action}</td>
-                                <td style="font-family: var(--font-mono); font-size: 0.76rem;">${t.signal_z >= 0 ? '+' : ''}${t.signal_z.toFixed(2)}&sigma;</td>
-                                <td style="font-family: var(--font-mono); color: #fff;">$${Number(t.underlying_entry).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono); color: #cbd5e1;">$${Number(t.strike).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono);">$${Number(t.entry_option_price).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono);">$${Number(t.exit_option_price).toFixed(2)}</td>
-                                <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor};">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct.toFixed(1)}%</td>
-                                <td style="font-family: var(--font-mono); font-weight: 700; color: ${pnlColor};">${t.dollar_pnl >= 0 ? '+$' : '-$'}${Math.abs(t.dollar_pnl).toFixed(2)}</td>
-                                <td><span class="tag-pill" style="font-size: 0.65rem; font-weight: 700; ${isWin ? 'background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc;' : 'background: rgba(255, 255, 255, 0.06); color: #787b86; border: 1px solid #36373d;'}">${t.result}</span></td>
-                                <td style="font-size: 0.72rem; color: var(--text-muted);">${t.failure_cause || '--'}</td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
-            }
-
-            if (container) {
-                container.style.display = "block";
-                container.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            }
-        }
 
         window.onload = init;
     </script>
