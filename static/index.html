@@ -1411,7 +1411,7 @@
                     <span>Project RM</span>
                     <span style="font-size: 0.7rem; color: var(--text-dim);">▾</span>
                 </div>
-                <div class="workspace-sub">Relative Mispriced Engine</div>
+                <div class="workspace-sub" style="color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>Asset Returns Edition</div>
             </div>
         </div>
 
@@ -1477,6 +1477,10 @@
                 <span style="font-size: 1.25rem; color: #2962ff; "></span>
                 <h1 class="page-title">Dashboard RM <span class="badge-subtle" style="background: rgba(41, 98, 255, 0.15); border: 1px solid #2962ff; color: #2962ff; font-weight: 700; font-family: var(--font-mono);">PRO V3</span></h1>
                 <span id="active-tool-title-badge" class="badge-subtle" style="font-size: 0.74rem; border-color: rgba(41, 98, 255, 0.4); color: #2962ff; background: #1e222d; padding: 4px 10px; font-weight: 700;">Dynamic Edge</span>
+                <span class="badge-subtle" style="background: rgba(8, 153, 129, 0.2); border: 1px solid #089981; color: #34d399; font-weight: 800; font-family: var(--font-mono); font-size: 0.74rem; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; box-shadow: 0 0 12px rgba(8, 153, 129, 0.25);">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block; box-shadow: 0 0 8px #34d399;"></span>
+                    BRANCH: ASSET-RETURNS-ONLY (PURE EQUITY %)
+                </span>
                 
                 <!-- Small Triple Current Trifecta Badge (Always visible above everything) -->
                 <div class="current-trifecta-badge" id="current-trifecta-display" style="display: inline-flex; align-items: center; gap: 8px; background: #131722; border: 1px solid #2a2e39; border-radius: 4px; padding: 3px 10px; font-family: var(--font-mono); font-size: 0.76rem;" title="Current stock triple asset under Kalman active measurement">
@@ -1566,7 +1570,7 @@
                         </div>
                         <!-- Retail Plain-English Mode -->
                         <div class="playbook-col-text mode-retail">
-                            <strong>Buy Calls on Green, Buy Puts on Red.</strong> When the gauge hits <strong>Green (Z &le; -&sigma;*)</strong>, buy an ATM Call option (~30&ndash;45 DTE) because the stock is due for a quick bounce back up. When it hits <strong>Red (Z &ge; +&sigma;*)</strong>, buy an ATM Put because the stock is overextended and due to drop. Exit the trade after reaching the holding days target or once the meter returns back to the neutral 0 ribbon.
+                            <strong>Go Long on Green (Oversold), Go Short on Red (Overbought).</strong> When the meter hits <strong>Green (Z &le; -&sigma;*)</strong>, enter a <strong>Long Asset</strong> position in underlying shares because the stock is statistically primed to mean-revert back upward. When it hits <strong>Red (Z &ge; +&sigma;*)</strong>, enter a <strong>Short Asset</strong> position because the stock is overstretched. Exit the trade after reaching the calibrated holding horizon sessions.
                         </div>
                         <!-- The Quant Answer Mode -->
                         <div class="playbook-col-text mode-quant" style="display: none;">Formulates an <strong>Ornstein-Uhlenbeck boundary crossing policy</strong>: execute long ATM Call when normalized 1-day innovation shock $Z_t \le -\sigma^*$ ($E[\Delta X_{t+h} | Z_t \le -\sigma^*] >0$) and long ATM Put when $Z_t \ge +\sigma^*$. Position sizing is governed by calibrated half-life $\tau = \ln(2)/\kappa$, liquidating upon ribbon convergence $|Z_{t+k}| \le 0.5\sigma$ or mandatory expiration at $H^*$ sessions.
@@ -2758,10 +2762,10 @@
                             <th style="width: 120px;">Action</th>
                             <th style="width: 80px;">Signal Z</th>
                             <th style="width: 90px;">Stock Entry</th>
-                            <th style="width: 95px;">ATM Strike</th>
-                            <th style="width: 105px;">Contract Tenor</th>
-                            <th style="width: 90px;">Entry Opt ($)</th>
-                            <th style="width: 90px;">Exit Opt ($)</th>
+                            <th style="width: 95px;">Exit Price ($)</th>
+                            <th style="width: 105px;">Holding Horizon</th>
+                            <th style="width: 90px;">Entry Price ($)</th>
+                            <th style="width: 90px;">Asset PnL %</th>
                             <th style="width: 95px;">Hold Horizon</th>
                             <th style="width: 90px;">Trade ROI</th>
                             <th style="width: 100px;">1-Ctr PnL</th>
