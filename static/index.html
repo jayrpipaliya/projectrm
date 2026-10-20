@@ -1571,7 +1571,30 @@
             <div class="cockpit-input-toolbar">
                 <div class="input-item">
                     <label>Target Asset</label>
-                    <input type="text" id="target-asset" value="MSFT" style="width: 100px; font-family: var(--font-headings); font-weight: 700;">
+                    <input type="text" id="target-asset" list="target-asset-datalist" value="MSFT" style="width: 100px; font-family: var(--font-headings); font-weight: 700;" autocomplete="off" onchange="onTargetAssetInputChange(this.value)">
+                    <datalist id="target-asset-datalist">
+                        <option value="MSFT">MSFT (Enterprise Cloud)</option>
+                        <option value="NVDA">NVDA (AI Chips)</option>
+                        <option value="AMD">AMD (Semiconductors)</option>
+                        <option value="MU">MU (Memory & Storage Chips)</option>
+                        <option value="INTC">INTC (Semiconductors / Foundry)</option>
+                        <option value="CRWD">CRWD (Cybersecurity Endpoint)</option>
+                        <option value="META">META (Digital Ads)</option>
+                        <option value="AMZN">AMZN (E-Commerce)</option>
+                        <option value="ADBE">ADBE (Creative Cloud Software)</option>
+                        <option value="TSLA">TSLA (EV Clean Energy)</option>
+                        <option value="SBUX">SBUX (Retail Dining)</option>
+                        <option value="NKE">NKE (Athletic Apparel)</option>
+                        <option value="MCD">MCD (Fast Food)</option>
+                        <option value="KO">KO (Beverages)</option>
+                        <option value="WMT">WMT (Discount Retail)</option>
+                        <option value="JPM">JPM (Banking & Financials)</option>
+                        <option value="LLY">LLY (Pharmaceuticals & GLP-1)</option>
+                        <option value="UNH">UNH (Healthcare)</option>
+                        <option value="VRTX">VRTX (Biotechnology)</option>
+                        <option value="DIS">DIS (Entertainment)</option>
+                        <option value="XOM">XOM (Energy)</option>
+                    </datalist>
                 </div>
                 <div class="input-item">
                     <label>Market Index</label>
@@ -1984,20 +2007,25 @@
                             <select id="calc-ticker-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #fff; font-weight: 700; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
                                 <option value="MSFT">MSFT (Enterprise Cloud)</option>
                                 <option value="NVDA">NVDA (AI Chips)</option>
-                                <option value="AAPL">AAPL (Consumer Electronics)</option>
-                                <option value="CRWD">CRWD (Cybersecurity)</option>
                                 <option value="AMD">AMD (Semiconductors)</option>
-                                <option value="TSLA">TSLA (EV Clean Energy)</option>
+                                <option value="MU">MU (Memory & Storage Chips)</option>
+                                <option value="INTC">INTC (Semiconductors / Foundry)</option>
+                                <option value="CRWD">CRWD (Cybersecurity Endpoint)</option>
                                 <option value="META">META (Digital Ads)</option>
                                 <option value="AMZN">AMZN (E-Commerce)</option>
-                                <option value="GOOGL">GOOGL (Alphabet)</option>
+                                <option value="ADBE">ADBE (Creative Cloud Software)</option>
+                                <option value="TSLA">TSLA (EV Clean Energy)</option>
                                 <option value="SBUX">SBUX (Retail Dining)</option>
+                                <option value="NKE">NKE (Athletic Apparel)</option>
                                 <option value="MCD">MCD (Fast Food)</option>
                                 <option value="KO">KO (Beverages)</option>
                                 <option value="WMT">WMT (Discount Retail)</option>
-                                <option value="XOM">XOM (Energy)</option>
-                                <option value="JPM">JPM (Banking)</option>
+                                <option value="JPM">JPM (Banking & Financials)</option>
+                                <option value="LLY">LLY (Pharmaceuticals & GLP-1)</option>
                                 <option value="UNH">UNH (Healthcare)</option>
+                                <option value="VRTX">VRTX (Biotechnology)</option>
+                                <option value="DIS">DIS (Entertainment)</option>
+                                <option value="XOM">XOM (Energy)</option>
                                 <option value="ALL">ALL 21 WATCHLIST ASSETS</option>
                             </select>
                         </div>
@@ -3333,6 +3361,15 @@
             });
 
             runAnomalyAnalysis(true);
+        }
+
+        function onTargetAssetInputChange(val) {
+            if (!val) return;
+            const ticker = val.trim().toUpperCase();
+            if (CHAMPION_OPTIMAL_MAP[ticker]) {
+                const item = CHAMPION_OPTIMAL_MAP[ticker];
+                applyPreset(ticker, item.market, item.sector);
+            }
         }
 
         function toggleModule(mod) {
@@ -4925,6 +4962,24 @@
                     } else {
                         tickerSel.value = "ALL";
                         currentSelectedTicker = "ALL";
+                    }
+                }
+
+                // Dynamically ensure calc-ticker-select includes all active ledger assets
+                const calcSel = document.getElementById("calc-ticker-select");
+                if (calcSel && currentGoldLedgerData.length > 0) {
+                    const prevCalcVal = calcSel.value || "MSFT";
+                    let calcOpts = "";
+                    currentGoldLedgerData.forEach(r => {
+                        const theme = r.theme ? ` (${r.theme})` : "";
+                        calcOpts += `<option value="${r.ticker}">${r.ticker}${theme}</option>`;
+                    });
+                    calcOpts += `<option value="ALL">ALL 21 WATCHLIST ASSETS</option>`;
+                    calcSel.innerHTML = calcOpts;
+                    if (prevCalcVal && Array.from(calcSel.options).some(o => o.value === prevCalcVal)) {
+                        calcSel.value = prevCalcVal;
+                    } else {
+                        calcSel.value = "MSFT";
                     }
                 }
 
