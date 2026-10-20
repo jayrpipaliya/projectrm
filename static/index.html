@@ -4911,21 +4911,24 @@
 
                 // Dynamically populate gold-trades-ticker-select from active ledger items
                 const tickerSel = document.getElementById("gold-trades-ticker-select");
-                if (tickerSel && currentGoldLedgerData.length >0) {
+                let currentSelectedTicker = "ALL";
+                if (tickerSel && currentGoldLedgerData.length > 0) {
                     const prevVal = tickerSel.value;
                     let opts = `<option value="ALL">All Champions (Portfolio Feed &bull; ${currentGoldLedgerData.length} Assets)</option>`;
                     currentGoldLedgerData.forEach(r => {
-                        opts += `<option value="${r.ticker}">${r.ticker} (&plusmn;${Number(r.threshold).toFixed(1)}&sigma; &bull; ${r.contract_dte}d DTE &bull; PF ${Number(r.profit_factor).toFixed(2)}x)</option>`;
+                        opts += `<option value="${r.ticker}">${r.ticker} (&plusmn;${Number(r.threshold).toFixed(1)}&sigma; &bull; ${r.holding_days || 5}s Hold &bull; PF ${Number(r.profit_factor).toFixed(2)}x)</option>`;
                     });
                     tickerSel.innerHTML = opts;
-                    if (prevVal && Array.from(tickerSel.options).some(o =>o.value === prevVal)) {
+                    if (prevVal && Array.from(tickerSel.options).some(o => o.value === prevVal)) {
                         tickerSel.value = prevVal;
+                        currentSelectedTicker = prevVal;
                     } else {
                         tickerSel.value = "ALL";
+                        currentSelectedTicker = "ALL";
                     }
                 }
 
-                fetchGoldTradesHistory("ALL");
+                fetchGoldTradesHistory(currentSelectedTicker);
             } catch (err) {
                 if (tbody) tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; color:var(--accent-red); padding:20px;">Network error loading Rare Edge: ${err.message}</td></tr>`;
             }
@@ -5422,6 +5425,11 @@
 
                 // Immediately refresh Rare Edge Master Registry
                 await fetchGoldLedger();
+
+                // Automatically focus the trade history log underneath on this specific ticker
+                const sel = document.getElementById("gold-trades-ticker-select");
+                if (sel) sel.value = ticker;
+                await fetchGoldTradesHistory(ticker);
 
                 // Scroll down to the Rare Edge table
                 const ledgerTable = document.getElementById("gold-ledger-table");
