@@ -425,7 +425,7 @@ class AssetReturnBacktestEngine:
 
         trades = []
         for ep in signal_episodes:
-            h_use = bull_stats["best_horizon"] if ep["is_bullish"] else bear_stats["best_horizon"]
+            h_use = holding_horizon if (holding_horizon and holding_horizon > 0) else (bull_stats["best_horizon"] if ep["is_bullish"] else bear_stats["best_horizon"])
             h_avail = min(h_use, len(ep["traj"]))
             if h_avail < 1:
                 continue
