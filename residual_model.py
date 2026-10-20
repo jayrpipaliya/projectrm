@@ -705,6 +705,13 @@ class ResidualAnomalyModel:
         innov_vars = kf.innov_variances  # S_t
         y_preds = kf.y_preds
 
+        # Standardized 1-Day Kalman Innovation Shock Z (Stationary Single-Day Shock):
+        # Strictly IID N(0, 1) single-day idiosyncratic impulse shocks (mean=0, std=1, zero autocorrelation)
+        std_innov = float(np.std(innovations[self.warmup_period:])) if T > self.warmup_period + 10 else float(np.std(innovations))
+        std_innov = max(1e-5, std_innov)
+        z_shock = innovations / std_innov
+        z_1d = z_shock
+
         # --- Layer 2: Cointegrated Cumulative Price Spread & OU Mean Reversion Engine ---
         # Cointegrated idiosyncratic return series: r_idio = r_asset - (alpha + beta_mkt * r_mkt + beta_sec * r_sec_perp)
         idio_ret = ret_asset - (beta_hist[:, 0] + beta_hist[:, 1] * ret_mkt + beta_hist[:, 2] * ret_sec_perp)
@@ -712,7 +719,7 @@ class ResidualAnomalyModel:
 
         # Fit continuous OU process on cointegrated spread
         ou_stats = OrnsteinUhlenbeckEngine.fit(spread_s)
-        z_1d = ou_stats["z_spread"]
+        z_spread = ou_stats["z_spread"]
         u_innovations = ou_stats["innovations"]
 
         # Multi-horizon smoothed Z-scores
@@ -756,6 +763,7 @@ class ResidualAnomalyModel:
                 "expected_return_pct": round(float(y_preds[t]) * 100.0, 2),
                 "residual_pct": round(float(innovations[t]) * 100.0, 3),
                 "cointegrated_spread": round(float(spread_s[t]), 4),
+                "z_spread": round(float(z_spread[t]), 2),
                 "z_1d": round(float(z_1d[t]), 2),
                 "z_5d": round(float(z_5d[t]), 2),
                 "z_20d": round(float(z_20d[t]), 2),
