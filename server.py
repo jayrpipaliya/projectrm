@@ -467,7 +467,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 all_results.sort(key=lambda x: (x.get("profit_factor", 0), x.get("win_rate_pct", 0)), reverse=True)
                 pfs = [r["profit_factor"] for r in all_results if r.get("profit_factor", 0) > 0]
                 wrs = [r["win_rate_pct"] for r in all_results if r.get("win_rate_pct", 0) > 0]
-                rrs = [r["risk_reward_ratio"] for r in all_results if r.get("risk_reward_ratio", 0) > 0]
+                typs = [r.get("typical_asset_return_pct", r.get("avg_roi_pct", 0.0)) for r in all_results]
 
                 self._send_json({
                     "status": "SUCCESS",
@@ -477,7 +477,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     "summary": {
                         "avg_win_rate_pct": round(float(np.mean(wrs)), 1) if wrs else 0.0,
                         "avg_profit_factor": round(float(np.mean(pfs)), 2) if pfs else 0.0,
-                        "avg_risk_reward_ratio": round(float(np.mean(rrs)), 2) if rrs else 0.0
+                        "avg_typical_return_pct": round(float(np.mean(typs)), 2) if typs else 0.0
                     }
                 })
                 return

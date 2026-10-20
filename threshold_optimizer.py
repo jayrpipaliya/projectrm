@@ -179,7 +179,9 @@ class ThresholdOptimizer:
                 "avg_roi_pct": 0.0,
                 "avg_win_pct": 0.0,
                 "avg_loss_pct": 0.0,
-                "risk_reward_ratio": 1.0,
+                "typical_asset_return_pct": 0.0,
+                "typical_win_pct": 0.0,
+                "typical_loss_pct": 0.0,
                 "profit_factor": 0.0,
                 "expectancy_pct": 0.0,
                 "long_win_rate_pct": 0.0,
@@ -236,7 +238,9 @@ class ThresholdOptimizer:
             "avg_roi_pct": round(avg_r, 2),
             "avg_win_pct": round(avg_win, 2),
             "avg_loss_pct": round(avg_loss, 2),
-            "risk_reward_ratio": rr_ratio,
+            "typical_asset_return_pct": round(avg_r, 2),
+            "typical_win_pct": round(avg_win, 2),
+            "typical_loss_pct": round(avg_loss, 2),
             "profit_factor": round(min(99.0, pf), 2),
             "expectancy_pct": expectancy,
             "long_win_rate_pct": long_wr,
@@ -555,9 +559,11 @@ class ThresholdOptimizer:
                     
                     if metric == "win_rate":
                         score = wr_val * np.log10(max(3, cnt))
-                    elif metric == "risk_reward":
-                        score = rr_val * (wr_val / 50.0) * np.log10(max(3, cnt))
-                    else: # profit_factor or expectancy
+                    elif metric == "typical_return":
+                        score = eval_res.get("avg_roi_pct", 0.0) * np.log10(max(3, cnt))
+                    elif metric == "expectancy":
+                        score = eval_res.get("expectancy_pct", 0.0) * np.log10(max(3, cnt))
+                    else: # profit_factor
                         score = pf_val * (wr_val / 50.0) * min(1.0, np.sqrt(cnt / 15.0))
 
                 if score > best_h_score or best_h_res is None:
@@ -570,7 +576,9 @@ class ThresholdOptimizer:
                     "threshold": sigma,
                     "holding_days": best_h,
                     "win_rate_pct": best_h_res["win_rate_pct"],
-                    "risk_reward_ratio": best_h_res["risk_reward_ratio"],
+                    "typical_asset_return_pct": best_h_res.get("typical_asset_return_pct", best_h_res["avg_roi_pct"]),
+                    "typical_win_pct": best_h_res["avg_win_pct"],
+                    "typical_loss_pct": best_h_res["avg_loss_pct"],
                     "profit_factor": best_h_res["profit_factor"],
                     "avg_roi_pct": best_h_res["avg_roi_pct"],
                     "avg_win_pct": best_h_res["avg_win_pct"],

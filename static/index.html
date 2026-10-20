@@ -1962,11 +1962,11 @@
                         <span style="font-size: 1.35rem; color: #38bdf8;">&#9878;</span>
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #ffffff; letter-spacing: -0.01em;">Best Standard Deviation (&sigma;*) &amp; WR / RR Calculator</h3>
+                                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #ffffff; letter-spacing: -0.01em;">Best Standard Deviation (&sigma;*) &amp; Asset Return Calculator</h3>
                                 <span class="tag-pill tag-blue" style="font-size: 0.68rem; font-weight: 800;">PROVEN EDGE CALIBRATOR</span>
                             </div>
                             <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 2px;">
-                                Sweeps trigger standard deviations (&sigma;) for Long and Short signals to find the barrier that maximizes backtested Win Rate (WR), Risk/Reward (RR), and Profit Factor. Lock in your edge to Rare Edge.
+                                Sweeps trigger standard deviations (&sigma;) for Long and Short signals to find the barrier that maximizes backtested Win Rate, Typical Asset Return %, and Profit Factor across programmatic holding horizons (without stop losses). Lock in your edge to Rare Edge.
                             </div>
                         </div>
                     </div>
@@ -2007,7 +2007,8 @@
                             <select id="calc-metric-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #38bdf8; font-weight: 700; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
                                 <option value="profit_factor" selected>Profit Factor (Gross Win / Gross Loss)</option>
                                 <option value="win_rate">Win Rate % (Peak Trade Accuracy)</option>
-                                <option value="risk_reward">Risk / Reward Ratio (Avg Win / Avg Loss)</option>
+                                <option value="typical_return">Typical Asset Return % (Mean Move Captured)</option>
+                                <option value="expectancy">Expected Return % per Trade (E[R])</option>
                             </select>
                         </div>
 
@@ -2063,9 +2064,9 @@
                                 <div class="stat-card-sub" id="calc-val-wr-sub">Long: --% &bull; Short: --%</div>
                             </div>
                             <div class="stat-card-sm" style="border: 1px solid #36373d;">
-                                <div class="stat-card-label" style="color: var(--text-muted);">Risk / Reward Ratio (RR)</div>
-                                <div class="stat-card-value" style="color: #ffffff;" id="calc-val-rr">-- : 1</div>
-                                <div class="stat-card-sub" id="calc-val-rr-sub">Avg Win: +--% vs Avg Loss: ---%</div>
+                                <div class="stat-card-label" style="color: var(--text-muted);">Typical Asset Return %</div>
+                                <div class="stat-card-value text-green" id="calc-val-typical">+--%</div>
+                                <div class="stat-card-sub" id="calc-val-typical-sub">Typical Win: +--% &bull; Typical Loss: ---%</div>
                             </div>
                             <div class="stat-card-sm" style="border: 1px solid #36373d;">
                                 <div class="stat-card-label" style="color: var(--text-muted);">Profit Factor</div>
@@ -2101,7 +2102,7 @@
                                             <th>Win Rate %</th>
                                             <th>Long WR %</th>
                                             <th>Short WR %</th>
-                                            <th>Risk/Reward (RR)</th>
+                                            <th>Typical Return %</th>
                                             <th>Profit Factor</th>
                                             <th>Avg Win %</th>
                                             <th>Avg Loss %</th>
@@ -2174,7 +2175,7 @@
                             <th>Barrier Proximity</th>
                             <th>Profit Factor</th>
                             <th>Win Rate %</th>
-                            <th>Avg Move %</th>
+                            <th>Typical Return %</th>
                             <th>Signal Cadence</th>
                             <th>Walk-Forward Status</th>
                             <th style="text-align: right; min-width: 130px;">Action</th>
@@ -5283,7 +5284,9 @@
 
                 currentStdvCalcResult = data;
                 renderStdvCalculatorResults(data);
-                showNotificationToast(`Optimal standard deviation calculated for ${ticker}: ±${data.champion_recommendation?.threshold}σ (WR: ${data.champion_recommendation?.win_rate_pct}%, RR: ${data.champion_recommendation?.risk_reward_ratio}:1)`, "success");
+                const champRec = data.champion_recommendation || {};
+                const typRet = Number(champRec.typical_asset_return_pct ?? champRec.avg_roi_pct ?? 0).toFixed(2);
+                showNotificationToast(`Optimal standard deviation calculated for ${ticker}: ±${champRec.threshold}σ (WR: ${champRec.win_rate_pct}%, Typical Return: +${typRet}%)`, "success");
 
             } catch (err) {
                 showNotificationToast(`Calculator error: ${err.message}`, "error");
@@ -5320,8 +5323,8 @@
             // Update KPI cards
             const wrEl = document.getElementById("calc-val-wr");
             const wrSub = document.getElementById("calc-val-wr-sub");
-            const rrEl = document.getElementById("calc-val-rr");
-            const rrSub = document.getElementById("calc-val-rr-sub");
+            const rrEl = document.getElementById("calc-val-typical") || document.getElementById("calc-val-rr");
+            const rrSub = document.getElementById("calc-val-typical-sub") || document.getElementById("calc-val-rr-sub");
             const pfEl = document.getElementById("calc-val-pf");
             const pfSub = document.getElementById("calc-val-pf-sub");
             const expEl = document.getElementById("calc-val-exp");
@@ -5334,8 +5337,12 @@
             if (wrEl) wrEl.textContent = `${champ.win_rate_pct || 0}%`;
             if (wrSub) wrSub.textContent = `Long: ${champ.long_win_rate_pct || 0}% • Short: ${champ.short_win_rate_pct || 0}%`;
 
-            if (rrEl) rrEl.textContent = `${champ.risk_reward_ratio || 1.0} : 1`;
-            if (rrSub) rrSub.textContent = `Avg Win: +${champ.avg_win_pct || 0}% vs Loss: -${champ.avg_loss_pct || 0}%`;
+            if (rrEl) {
+                const typVal = Number(champ.typical_asset_return_pct ?? champ.avg_roi_pct ?? 0);
+                rrEl.textContent = `${typVal >= 0 ? '+' : ''}${typVal.toFixed(2)}%`;
+                rrEl.style.color = typVal >= 0 ? '#34d399' : '#f23645';
+            }
+            if (rrSub) rrSub.textContent = `Typical Win: +${champ.typical_win_pct ?? champ.avg_win_pct ?? 0}% • Loss: -${champ.typical_loss_pct ?? champ.avg_loss_pct ?? 0}%`;
 
             if (pfEl) pfEl.textContent = `${champ.profit_factor || 0}x`;
             if (pfSub) pfSub.textContent = `Total Dollar: +$${Math.round(champ.total_dollar || 0).toLocaleString()}`;
@@ -5374,7 +5381,7 @@
                         <td style="font-weight: 700; color: #ffffff;">${r.win_rate_pct.toFixed(1)}%</td>
                         <td style="color: #34d399;">${r.long_win_rate_pct.toFixed(1)}%</td>
                         <td style="color: #f23645;">${r.short_win_rate_pct.toFixed(1)}%</td>
-                        <td style="font-weight: 700; color: #ffffff;">${r.risk_reward_ratio.toFixed(2)}:1</td>
+                        <td style="font-weight: 700; color: ${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0) >= 0 ? '#34d399' : '#f23645'};">${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0) >= 0 ? '+' : ''}${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0).toFixed(2)}%</td>
                         <td style="font-weight: 800; color: ${pfColor};">${r.profit_factor.toFixed(2)}x</td>
                         <td style="color: #34d399;">+${r.avg_win_pct.toFixed(1)}%</td>
                         <td style="color: #f23645;">-${r.avg_loss_pct.toFixed(1)}%</td>
@@ -5479,8 +5486,8 @@
             // Update KPI cards
             const wrEl = document.getElementById("calc-val-wr");
             const wrSub = document.getElementById("calc-val-wr-sub");
-            const rrEl = document.getElementById("calc-val-rr");
-            const rrSub = document.getElementById("calc-val-rr-sub");
+            const rrEl = document.getElementById("calc-val-typical") || document.getElementById("calc-val-rr");
+            const rrSub = document.getElementById("calc-val-typical-sub") || document.getElementById("calc-val-rr-sub");
             const pfEl = document.getElementById("calc-val-pf");
             const pfSub = document.getElementById("calc-val-pf-sub");
             const expEl = document.getElementById("calc-val-exp");
@@ -5493,8 +5500,12 @@
             if (wrEl) wrEl.textContent = `${s.avg_win_rate_pct || 0}%`;
             if (wrSub) wrSub.textContent = `Across all 21 universe stocks`;
 
-            if (rrEl) rrEl.textContent = `${s.avg_risk_reward_ratio || 0} : 1`;
-            if (rrSub) rrSub.textContent = `Portfolio mean RR ratio`;
+            if (rrEl) {
+                const typVal = Number(s.avg_typical_return_pct ?? 0);
+                rrEl.textContent = `${typVal >= 0 ? '+' : ''}${typVal.toFixed(2)}%`;
+                rrEl.style.color = typVal >= 0 ? '#34d399' : '#f23645';
+            }
+            if (rrSub) rrSub.textContent = `Portfolio mean typical return %`;
 
             if (pfEl) pfEl.textContent = `${s.avg_profit_factor || 0}x`;
             if (pfSub) pfSub.textContent = `Gross win / loss across universe`;
@@ -5528,7 +5539,7 @@
                         <td style="font-weight: 700; color: #ffffff;">${r.win_rate_pct.toFixed(1)}%</td>
                         <td style="color: #34d399;">${r.long_win_rate_pct.toFixed(1)}%</td>
                         <td style="color: #f23645;">${r.short_win_rate_pct.toFixed(1)}%</td>
-                        <td style="font-weight: 700; color: #ffffff;">${r.risk_reward_ratio.toFixed(2)}:1</td>
+                        <td style="font-weight: 700; color: ${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0) >= 0 ? '#34d399' : '#f23645'};">${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0) >= 0 ? '+' : ''}${(r.typical_asset_return_pct ?? r.avg_roi_pct ?? 0).toFixed(2)}%</td>
                         <td style="font-weight: 800; color: ${pfColor};">${r.profit_factor.toFixed(2)}x</td>
                         <td style="color: #34d399;">+${r.avg_win_pct.toFixed(1)}%</td>
                         <td style="color: #f23645;">-${r.avg_loss_pct.toFixed(1)}%</td>
