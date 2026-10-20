@@ -1573,27 +1573,56 @@
                     <label>Target Asset</label>
                     <input type="text" id="target-asset" list="target-asset-datalist" value="MSFT" style="width: 100px; font-family: var(--font-headings); font-weight: 700;" autocomplete="off" onchange="onTargetAssetInputChange(this.value)">
                     <datalist id="target-asset-datalist">
-                        <option value="MSFT">MSFT (Enterprise Cloud)</option>
-                        <option value="NVDA">NVDA (AI Chips)</option>
-                        <option value="AMD">AMD (Semiconductors)</option>
-                        <option value="MU">MU (Memory & Storage Chips)</option>
-                        <option value="INTC">INTC (Semiconductors / Foundry)</option>
-                        <option value="CRWD">CRWD (Cybersecurity Endpoint)</option>
-                        <option value="META">META (Digital Ads)</option>
-                        <option value="AMZN">AMZN (E-Commerce)</option>
-                        <option value="ADBE">ADBE (Creative Cloud Software)</option>
-                        <option value="TSLA">TSLA (EV Clean Energy)</option>
-                        <option value="SBUX">SBUX (Retail Dining)</option>
-                        <option value="NKE">NKE (Athletic Apparel)</option>
-                        <option value="MCD">MCD (Fast Food)</option>
-                        <option value="KO">KO (Beverages)</option>
-                        <option value="WMT">WMT (Discount Retail)</option>
-                        <option value="JPM">JPM (Banking & Financials)</option>
-                        <option value="LLY">LLY (Pharmaceuticals & GLP-1)</option>
-                        <option value="UNH">UNH (Healthcare)</option>
-                        <option value="VRTX">VRTX (Biotechnology)</option>
-                        <option value="DIS">DIS (Entertainment)</option>
-                        <option value="XOM">XOM (Energy)</option>
+                        <option value="MSFT">MSFT (Enterprise cloud & software) — QQQ/IGV</option>
+                        <option value="CRM">CRM (Cloud CRM software) — QQQ/IGV</option>
+                        <option value="NOW">NOW (Workflow cloud automation) — QQQ/IGV</option>
+                        <option value="ADBE">ADBE (Creative cloud software) — QQQ/IGV</option>
+                        <option value="ORCL">ORCL (Database & cloud infrastructure) — SPY/IGV</option>
+                        <option value="PANW">PANW (Cybersecurity platform architecture) — QQQ/CIBR</option>
+                        <option value="CRWD">CRWD (Cybersecurity endpoint & threat intel) — QQQ/CIBR</option>
+                        <option value="NVDA">NVDA (AI chips & GPU compute) — QQQ/SMH</option>
+                        <option value="AMD">AMD (Advanced micro devices & x86/GPU) — QQQ/SMH</option>
+                        <option value="AVGO">AVGO (Custom silicon & networking chips) — QQQ/SMH</option>
+                        <option value="QCOM">QCOM (Wireless & mobile semiconductors) — QQQ/SMH</option>
+                        <option value="AMAT">AMAT (Semiconductor wafer equipment) — QQQ/SMH</option>
+                        <option value="MU">MU (Memory & storage semiconductors) — QQQ/SMH</option>
+                        <option value="AAPL">AAPL (Consumer electronics & ecosystem) — QQQ/XLK</option>
+                        <option value="DELL">DELL (Enterprise IT hardware & servers) — SPY/XLK</option>
+                        <option value="GOOGL">GOOGL (Search, digital advertising & cloud) — QQQ/XLC</option>
+                        <option value="META">META (Social platforms & AI advertising) — QQQ/XLC</option>
+                        <option value="NFLX">NFLX (Subscription streaming entertainment) — QQQ/XLC</option>
+                        <option value="DIS">DIS (Entertainment, studios & theme parks) — DIA/XLC</option>
+                        <option value="CMCSA">CMCSA (Cable broadband & media entertainment) — SPY/XLC</option>
+                        <option value="AMZN">AMZN (E-commerce & AWS cloud) — QQQ/XLY</option>
+                        <option value="TSLA">TSLA (EV, autonomy & clean energy) — QQQ/XLY</option>
+                        <option value="HD">HD (Home improvement retail) — DIA/XLY</option>
+                        <option value="NKE">NKE (Athletic footwear & apparel) — DIA/XLY</option>
+                        <option value="MCD">MCD (Fast food franchising & dining) — DIA/XLY</option>
+                        <option value="SBUX">SBUX (Retail coffee & dining) — SPY/XLY</option>
+                        <option value="TGT">TGT (Discount department store retail) — SPY/XLY</option>
+                        <option value="PG">PG (Household & personal care products) — DIA/XLP</option>
+                        <option value="KO">KO (Non-alcoholic beverages) — DIA/XLP</option>
+                        <option value="PEP">PEP (Beverages & global snacks) — QQQ/XLP</option>
+                        <option value="COST">COST (Wholesale club retail) — QQQ/XLP</option>
+                        <option value="WMT">WMT (Discount retail & grocery) — DIA/XLP</option>
+                        <option value="JPM">JPM (Money center banking & markets) — SPY/XLF</option>
+                        <option value="BAC">BAC (Consumer & commercial banking) — SPY/XLF</option>
+                        <option value="WFC">WFC (Commercial & retail banking) — SPY/XLF</option>
+                        <option value="GS">GS (Investment banking & global markets) — DIA/XLF</option>
+                        <option value="MS">MS (Wealth management & investment banking) — SPY/XLF</option>
+                        <option value="V">V (Global digital payments network) — DIA/XLF</option>
+                        <option value="USB">USB (Regional & commercial banking) — IWM/KRE</option>
+                        <option value="XOM">XOM (Integrated energy & refining) — SPY/XLE</option>
+                        <option value="CVX">CVX (Integrated oil & gas operations) — DIA/XLE</option>
+                        <option value="COP">COP (Oil & gas exploration & production) — SPY/XLE</option>
+                        <option value="SLB">SLB (Oilfield equipment & technology) — SPY/OIH</option>
+                        <option value="LLY">LLY (Pharmaceuticals & GLP-1 therapies) — SPY/XLV</option>
+                        <option value="UNH">UNH (Managed healthcare & Optum services) — DIA/XLV</option>
+                        <option value="PFE">PFE (Biopharmaceuticals & vaccines) — SPY/XLV</option>
+                        <option value="VRTX">VRTX (Biotechnology & CF therapies) — QQQ/XBI</option>
+                        <option value="CAT">CAT (Heavy machinery & construction equipment) — DIA/XLI</option>
+                        <option value="BA">BA (Commercial aerospace & defense systems) — DIA/ITA</option>
+                        <option value="FCX">FCX (Copper mining & basic materials) — SPY/COPX</option>
                     </datalist>
                 </div>
                 <div class="input-item">
@@ -2005,28 +2034,57 @@
                         <div>
                             <label style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 4px;">Target Asset:</label>
                             <select id="calc-ticker-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #fff; font-weight: 700; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
-                                <option value="MSFT">MSFT (Enterprise Cloud)</option>
-                                <option value="NVDA">NVDA (AI Chips)</option>
-                                <option value="AMD">AMD (Semiconductors)</option>
-                                <option value="MU">MU (Memory & Storage Chips)</option>
-                                <option value="INTC">INTC (Semiconductors / Foundry)</option>
-                                <option value="CRWD">CRWD (Cybersecurity Endpoint)</option>
-                                <option value="META">META (Digital Ads)</option>
-                                <option value="AMZN">AMZN (E-Commerce)</option>
-                                <option value="ADBE">ADBE (Creative Cloud Software)</option>
-                                <option value="TSLA">TSLA (EV Clean Energy)</option>
-                                <option value="SBUX">SBUX (Retail Dining)</option>
-                                <option value="NKE">NKE (Athletic Apparel)</option>
-                                <option value="MCD">MCD (Fast Food)</option>
-                                <option value="KO">KO (Beverages)</option>
-                                <option value="WMT">WMT (Discount Retail)</option>
-                                <option value="JPM">JPM (Banking & Financials)</option>
-                                <option value="LLY">LLY (Pharmaceuticals & GLP-1)</option>
-                                <option value="UNH">UNH (Healthcare)</option>
-                                <option value="VRTX">VRTX (Biotechnology)</option>
-                                <option value="DIS">DIS (Entertainment)</option>
-                                <option value="XOM">XOM (Energy)</option>
-                                <option value="ALL">ALL 21 WATCHLIST ASSETS</option>
+                                <option value="MSFT" selected>MSFT (Enterprise cloud & software)</option>
+                                <option value="CRM">CRM (Cloud CRM software)</option>
+                                <option value="NOW">NOW (Workflow cloud automation)</option>
+                                <option value="ADBE">ADBE (Creative cloud software)</option>
+                                <option value="ORCL">ORCL (Database & cloud infrastructure)</option>
+                                <option value="PANW">PANW (Cybersecurity platform architecture)</option>
+                                <option value="CRWD">CRWD (Cybersecurity endpoint & threat intel)</option>
+                                <option value="NVDA">NVDA (AI chips & GPU compute)</option>
+                                <option value="AMD">AMD (Advanced micro devices & x86/GPU)</option>
+                                <option value="AVGO">AVGO (Custom silicon & networking chips)</option>
+                                <option value="QCOM">QCOM (Wireless & mobile semiconductors)</option>
+                                <option value="AMAT">AMAT (Semiconductor wafer equipment)</option>
+                                <option value="MU">MU (Memory & storage semiconductors)</option>
+                                <option value="AAPL">AAPL (Consumer electronics & ecosystem)</option>
+                                <option value="DELL">DELL (Enterprise IT hardware & servers)</option>
+                                <option value="GOOGL">GOOGL (Search, digital advertising & cloud)</option>
+                                <option value="META">META (Social platforms & AI advertising)</option>
+                                <option value="NFLX">NFLX (Subscription streaming entertainment)</option>
+                                <option value="DIS">DIS (Entertainment, studios & theme parks)</option>
+                                <option value="CMCSA">CMCSA (Cable broadband & media entertainment)</option>
+                                <option value="AMZN">AMZN (E-commerce & AWS cloud)</option>
+                                <option value="TSLA">TSLA (EV, autonomy & clean energy)</option>
+                                <option value="HD">HD (Home improvement retail)</option>
+                                <option value="NKE">NKE (Athletic footwear & apparel)</option>
+                                <option value="MCD">MCD (Fast food franchising & dining)</option>
+                                <option value="SBUX">SBUX (Retail coffee & dining)</option>
+                                <option value="TGT">TGT (Discount department store retail)</option>
+                                <option value="PG">PG (Household & personal care products)</option>
+                                <option value="KO">KO (Non-alcoholic beverages)</option>
+                                <option value="PEP">PEP (Beverages & global snacks)</option>
+                                <option value="COST">COST (Wholesale club retail)</option>
+                                <option value="WMT">WMT (Discount retail & grocery)</option>
+                                <option value="JPM">JPM (Money center banking & markets)</option>
+                                <option value="BAC">BAC (Consumer & commercial banking)</option>
+                                <option value="WFC">WFC (Commercial & retail banking)</option>
+                                <option value="GS">GS (Investment banking & global markets)</option>
+                                <option value="MS">MS (Wealth management & investment banking)</option>
+                                <option value="V">V (Global digital payments network)</option>
+                                <option value="USB">USB (Regional & commercial banking)</option>
+                                <option value="XOM">XOM (Integrated energy & refining)</option>
+                                <option value="CVX">CVX (Integrated oil & gas operations)</option>
+                                <option value="COP">COP (Oil & gas exploration & production)</option>
+                                <option value="SLB">SLB (Oilfield equipment & technology)</option>
+                                <option value="LLY">LLY (Pharmaceuticals & GLP-1 therapies)</option>
+                                <option value="UNH">UNH (Managed healthcare & Optum services)</option>
+                                <option value="PFE">PFE (Biopharmaceuticals & vaccines)</option>
+                                <option value="VRTX">VRTX (Biotechnology & CF therapies)</option>
+                                <option value="CAT">CAT (Heavy machinery & construction equipment)</option>
+                                <option value="BA">BA (Commercial aerospace & defense systems)</option>
+                                <option value="FCX">FCX (Copper mining & basic materials)</option>
+                                <option value="ALL">ALL 50 WATCHLIST ASSETS</option>
                             </select>
                         </div>
 
@@ -3183,75 +3241,109 @@
         }
 
         const CHAMPION_OPTIMAL_MAP = {
-            'NKE':  { threshold: 3.0, holding: 15, dte: 60, market: 'DIA', sector: 'XLY' },
-            'KO':   { threshold: 2.8, holding: 2,  dte: 14, market: 'DIA', sector: 'XLP' },
-            'NVDA': { threshold: 2.6, holding: 4,  dte: 45, market: 'QQQ', sector: 'SMH' },
-            'CRWD': { threshold: 3.0, holding: 7,  dte: 10, market: 'QQQ', sector: 'CIBR' },
-            'MCD':  { threshold: 3.0, holding: 1,  dte: 7,  market: 'DIA', sector: 'XLY' },
-            'MSFT': { threshold: 2.4, holding: 12, dte: 45, market: 'QQQ', sector: 'IGV' },
-            'TSLA': { threshold: 2.8, holding: 15, dte: 21, market: 'QQQ', sector: 'XLY' },
-            'MU':   { threshold: 1.6, holding: 12, dte: 90, market: 'QQQ', sector: 'DRAM' },
-            'UNH':  { threshold: 2.8, holding: 7,  dte: 60, market: 'SPY', sector: 'XLV' },
-            'ADBE': { threshold: 2.6, holding: 2,  dte: 10, market: 'QQQ', sector: 'IGV' },
-            'WMT':  { threshold: 2.6, holding: 10, dte: 14, market: 'DIA', sector: 'XLP' },
-            'AMD':  { threshold: 3.0, holding: 2,  dte: 7,  market: 'QQQ', sector: 'SMH' },
-            'VRTX': { threshold: 3.0, holding: 3,  dte: 7,  market: 'QQQ', sector: 'XBI' },
-            'XOM':  { threshold: 2.4, holding: 3,  dte: 7,  market: 'SPY', sector: 'XLE' },
-            'DIS':  { threshold: 2.4, holding: 4,  dte: 35, market: 'DIA', sector: 'XLC' },
-            'INTC': { threshold: 2.8, holding: 1,  dte: 7,  market: 'QQQ', sector: 'SMH' },
-            'META': { threshold: 2.4, holding: 1,  dte: 14, market: 'QQQ', sector: 'XLC' },
-            'JPM':  { threshold: 3.0, holding: 10, dte: 14, market: 'SPY', sector: 'XLF' },
-            'LLY':  { threshold: 1.4, holding: 18, dte: 90, market: 'SPY', sector: 'XLV' },
-            'AMZN': { threshold: 2.0, holding: 12, dte: 35, market: 'QQQ', sector: 'XLY' },
-            'SBUX': { threshold: 1.6, holding: 7,  dte: 10, market: 'SPY', sector: 'XLY' }
+            'MSFT': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'IGV' },
+            'CRM': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'IGV' },
+            'NOW': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'IGV' },
+            'ADBE': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'IGV' },
+            'ORCL': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'IGV' },
+            'PANW': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'CIBR' },
+            'CRWD': { threshold: 2.2, holding: 7, market: 'QQQ', sector: 'CIBR' },
+            'NVDA': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'SMH' },
+            'AMD': { threshold: 1.8, holding: 2, market: 'QQQ', sector: 'SMH' },
+            'AVGO': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
+            'QCOM': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
+            'AMAT': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
+            'MU': { threshold: 1.4, holding: 2, market: 'QQQ', sector: 'SMH' },
+            'AAPL': { threshold: 2.0, holding: 10, market: 'QQQ', sector: 'XLK' },
+            'DELL': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLK' },
+            'GOOGL': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLC' },
+            'META': { threshold: 1.4, holding: 18, market: 'QQQ', sector: 'XLC' },
+            'NFLX': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLC' },
+            'DIS': { threshold: 2.0, holding: 7, market: 'DIA', sector: 'XLC' },
+            'CMCSA': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLC' },
+            'AMZN': { threshold: 2.0, holding: 14, market: 'QQQ', sector: 'XLY' },
+            'TSLA': { threshold: 1.4, holding: 3, market: 'QQQ', sector: 'XLY' },
+            'HD': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLY' },
+            'NKE': { threshold: 2.6, holding: 18, market: 'DIA', sector: 'XLY' },
+            'MCD': { threshold: 2.6, holding: 3, market: 'DIA', sector: 'XLY' },
+            'SBUX': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLY' },
+            'TGT': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLY' },
+            'PG': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLP' },
+            'KO': { threshold: 2.6, holding: 2, market: 'DIA', sector: 'XLP' },
+            'PEP': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLP' },
+            'COST': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLP' },
+            'WMT': { threshold: 2.0, holding: 18, market: 'DIA', sector: 'XLP' },
+            'JPM': { threshold: 2.0, holding: 18, market: 'SPY', sector: 'XLF' },
+            'BAC': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
+            'WFC': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
+            'GS': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLF' },
+            'MS': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
+            'V': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLF' },
+            'USB': { threshold: 2.0, holding: 5, market: 'IWM', sector: 'KRE' },
+            'XOM': { threshold: 2.2, holding: 10, market: 'SPY', sector: 'XLE' },
+            'CVX': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLE' },
+            'COP': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLE' },
+            'SLB': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'OIH' },
+            'LLY': { threshold: 1.6, holding: 18, market: 'SPY', sector: 'XLV' },
+            'UNH': { threshold: 2.6, holding: 14, market: 'DIA', sector: 'XLV' },
+            'PFE': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLV' },
+            'VRTX': { threshold: 2.0, holding: 18, market: 'QQQ', sector: 'XBI' },
+            'CAT': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLI' },
+            'BA': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'ITA' },
+            'FCX': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'COPX' },
         };
 
         const ALL_MEASURED_STOCKS = [
-            { ticker: "MSFT", market: "QQQ", sector: "IGV", name: "Microsoft" },
-            { ticker: "CRM",  market: "QQQ", sector: "IGV", name: "Salesforce" },
-            { ticker: "NOW",  market: "QQQ", sector: "IGV", name: "ServiceNow" },
-            { ticker: "ADBE", market: "QQQ", sector: "IGV", name: "Adobe" },
-            { ticker: "PANW", market: "QQQ", sector: "CIBR", name: "Palo Alto Networks" },
-            { ticker: "CRWD", market: "QQQ", sector: "CIBR", name: "CrowdStrike" },
-            { ticker: "NVDA", market: "QQQ", sector: "SMH", name: "NVIDIA" },
-            { ticker: "AMD",  market: "QQQ", sector: "SMH", name: "AMD" },
-            { ticker: "QCOM", market: "QQQ", sector: "SMH", name: "Qualcomm" },
-            { ticker: "AMAT", market: "QQQ", sector: "SMH", name: "Applied Materials" },
-            { ticker: "MU",   market: "QQQ", sector: "DRAM", name: "Micron" },
-            { ticker: "DELL", market: "SPY", sector: "XLK", name: "Dell" },
-            { ticker: "INTC", market: "QQQ", sector: "SMH", name: "Intel" },
-            { ticker: "META", market: "QQQ", sector: "XLC", name: "Meta Platforms" },
-            { ticker: "NFLX", market: "QQQ", sector: "XLC", name: "Netflix" },
-            { ticker: "DIS",  market: "DIA", sector: "XLC", name: "Walt Disney" },
-            { ticker: "CMCSA", market: "SPY", sector: "XLC", name: "Comcast" },
-            { ticker: "AMZN", market: "QQQ", sector: "XLY", name: "Amazon" },
-            { ticker: "TSLA", market: "QQQ", sector: "XLY", name: "Tesla" },
-            { ticker: "HD",   market: "DIA", sector: "XLY", name: "Home Depot" },
-            { ticker: "NKE",  market: "DIA", sector: "XLY", name: "Nike" },
-            { ticker: "MCD",  market: "DIA", sector: "XLY", name: "McDonald's" },
-            { ticker: "SBUX", market: "SPY", sector: "XLY", name: "Starbucks" },
-            { ticker: "TGT",  market: "SPY", sector: "XLY", name: "Target" },
-            { ticker: "PG",   market: "DIA", sector: "XLP", name: "Procter & Gamble" },
-            { ticker: "KO",   market: "DIA", sector: "XLP", name: "Coca-Cola" },
-            { ticker: "PEP",  market: "QQQ", sector: "XLP", name: "PepsiCo" },
-            { ticker: "COST", market: "QQQ", sector: "XLP", name: "Costco" },
-            { ticker: "WMT",  market: "DIA", sector: "XLP", name: "Walmart" },
-            { ticker: "JPM",  market: "SPY", sector: "XLF", name: "JPMorgan Chase" },
-            { ticker: "BAC",  market: "SPY", sector: "XLF", name: "Bank of America" },
-            { ticker: "WFC",  market: "SPY", sector: "XLF", name: "Wells Fargo" },
-            { ticker: "MS",   market: "SPY", sector: "XLF", name: "Morgan Stanley" },
-            { ticker: "V",    market: "DIA", sector: "XLF", name: "Visa" },
-            { ticker: "USB",  market: "IWM", sector: "KRE", name: "U.S. Bancorp" },
-            { ticker: "XOM",  market: "SPY", sector: "XLE", name: "ExxonMobil" },
-            { ticker: "CVX",  market: "DIA", sector: "XLE", name: "Chevron" },
-            { ticker: "COP",  market: "SPY", sector: "XLE", name: "ConocoPhillips" },
-            { ticker: "SLB",  market: "SPY", sector: "OIH", name: "Schlumberger" },
-            { ticker: "LLY",  market: "SPY", sector: "XLV", name: "Eli Lilly" },
-            { ticker: "UNH",  market: "DIA", sector: "XLV", name: "UnitedHealth" },
-            { ticker: "PFE",  market: "SPY", sector: "XLV", name: "Pfizer" },
-            { ticker: "VRTX", market: "QQQ", sector: "XBI", name: "Vertex Pharma" },
-            { ticker: "BA",   market: "DIA", sector: "ITA", name: "Boeing" },
-            { ticker: "FCX",  market: "SPY", sector: "COPX", name: "Freeport-McMoRan" }
+            { ticker: "MSFT", market: "QQQ", sector: "IGV", name: "Enterprise cloud & software" },
+            { ticker: "CRM", market: "QQQ", sector: "IGV", name: "Cloud CRM software" },
+            { ticker: "NOW", market: "QQQ", sector: "IGV", name: "Workflow cloud automation" },
+            { ticker: "ADBE", market: "QQQ", sector: "IGV", name: "Creative cloud software" },
+            { ticker: "ORCL", market: "SPY", sector: "IGV", name: "Database & cloud infrastructure" },
+            { ticker: "PANW", market: "QQQ", sector: "CIBR", name: "Cybersecurity platform architecture" },
+            { ticker: "CRWD", market: "QQQ", sector: "CIBR", name: "Cybersecurity endpoint & threat intel" },
+            { ticker: "NVDA", market: "QQQ", sector: "SMH", name: "AI chips & GPU compute" },
+            { ticker: "AMD", market: "QQQ", sector: "SMH", name: "Advanced micro devices & x86/GPU" },
+            { ticker: "AVGO", market: "QQQ", sector: "SMH", name: "Custom silicon & networking chips" },
+            { ticker: "QCOM", market: "QQQ", sector: "SMH", name: "Wireless & mobile semiconductors" },
+            { ticker: "AMAT", market: "QQQ", sector: "SMH", name: "Semiconductor wafer equipment" },
+            { ticker: "MU", market: "QQQ", sector: "SMH", name: "Memory & storage semiconductors" },
+            { ticker: "AAPL", market: "QQQ", sector: "XLK", name: "Consumer electronics & ecosystem" },
+            { ticker: "DELL", market: "SPY", sector: "XLK", name: "Enterprise IT hardware & servers" },
+            { ticker: "GOOGL", market: "QQQ", sector: "XLC", name: "Search, digital advertising & cloud" },
+            { ticker: "META", market: "QQQ", sector: "XLC", name: "Social platforms & AI advertising" },
+            { ticker: "NFLX", market: "QQQ", sector: "XLC", name: "Subscription streaming entertainment" },
+            { ticker: "DIS", market: "DIA", sector: "XLC", name: "Entertainment, studios & theme parks" },
+            { ticker: "CMCSA", market: "SPY", sector: "XLC", name: "Cable broadband & media entertainment" },
+            { ticker: "AMZN", market: "QQQ", sector: "XLY", name: "E-commerce & AWS cloud" },
+            { ticker: "TSLA", market: "QQQ", sector: "XLY", name: "EV, autonomy & clean energy" },
+            { ticker: "HD", market: "DIA", sector: "XLY", name: "Home improvement retail" },
+            { ticker: "NKE", market: "DIA", sector: "XLY", name: "Athletic footwear & apparel" },
+            { ticker: "MCD", market: "DIA", sector: "XLY", name: "Fast food franchising & dining" },
+            { ticker: "SBUX", market: "SPY", sector: "XLY", name: "Retail coffee & dining" },
+            { ticker: "TGT", market: "SPY", sector: "XLY", name: "Discount department store retail" },
+            { ticker: "PG", market: "DIA", sector: "XLP", name: "Household & personal care products" },
+            { ticker: "KO", market: "DIA", sector: "XLP", name: "Non-alcoholic beverages" },
+            { ticker: "PEP", market: "QQQ", sector: "XLP", name: "Beverages & global snacks" },
+            { ticker: "COST", market: "QQQ", sector: "XLP", name: "Wholesale club retail" },
+            { ticker: "WMT", market: "DIA", sector: "XLP", name: "Discount retail & grocery" },
+            { ticker: "JPM", market: "SPY", sector: "XLF", name: "Money center banking & markets" },
+            { ticker: "BAC", market: "SPY", sector: "XLF", name: "Consumer & commercial banking" },
+            { ticker: "WFC", market: "SPY", sector: "XLF", name: "Commercial & retail banking" },
+            { ticker: "GS", market: "DIA", sector: "XLF", name: "Investment banking & global markets" },
+            { ticker: "MS", market: "SPY", sector: "XLF", name: "Wealth management & investment banking" },
+            { ticker: "V", market: "DIA", sector: "XLF", name: "Global digital payments network" },
+            { ticker: "USB", market: "IWM", sector: "KRE", name: "Regional & commercial banking" },
+            { ticker: "XOM", market: "SPY", sector: "XLE", name: "Integrated energy & refining" },
+            { ticker: "CVX", market: "DIA", sector: "XLE", name: "Integrated oil & gas operations" },
+            { ticker: "COP", market: "SPY", sector: "XLE", name: "Oil & gas exploration & production" },
+            { ticker: "SLB", market: "SPY", sector: "OIH", name: "Oilfield equipment & technology" },
+            { ticker: "LLY", market: "SPY", sector: "XLV", name: "Pharmaceuticals & GLP-1 therapies" },
+            { ticker: "UNH", market: "DIA", sector: "XLV", name: "Managed healthcare & Optum services" },
+            { ticker: "PFE", market: "SPY", sector: "XLV", name: "Biopharmaceuticals & vaccines" },
+            { ticker: "VRTX", market: "QQQ", sector: "XBI", name: "Biotechnology & CF therapies" },
+            { ticker: "CAT", market: "DIA", sector: "XLI", name: "Heavy machinery & construction equipment" },
+            { ticker: "BA", market: "DIA", sector: "ITA", name: "Commercial aerospace & defense systems" },
+            { ticker: "FCX", market: "SPY", sector: "COPX", name: "Copper mining & basic materials" },
         ];
 
         function populateMeasuredStocksDropdown() {
@@ -4974,7 +5066,7 @@
                         const theme = r.theme ? ` (${r.theme})` : "";
                         calcOpts += `<option value="${r.ticker}">${r.ticker}${theme}</option>`;
                     });
-                    calcOpts += `<option value="ALL">ALL 21 WATCHLIST ASSETS</option>`;
+                    calcOpts += `<option value="ALL">ALL 50 WATCHLIST ASSETS</option>`;
                     calcSel.innerHTML = calcOpts;
                     if (prevCalcVal && Array.from(calcSel.options).some(o => o.value === prevCalcVal)) {
                         calcSel.value = prevCalcVal;
