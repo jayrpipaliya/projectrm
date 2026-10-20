@@ -177,7 +177,16 @@ class ThresholdOptimizer:
                 "trades_count": 0,
                 "win_rate_pct": 0.0,
                 "avg_roi_pct": 0.0,
+                "avg_win_pct": 0.0,
+                "avg_loss_pct": 0.0,
+                "risk_reward_ratio": 1.0,
                 "profit_factor": 0.0,
+                "expectancy_pct": 0.0,
+                "long_win_rate_pct": 0.0,
+                "short_win_rate_pct": 0.0,
+                "long_trades_count": 0,
+                "short_trades_count": 0,
+                "trades_per_year": 0.0,
                 "total_dollar": 0.0,
                 "trades": [],
                 "forensic_breakdown": {}
@@ -540,9 +549,9 @@ class ThresholdOptimizer:
                 if cnt < 3:
                     score = -50.0
                 else:
-                    pf_val = min(15.0, eval_res["profit_factor"])
-                    wr_val = eval_res["win_rate_pct"]
-                    rr_val = min(10.0, eval_res["risk_reward_ratio"])
+                    pf_val = min(15.0, eval_res.get("profit_factor", 0.0))
+                    wr_val = eval_res.get("win_rate_pct", 0.0)
+                    rr_val = min(10.0, eval_res.get("risk_reward_ratio", 1.0))
                     
                     if metric == "win_rate":
                         score = wr_val * np.log10(max(3, cnt))
