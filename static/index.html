@@ -4141,11 +4141,13 @@
                                 callbacks: {
                                     afterBody: (ctx) => {
                                         const row = visibleSlice[ctx[0].dataIndex];
+                                        const alertVal = Number(row.regime_alert ?? row.cusum_alert ?? 0);
+                                        const streakVal = Number(row.streak ?? row.cusum_streak ?? 0);
                                         return [
-                                            `S+ Positive Drift: ${row.cusum_pos.toFixed(2)}`,
-                                            `S- Negative Drift: ${row.cusum_neg.toFixed(2)}`,
-                                            `Streak: ${row.streak} days`,
-                                            row.regime_alert != 0 ? "⚠ STEALTH REGIME SHIFT DETECTED!" : "✓ No Drift Alert"
+                                            `S+ Positive Drift: ${Number(row.cusum_pos || 0).toFixed(2)}`,
+                                            `S- Negative Drift: ${Number(row.cusum_neg || 0).toFixed(2)}`,
+                                            `Streak: ${streakVal} days`,
+                                            alertVal !== 0 ? "⚠ STEALTH REGIME SHIFT DETECTED!" : "✓ No Drift Alert"
                                         ];
                                     }
                                 }
@@ -4267,14 +4269,17 @@
 
                     ctx.save();
                     visibleSlice.forEach((h, idx) => {
-                        const isAlert = h.regime_alert != 0;
-                        const isStreak = Math.abs(h.streak || 0) >= 4;
+                        const alertVal = Number(h.regime_alert ?? h.cusum_alert ?? 0);
+                        const streakVal = Number(h.streak ?? h.cusum_streak ?? 0);
+                        const isAlert = alertVal !== 0;
+                        const isStreak = Math.abs(streakVal) >= 4;
 
+                        // Only shade when there is an active structural break alert or a persistent 4+ day streak
                         if (isAlert || isStreak) {
-                            const isBullishRegime = (h.regime_alert >0) || (h.streak >0) || (h.cusum_pos >h.cusum_neg);
+                            const isBullishRegime = alertVal > 0 || streakVal > 0 || (alertVal === 0 && (h.cusum_pos || 0) > (h.cusum_neg || 0));
                             const pixelX = x.getPixelForValue(idx);
                             let bandWidth = 14;
-                            if (visibleSlice.length >1) {
+                            if (visibleSlice.length > 1) {
                                 if (idx === 0) {
                                     bandWidth = (x.getPixelForValue(1) - pixelX);
                                 } else if (idx === visibleSlice.length - 1) {
@@ -4283,18 +4288,18 @@
                                     bandWidth = (x.getPixelForValue(idx + 1) - x.getPixelForValue(idx - 1)) / 2;
                                 }
                             }
-                            bandWidth = Math.max(bandWidth, 12);
+                            bandWidth = Math.max(bandWidth, 8);
                             const startX = pixelX - (bandWidth / 2);
 
                             // Shading color: Green for Bullish, Red for Bearish
                             if (isBullishRegime) {
-                                ctx.fillStyle = isAlert ? "rgba(8, 153, 129, 0.24)" : "rgba(8, 153, 129, 0.12)";
+                                ctx.fillStyle = isAlert ? "rgba(8, 153, 129, 0.22)" : "rgba(8, 153, 129, 0.10)";
                                 ctx.fillRect(startX, top, bandWidth, height);
 
                                 ctx.fillStyle = isAlert ? "rgba(52, 211, 153, 0.95)" : "rgba(8, 153, 129, 0.55)";
                                 ctx.fillRect(startX, top, bandWidth, 3);
                             } else {
-                                ctx.fillStyle = isAlert ? "rgba(242, 54, 69, 0.24)" : "rgba(242, 54, 69, 0.12)";
+                                ctx.fillStyle = isAlert ? "rgba(242, 54, 69, 0.22)" : "rgba(242, 54, 69, 0.10)";
                                 ctx.fillRect(startX, top, bandWidth, height);
 
                                 ctx.fillStyle = isAlert ? "rgba(248, 113, 113, 0.95)" : "rgba(242, 54, 69, 0.55)";
@@ -4362,12 +4367,14 @@
                                         `5-Day Z: ${row.z_5d}σ | 20-Day Z: ${row.z_20d}σ`,
                                         `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`
                                     ];
-                                    if (row.regime_alert != 0 || Math.abs(row.streak || 0) >= 4) {
-                                        const isBull = (row.regime_alert >0) || (row.streak >0) || (row.cusum_pos >row.cusum_neg);
-                                        const label = isBull ? " BULLISH REGIME SHIFT (Upward Drift)" : " BEARISH REGIME SHIFT (Downward Drift)";
+                                    const alertVal = Number(row.regime_alert ?? row.cusum_alert ?? 0);
+                                    const streakVal = Number(row.streak ?? row.cusum_streak ?? 0);
+                                    if (alertVal !== 0 || Math.abs(streakVal) >= 4) {
+                                        const isBull = alertVal > 0 || streakVal > 0 || (alertVal === 0 && (row.cusum_pos || 0) > (row.cusum_neg || 0));
+                                        const label = isBull ? "▲ BULLISH REGIME SHIFT (Upward Drift)" : "▼ BEARISH REGIME SHIFT (Downward Drift)";
                                         lines.push(`⚠ ${label}`);
-                                        if (Math.abs(row.streak || 0) >= 4) {
-                                            lines.push(`   Consecutive Streak: ${row.streak} days`);
+                                        if (Math.abs(streakVal) >= 4) {
+                                            lines.push(`   Consecutive Streak: ${streakVal} days`);
                                         }
                                     }
                                     if (row.z_1d <= -thresh) {

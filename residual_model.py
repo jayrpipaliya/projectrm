@@ -773,7 +773,9 @@ class ResidualAnomalyModel:
                 "cusum_pos": round(float(cusum_res["s_pos"][t]), 2),
                 "cusum_neg": round(float(cusum_res["s_neg"][t]), 2),
                 "cusum_alert": int(cusum_res["alert"][t]),
-                "cusum_streak": int(cusum_res["streak"][t])
+                "cusum_streak": int(cusum_res["streak"][t]),
+                "regime_alert": int(cusum_res["alert"][t]),
+                "streak": int(cusum_res["streak"][t])
             })
 
         latest = history[-1] if history else {}
