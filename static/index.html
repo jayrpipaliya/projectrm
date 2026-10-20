@@ -1949,7 +1949,7 @@
                         <div class="playbook-col-text mode-retail">Instead of guessing which expiration date (DTE) or strike to buy, or when to take profits, this master registry has already <strong>backtested and locked in the winning formula</strong> for each stock on your watchlist. Right before market close (at 3:55 PM EST), the scanner lights up if any stock just triggered an official, high-win-rate trade.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>Champion Setup (&sigma;* &times; Tenor* &times; Hold H*)</strong> across all 21 core watchlist stocks. Continually monitors incoming market close bars against live Kalman innovation thresholds.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>Champion Setup (&sigma;* &times; Tenor* &times; Hold H*)</strong> across all 50 core watchlist stocks. Continually monitors incoming market close bars against live Kalman innovation thresholds.
                         </div>
                     </div>
                     <div class="playbook-col">
@@ -1961,7 +1961,7 @@
                             <strong>Set an alarm for 3:55 PM EST.</strong> Click <strong>"Search for the Rare Edge"</strong>. If any stock lights up: 1. Buy the exact <strong>Contract Tenor</strong> listed (e.g. 30 DTE Call if Green, Put if Red); 2. Hold the trade for the exact <strong>Holding Days</strong> shown (e.g. 12 trading days); 3. That's it! You are trading with audited historical win rates and verified edge, zero guessing needed.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Implements an automated institutional <strong>Market-On-Close (MOC) execution protocol</strong>. At 15:55 EST, residual innovations are evaluated across the 21-asset universe against Walk-Forward Pareto-optimal triplets $(\sigma^*_i, \text{Tenor}^*_i, H^*_i)$. Signals trigger MOC orders at 16:00 EST close price $S_0$, hedging directional index beta while capturing pure idiosyncratic alpha with pre-scheduled $H^*$-day programmatic unwinds.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Implements an automated institutional <strong>Market-On-Close (MOC) execution protocol</strong>. At 15:55 EST, residual innovations are evaluated across the 50-asset universe against Walk-Forward Pareto-optimal triplets $(\sigma^*_i, \text{Tenor}^*_i, H^*_i)$. Signals trigger MOC orders at 16:00 EST close price $S_0$, hedging directional index beta while capturing pure idiosyncratic alpha with pre-scheduled $H^*$-day programmatic unwinds.
                         </div>
                     </div>
                 </div>
@@ -1978,7 +1978,7 @@
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <button id="btn-preclose-scan" class="action-pill" onclick="runPreCloseScan()" style="padding: 6px 16px; font-weight: 700; font-size: 0.78rem; background: #f23645; color: #ffffff; border: 1px solid #f23645; cursor: pointer;" title="Search all watchlist champions for active trigger signals before 4:00 PM EST market close">Search for the Rare Edge
                     </button>
-                    <button id="btn-ledger-sync-stocks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerStocks()" title="High-speed sync of all 21 core watchlist stocks">Sharpen Watchlist Stocks
+                    <button id="btn-ledger-sync-stocks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerStocks()" title="High-speed sync of all 50 core watchlist stocks">Sharpen Watchlist Stocks
                     </button>
                     <button id="btn-ledger-sync-benchmarks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerBenchmarks()" title="High-speed sync of all 12 market and sector benchmark ETFs">Sharpen Benchmarks
                     </button>
@@ -2117,8 +2117,8 @@
                             <button id="btn-run-stdv-calc" onclick="runStdvCalculator()" class="action-pill" style="background: #2962ff; border: 1px solid #2962ff; color: #fff; font-weight: 800; padding: 7px 16px; font-size: 0.80rem; cursor: pointer;">
                                 Calculate Best Stdv
                             </button>
-                            <button id="btn-run-calc-all" onclick="runBatchStdvCalculation()" class="action-pill" style="background: rgba(8, 153, 129, 0.15); border: 1px solid rgba(8, 153, 129, 0.6); color: #34d399; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;" title="Sweep and calibrate optimal standard deviations across all 21 universe assets">
-                                Calculate for ALL 21 Assets
+                            <button id="btn-run-calc-all" onclick="runBatchStdvCalculation()" class="action-pill" style="background: rgba(8, 153, 129, 0.15); border: 1px solid rgba(8, 153, 129, 0.6); color: #34d399; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;" title="Sweep and calibrate optimal standard deviations across all 50 universe assets">
+                                Calculate for ALL 50 Assets
                             </button>
                         </div>
                     </div>
@@ -2137,7 +2137,7 @@
                                     Set as Rare Edge Champion
                                 </button>
                                 <button id="btn-apply-all-rare-edge" onclick="setAllChampionsToRareEdge()" class="action-pill" style="background: rgba(8, 153, 129, 0.2); border: 1px solid #089981; color: #34d399; font-weight: 800; padding: 8px 16px; font-size: 0.82rem; cursor: pointer; display: none;">
-                                    Lock In ALL 21 Champions
+                                    Lock In ALL 50 Champions
                                 </button>
                             </div>
                         </div>
@@ -4964,7 +4964,7 @@
                     showNotificationToast(` ${firing.length} Pre-Close 4 PM Signals Firing! Auto-filtering table.`, "warning");
                     setLedgerFilter('ACTIVE');
                 } else {
-                    const totalScanned = data.total_scanned || (data.ledger ? data.ledger.length : 21);
+                    const totalScanned = data.total_scanned || (data.ledger ? data.ledger.length : 50);
                     if (bannerIcon) bannerIcon.textContent = "";
                     if (bannerTitle) bannerTitle.innerHTML = `<span style="color:#ffffff;">NO 4 PM MOC SIGNALS FIRING &bull; ALL ${totalScanned} ASSETS WITHIN NORMAL VOLATILITY BANDS</span>`;
                     if (bannerBadge) {
@@ -5592,9 +5592,9 @@
             const origText = btn ? btn.innerHTML : "";
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = `<span>⏳ Optimizing All 21 Stocks...</span>`;
+                btn.innerHTML = `<span>⏳ Optimizing All 50 Stocks...</span>`;
             }
-            showNotificationToast("Sweeping standard deviation barriers across all 21 watchlist assets in background...", "info");
+            showNotificationToast("Sweeping standard deviation barriers across all 50 watchlist assets in background...", "info");
 
             try {
                 const res = await fetch("/api/optimizer/calculate-stdv?ticker=ALL");
@@ -5613,7 +5613,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || `Calculate for ALL 21 Assets`;
+                    btn.innerHTML = origText || `Calculate for ALL 50 Assets`;
                 }
             }
         }
@@ -5653,7 +5653,7 @@
             const wfSub = document.getElementById("calc-val-wf-sub");
 
             if (wrEl) wrEl.textContent = `${s.avg_win_rate_pct || 0}%`;
-            if (wrSub) wrSub.textContent = `Across all 21 universe stocks`;
+            if (wrSub) wrSub.textContent = `Across all 50 universe stocks`;
 
             if (rrEl) {
                 const typVal = Number(s.avg_typical_return_pct ?? 0);
@@ -5718,7 +5718,7 @@
                 btn.disabled = true;
                 btn.innerHTML = `<span>⏳ Locking in All Champions...</span>`;
             }
-            showNotificationToast("Locking in optimal Stdv barriers for all 21 assets into Rare Edge...", "info");
+            showNotificationToast("Locking in optimal Stdv barriers for all 50 assets into Rare Edge...", "info");
 
             try {
                 const res = await fetch("/api/ledger/set-champion?ticker=ALL");
@@ -5739,7 +5739,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || `Lock In ALL 21 Champions`;
+                    btn.innerHTML = origText || `Lock In ALL 50 Champions`;
                 }
             }
         }
