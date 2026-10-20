@@ -5150,9 +5150,13 @@
                 const pfColor = pf >= 2.0 ? '#ffffff' : (pf >= 1.3 ? '#fcd34d' : '#94a3b8');
                 const roiColor = roi >= 0 ? '#34d399' : '#f23645';
 
-                let valStyle = "background: rgba(255,255,255,0.06); color: #ffffff; border: 1px solid rgba(255,255,255,0.15);";
-                if (r.validation_status === "MILD_DEGRADATION") valStyle = "background: rgba(255,255,255,0.06); color: #d1d4dc; border: 1px solid #36373d;";
-                else if (r.validation_status === "OVERFITTED_WARNING") valStyle = "background: rgba(242,54,69,0.15); color: #f23645; border: 1px solid #f23645;";
+                const rawStatus = (r.validation_status || 'ROBUST').toUpperCase();
+                let valStyle = "background: rgba(8, 153, 129, 0.18); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.5);"; // Green for ROBUST
+                if (rawStatus.includes("ACCEPT")) {
+                    valStyle = "background: rgba(245, 158, 11, 0.18); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.5);"; // Yellow for ACCEPTABLE
+                } else if (rawStatus.includes("DEGRAD") || rawStatus.includes("OVERFIT")) {
+                    valStyle = "background: rgba(242, 54, 69, 0.18); color: #f23645; border: 1px solid rgba(242, 54, 69, 0.5);"; // Red for DEGRADED
+                }
 
                 const rowBg = isTriggered 
                     ? (isBull ? "background: rgba(8, 153, 129, 0.08); border-left: 3px solid #34d399;" : "background: rgba(242, 54, 69, 0.08); border-left: 3px solid #f23645;")
@@ -5504,9 +5508,15 @@
             if (freqSub) freqSub.textContent = `Total: ${champ.trades_count || 0} verified trades`;
 
             if (wfEl) {
-                const status = wf.validation_status || "ROBUST";
+                const status = (wf.validation_status || "ROBUST").toUpperCase();
                 wfEl.textContent = status.replace('_', ' ');
-                wfEl.style.color = status === "ROBUST" ? "#34d399" : (status === "ACCEPTABLE" ? "#38bdf8" : "#f23645");
+                if (status.includes("ACCEPT")) {
+                    wfEl.style.color = "#fcd34d"; // Yellow for ACCEPTABLE
+                } else if (status.includes("DEGRAD") || status.includes("OVERFIT")) {
+                    wfEl.style.color = "#f23645"; // Red for DEGRADED
+                } else {
+                    wfEl.style.color = "#34d399"; // Green for ROBUST
+                }
             }
             if (wfSub) wfSub.textContent = `OOS WR: ${wf.oos_win_rate_pct || champ.win_rate_pct}% (Eff: ${wf.efficiency_ratio || 1.0}x)`;
 
