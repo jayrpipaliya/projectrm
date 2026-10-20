@@ -95,28 +95,27 @@ def main():
                 calc_details=True
             )
             raw_trades = eval_trades.get("trades", [])
-            if raw_trades:
-                gold_trades = []
-                for tr in raw_trades:
-                    gold_trades.append({
-                        "ticker": ticker,
-                        "trade_date": tr["date"],
-                        "action": tr["action"],
-                        "signal_z": tr.get("signal_z", 0.0),
-                        "underlying_entry": tr["entry_price"],
-                        "strike": tr["exit_price"],
-                        "contract_dte": 0,
-                        "holding_sessions": tr["holding_sessions"],
-                        "entry_option_price": tr["entry_price"],
-                        "exit_option_price": tr["exit_price"],
-                        "pnl_pct": tr["pnl_rec_pct"],
-                        "dollar_pnl": tr["dollar_rec"],
-                        "is_win": 1 if tr["win_rec"] else 0,
-                        "loss_cause": tr.get("loss_cause", ""),
-                        "mfe_pct": tr.get("mfe_pct", 0.0),
-                        "mae_pct": tr.get("mae_pct", 0.0)
-                    })
-                warehouse.save_champion_trades(ticker, gold_trades)
+            gold_trades = []
+            for tr in raw_trades:
+                gold_trades.append({
+                    "ticker": ticker,
+                    "trade_date": tr["date"],
+                    "action": tr["action"],
+                    "signal_z": tr.get("signal_z", 0.0),
+                    "underlying_entry": tr["entry_price"],
+                    "strike": tr["exit_price"],
+                    "contract_dte": 0,
+                    "holding_sessions": tr["holding_sessions"],
+                    "entry_option_price": tr["entry_price"],
+                    "exit_option_price": tr["exit_price"],
+                    "pnl_pct": tr["pnl_rec_pct"],
+                    "dollar_pnl": tr["dollar_rec"],
+                    "is_win": 1 if tr["win_rec"] else 0,
+                    "loss_cause": tr.get("loss_cause", ""),
+                    "mfe_pct": tr.get("mfe_pct", 0.0),
+                    "mae_pct": tr.get("mae_pct", 0.0)
+                })
+            warehouse.save_champion_trades(ticker, gold_trades)
 
             # Update live signal in gold ledger
             latest = hist[-1]

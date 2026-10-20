@@ -594,28 +594,27 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                                 calc_details=True
                             )
                             raw_trades = eval_t.get("trades", [])
-                            if raw_trades:
-                                gold_trades = []
-                                for tr in raw_trades:
-                                    gold_trades.append({
-                                        "ticker": t,
-                                        "trade_date": tr["date"],
-                                        "action": tr["action"],
-                                        "signal_z": tr.get("signal_z", 0.0),
-                                        "underlying_entry": tr["entry_price"],
-                                        "strike": tr["exit_price"],
-                                        "contract_dte": 0,
-                                        "holding_sessions": tr["holding_sessions"],
-                                        "entry_option_price": tr["entry_price"],
-                                        "exit_option_price": tr["exit_price"],
-                                        "pnl_pct": tr["pnl_rec_pct"],
-                                        "dollar_pnl": tr["dollar_rec"],
-                                        "is_win": 1 if tr["win_rec"] else 0,
-                                        "loss_cause": tr.get("loss_cause", "UNKNOWN"),
-                                        "mfe_pct": tr.get("mfe_pct", 0.0),
-                                        "mae_pct": tr.get("mae_pct", 0.0)
-                                    })
-                                warehouse.save_champion_trades(t, gold_trades)
+                            gold_trades = []
+                            for tr in raw_trades:
+                                gold_trades.append({
+                                    "ticker": t,
+                                    "trade_date": tr["date"],
+                                    "action": tr["action"],
+                                    "signal_z": tr.get("signal_z", 0.0),
+                                    "underlying_entry": tr["entry_price"],
+                                    "strike": tr["exit_price"],
+                                    "contract_dte": 0,
+                                    "holding_sessions": tr["holding_sessions"],
+                                    "entry_option_price": tr["entry_price"],
+                                    "exit_option_price": tr["exit_price"],
+                                    "pnl_pct": tr["pnl_rec_pct"],
+                                    "dollar_pnl": tr["dollar_rec"],
+                                    "is_win": 1 if tr["win_rec"] else 0,
+                                    "loss_cause": tr.get("loss_cause", "UNKNOWN"),
+                                    "mfe_pct": tr.get("mfe_pct", 0.0),
+                                    "mae_pct": tr.get("mae_pct", 0.0)
+                                })
+                            warehouse.save_champion_trades(t, gold_trades)
                             updated_count += 1
                     except Exception as e:
                         print(f"Error setting champion for {t}: {e}")
@@ -686,28 +685,27 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             })
 
             raw_trades = eval_res.get("trades", [])
-            if raw_trades:
-                gold_trades = []
-                for tr in raw_trades:
-                    gold_trades.append({
-                        "ticker": ticker,
-                        "trade_date": tr["date"],
-                        "action": tr["action"],
-                        "signal_z": tr.get("signal_z", 0.0),
-                        "underlying_entry": tr["entry_price"],
-                        "strike": tr["exit_price"],
-                        "contract_dte": 0,
-                        "holding_sessions": tr["holding_sessions"],
-                        "entry_option_price": tr["entry_price"],
-                        "exit_option_price": tr["exit_price"],
-                        "pnl_pct": tr["pnl_rec_pct"],
-                        "dollar_pnl": tr["dollar_rec"],
-                        "is_win": 1 if tr["win_rec"] else 0,
-                        "loss_cause": tr.get("loss_cause", "UNKNOWN"),
-                        "mfe_pct": tr.get("mfe_pct", 0.0),
-                        "mae_pct": tr.get("mae_pct", 0.0)
-                    })
-                warehouse.save_champion_trades(ticker, gold_trades)
+            gold_trades = []
+            for tr in raw_trades:
+                gold_trades.append({
+                    "ticker": ticker,
+                    "trade_date": tr["date"],
+                    "action": tr["action"],
+                    "signal_z": tr.get("signal_z", 0.0),
+                    "underlying_entry": tr["entry_price"],
+                    "strike": tr["exit_price"],
+                    "contract_dte": 0,
+                    "holding_sessions": tr["holding_sessions"],
+                    "entry_option_price": tr["entry_price"],
+                    "exit_option_price": tr["exit_price"],
+                    "pnl_pct": tr["pnl_rec_pct"],
+                    "dollar_pnl": tr["dollar_rec"],
+                    "is_win": 1 if tr["win_rec"] else 0,
+                    "loss_cause": tr.get("loss_cause", "UNKNOWN"),
+                    "mfe_pct": tr.get("mfe_pct", 0.0),
+                    "mae_pct": tr.get("mae_pct", 0.0)
+                })
+            warehouse.save_champion_trades(ticker, gold_trades)
 
             self._send_json({
                 "status": "SUCCESS",
@@ -1192,28 +1190,27 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                             calc_details=True
                         )
                         raw_trades = eval_t.get("trades", [])
-                        if raw_trades:
-                            gold_trades = []
-                            for tr in raw_trades:
-                                gold_trades.append({
-                                    "ticker": t,
-                                    "trade_date": tr["date"],
-                                    "action": tr["action"],
-                                    "signal_z": tr.get("signal_z", 0.0),
-                                    "underlying_entry": tr["entry_price"],
-                                    "strike": tr["exit_price"],
-                                    "contract_dte": 0,
-                                    "holding_sessions": tr["holding_sessions"],
-                                    "entry_option_price": tr["entry_price"],
-                                    "exit_option_price": tr["exit_price"],
-                                    "pnl_pct": tr["pnl_rec_pct"],
-                                    "dollar_pnl": tr["dollar_rec"],
-                                    "is_win": 1 if tr["win_rec"] else 0,
-                                    "loss_cause": tr.get("loss_cause", ""),
-                                    "mfe_pct": tr.get("mfe_pct", 0.0),
-                                    "mae_pct": tr.get("mae_pct", 0.0)
-                                })
-                            warehouse.save_champion_trades(t, gold_trades)
+                        gold_trades = []
+                        for tr in raw_trades:
+                            gold_trades.append({
+                                "ticker": t,
+                                "trade_date": tr["date"],
+                                "action": tr["action"],
+                                "signal_z": tr.get("signal_z", 0.0),
+                                "underlying_entry": tr["entry_price"],
+                                "strike": tr["exit_price"],
+                                "contract_dte": 0,
+                                "holding_sessions": tr["holding_sessions"],
+                                "entry_option_price": tr["entry_price"],
+                                "exit_option_price": tr["exit_price"],
+                                "pnl_pct": tr["pnl_rec_pct"],
+                                "dollar_pnl": tr["dollar_rec"],
+                                "is_win": 1 if tr["win_rec"] else 0,
+                                "loss_cause": tr.get("loss_cause", ""),
+                                "mfe_pct": tr.get("mfe_pct", 0.0),
+                                "mae_pct": tr.get("mae_pct", 0.0)
+                            })
+                        warehouse.save_champion_trades(t, gold_trades)
                         synced.append(t)
                 except Exception as e:
                     print(f"Error syncing gold ledger for {t}: {e}")

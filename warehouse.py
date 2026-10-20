@@ -675,12 +675,13 @@ class Warehouse:
 
     def save_champion_trades(self, ticker: str, trades: List[Dict[str, Any]]) -> int:
         """Saves full forensic trade records for a champion asset, replacing prior calibration."""
-        if not trades:
-            return 0
-        inserted = 0
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM champion_gold_trades WHERE ticker = ?", (ticker.upper(),))
+            if not trades:
+                conn.commit()
+                return 0
+            inserted = 0
             for tr in trades:
                 t_date = tr.get("date") or tr.get("trade_date")
                 if not t_date:
