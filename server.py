@@ -119,7 +119,6 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
             # Fallback to yfinance if live API returns empty
             try:
-                from yfinance_loader import YFinanceLoader
                 yf_loader = YFinanceLoader(warehouse)
                 yf_res = yf_loader.fetch_and_store_ticker(ticker, period="2y")
                 combined = warehouse.get_stock_history(ticker)
