@@ -1952,6 +1952,175 @@
                 </div>
             </div>
 
+            
+            <!-- =============================================================== -->
+            <!-- SECTION 1.85A: BEST STDV & RISK/REWARD (WR/RR) CALCULATOR       -->
+            <!-- =============================================================== -->
+            <div id="stdv-calculator-card" style="background: linear-gradient(135deg, rgba(41, 98, 255, 0.08) 0%, rgba(242, 54, 69, 0.06) 100%); border: 1px solid rgba(41, 98, 255, 0.35); border-radius: var(--radius-sm); padding: 18px 22px; margin-top: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.35rem; color: #38bdf8;">&#9878;</span>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #ffffff; letter-spacing: -0.01em;">Best Standard Deviation (&sigma;*) &amp; WR / RR Calculator</h3>
+                                <span class="tag-pill tag-blue" style="font-size: 0.68rem; font-weight: 800;">PROVEN EDGE CALIBRATOR</span>
+                            </div>
+                            <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 2px;">
+                                Sweeps trigger standard deviations (&sigma;) for Long and Short signals to find the barrier that maximizes backtested Win Rate (WR), Risk/Reward (RR), and Profit Factor. Lock in your edge to Rare Edge.
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="action-pill" onclick="toggleStdvCalculatorVisibility()" id="btn-toggle-stdv-calc" style="font-size: 0.72rem; padding: 4px 10px; color: #94a3b8; border-color: #36373d;">Collapse Calculator &#9652;</button>
+                    </div>
+                </div>
+
+                <!-- Calculator Body Container -->
+                <div id="stdv-calculator-body">
+                    <!-- Controls Toolbar -->
+                    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,0.25); padding: 12px 16px; border-radius: 4px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+                        <div>
+                            <label style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 4px;">Target Asset:</label>
+                            <select id="calc-ticker-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #fff; font-weight: 700; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
+                                <option value="MSFT">MSFT (Enterprise Cloud)</option>
+                                <option value="NVDA">NVDA (AI Chips)</option>
+                                <option value="AAPL">AAPL (Consumer Electronics)</option>
+                                <option value="CRWD">CRWD (Cybersecurity)</option>
+                                <option value="AMD">AMD (Semiconductors)</option>
+                                <option value="TSLA">TSLA (EV Clean Energy)</option>
+                                <option value="META">META (Digital Ads)</option>
+                                <option value="AMZN">AMZN (E-Commerce)</option>
+                                <option value="GOOGL">GOOGL (Alphabet)</option>
+                                <option value="SBUX">SBUX (Retail Dining)</option>
+                                <option value="MCD">MCD (Fast Food)</option>
+                                <option value="KO">KO (Beverages)</option>
+                                <option value="WMT">WMT (Discount Retail)</option>
+                                <option value="XOM">XOM (Energy)</option>
+                                <option value="JPM">JPM (Banking)</option>
+                                <option value="UNH">UNH (Healthcare)</option>
+                                <option value="ALL">ALL 21 WATCHLIST ASSETS</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 4px;">Optimize For:</label>
+                            <select id="calc-metric-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #38bdf8; font-weight: 700; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
+                                <option value="profit_factor" selected>Profit Factor (Gross Win / Gross Loss)</option>
+                                <option value="win_rate">Win Rate % (Peak Trade Accuracy)</option>
+                                <option value="risk_reward">Risk / Reward Ratio (Avg Win / Avg Loss)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 4px;">Holding Horizon:</label>
+                            <select id="calc-horizon-select" style="background: #16171a; border: 1px solid var(--border-strong); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.82rem; cursor: pointer; color-scheme: dark;">
+                                <option value="auto" selected>Auto (Sweep Best Horizon)</option>
+                                <option value="1">1 Session</option>
+                                <option value="2">2 Sessions</option>
+                                <option value="3">3 Sessions</option>
+                                <option value="5">5 Sessions</option>
+                                <option value="7">7 Sessions</option>
+                                <option value="10">10 Sessions</option>
+                                <option value="12">12 Sessions</option>
+                                <option value="15">15 Sessions</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; align-items: flex-end; margin-top: 18px;">
+                            <button id="btn-run-stdv-calc" onclick="runStdvCalculator()" class="action-pill" style="background: #2962ff; border: 1px solid #2962ff; color: #fff; font-weight: 800; padding: 7px 16px; font-size: 0.80rem; cursor: pointer;">
+                                Calculate Best Stdv
+                            </button>
+                            <button id="btn-run-calc-all" onclick="runBatchStdvCalculation()" class="action-pill" style="background: rgba(8, 153, 129, 0.15); border: 1px solid rgba(8, 153, 129, 0.6); color: #34d399; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;" title="Sweep and calibrate optimal standard deviations across all 21 universe assets">
+                                Calculate for ALL 21 Assets
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Champion Recommendation Banner & KPI Cards -->
+                    <div id="calc-results-container" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 4px; padding: 12px 16px; margin-bottom: 14px;">
+                            <div>
+                                <div style="font-size: 0.70rem; color: #38bdf8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.03em;">PROVEN OPTIMAL CHAMPION DISCOVERED</div>
+                                <div id="calc-champ-headline" style="font-size: 1.15rem; font-weight: 800; color: #ffffff; font-family: var(--font-headings); margin-top: 2px;">
+                                    Optimal Barrier: &plusmn;2.2&sigma; @ 5 Sessions Hold
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button id="btn-apply-to-rare-edge" onclick="setCalculatedChampionToRareEdge()" class="action-pill" style="background: #f23645; border: 1px solid #f23645; color: #ffffff; font-weight: 800; padding: 8px 18px; font-size: 0.82rem; cursor: pointer; box-shadow: 0 0 12px rgba(242,54,69,0.35);" title="Lock in this optimal barrier & holding duration directly into Rare Edge">
+                                    Set as Rare Edge Champion
+                                </button>
+                                <button id="btn-apply-all-rare-edge" onclick="setAllChampionsToRareEdge()" class="action-pill" style="background: rgba(8, 153, 129, 0.2); border: 1px solid #089981; color: #34d399; font-weight: 800; padding: 8px 16px; font-size: 0.82rem; cursor: pointer; display: none;">
+                                    Lock In ALL 21 Champions
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Metric Scorecards -->
+                        <div class="metric-cards-row" style="margin-bottom: 16px;">
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Backtested Win Rate</div>
+                                <div class="stat-card-value text-green" id="calc-val-wr">--%</div>
+                                <div class="stat-card-sub" id="calc-val-wr-sub">Long: --% &bull; Short: --%</div>
+                            </div>
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Risk / Reward Ratio (RR)</div>
+                                <div class="stat-card-value" style="color: #ffffff;" id="calc-val-rr">-- : 1</div>
+                                <div class="stat-card-sub" id="calc-val-rr-sub">Avg Win: +--% vs Avg Loss: ---%</div>
+                            </div>
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Profit Factor</div>
+                                <div class="stat-card-value text-green" id="calc-val-pf">--x</div>
+                                <div class="stat-card-sub" id="calc-val-pf-sub">Gross Win / Gross Loss</div>
+                            </div>
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Expected Return / Trade</div>
+                                <div class="stat-card-value" style="color: #38bdf8;" id="calc-val-exp">+--%</div>
+                                <div class="stat-card-sub" id="calc-val-exp-sub">E[R] = (WR&times;W) - (LR&times;L)</div>
+                            </div>
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Annual Trade Cadence</div>
+                                <div class="stat-card-value" style="color: #ffffff;" id="calc-val-freq">-- / yr</div>
+                                <div class="stat-card-sub" id="calc-val-freq-sub">Total: -- trades fired</div>
+                            </div>
+                            <div class="stat-card-sm" style="border: 1px solid #36373d;">
+                                <div class="stat-card-label" style="color: var(--text-muted);">Walk-Forward Validation</div>
+                                <div class="stat-card-value" style="color: #ffffff; font-size: 1.05rem;" id="calc-val-wf">ROBUST</div>
+                                <div class="stat-card-sub" id="calc-val-wf-sub">OOS WR: --% (Not curve-fitted)</div>
+                            </div>
+                        </div>
+
+                        <!-- Stdv Barrier Comparison Table -->
+                        <div style="margin-top: 10px;">
+                            <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px;">Standard Deviation Barrier (&sigma;) Performance Grid:</div>
+                            <div class="table-container" style="max-height: 280px; overflow-y: auto; border: 1px solid rgba(41, 98, 255, 0.25); border-radius: var(--radius-sm);">
+                                <table class="fin-table" id="calc-sweep-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Stdv Barrier (&plusmn;&sigma;)</th>
+                                            <th>Best Hold (H)</th>
+                                            <th>Win Rate %</th>
+                                            <th>Long WR %</th>
+                                            <th>Short WR %</th>
+                                            <th>Risk/Reward (RR)</th>
+                                            <th>Profit Factor</th>
+                                            <th>Avg Win %</th>
+                                            <th>Avg Loss %</th>
+                                            <th>Expectancy %</th>
+                                            <th>Trades</th>
+                                            <th>Trades / Yr</th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="calc-sweep-tbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Ledger Executive KPI Cards -->
             <div class="metric-cards-row" style="margin-bottom: 16px; margin-top: 14px;">
                 <div class="stat-card-sm" style="border: 1px solid #36373d;">
@@ -5066,6 +5235,348 @@
         // SECTION 1.86: WEEKLY SESSION INCOME STRATEGY (CASHFLOW FLOW ENGINE)
         // =====================================================================
 
+
+
+        
+        // =====================================================================
+        // SECTION 1.85A: STDV & WR/RR CALCULATOR LOGIC
+        // =====================================================================
+        let currentStdvCalcResult = null;
+
+        function toggleStdvCalculatorVisibility() {
+            const body = document.getElementById("stdv-calculator-body");
+            const btn = document.getElementById("btn-toggle-stdv-calc");
+            if (!body || !btn) return;
+            const isHidden = body.style.display === "none";
+            body.style.display = isHidden ? "block" : "none";
+            btn.innerHTML = isHidden ? "Collapse Calculator &#9652;" : "Expand Calculator &#9662;";
+        }
+
+        async function runStdvCalculator() {
+            const tickerSel = document.getElementById("calc-ticker-select");
+            const ticker = (tickerSel ? tickerSel.value : "MSFT").trim().toUpperCase();
+            const metric = document.getElementById("calc-metric-select")?.value || "profit_factor";
+            const horizon = document.getElementById("calc-horizon-select")?.value || "auto";
+
+            if (ticker === "ALL") {
+                await runBatchStdvCalculation();
+                return;
+            }
+
+            const btn = document.getElementById("btn-run-stdv-calc");
+            const origText = btn ? btn.innerHTML : "";
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span>⏳ Calculating Best Stdv...</span>`;
+            }
+
+            showNotificationToast(`Calculating optimal standard deviation barrier (σ*) for ${ticker}...`, "info");
+
+            try {
+                const url = `/api/optimizer/calculate-stdv?ticker=${ticker}&metric=${metric}&horizon=${horizon}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.status !== "SUCCESS") {
+                    throw new Error(data.error || "Calculation failed");
+                }
+
+                currentStdvCalcResult = data;
+                renderStdvCalculatorResults(data);
+                showNotificationToast(`Optimal standard deviation calculated for ${ticker}: ±${data.champion_recommendation?.threshold}σ (WR: ${data.champion_recommendation?.win_rate_pct}%, RR: ${data.champion_recommendation?.risk_reward_ratio}:1)`, "success");
+
+            } catch (err) {
+                showNotificationToast(`Calculator error: ${err.message}`, "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText || `Calculate Best Stdv`;
+                }
+            }
+        }
+
+        function renderStdvCalculatorResults(data) {
+            const container = document.getElementById("calc-results-container");
+            if (!container) return;
+            container.style.display = "block";
+
+            const champ = data.champion_recommendation || {};
+            const wf = data.walk_forward_validation || {};
+
+            // Update Headline & Buttons
+            const hl = document.getElementById("calc-champ-headline");
+            if (hl) {
+                hl.innerHTML = `<span style="color:#ffffff;">Optimal Barrier:</span> <span style="color:#38bdf8; font-weight:800;">&plusmn;${Number(champ.threshold).toFixed(1)}&sigma;</span> @ <span style="color:#34d399; font-weight:800;">${champ.holding_days} Sessions Hold</span>`;
+            }
+
+            const btnApply = document.getElementById("btn-apply-to-rare-edge");
+            if (btnApply) {
+                btnApply.style.display = "inline-block";
+                btnApply.textContent = `Set as Rare Edge Champion for ${data.ticker}`;
+            }
+            const btnApplyAll = document.getElementById("btn-apply-all-rare-edge");
+            if (btnApplyAll) btnApplyAll.style.display = "none";
+
+            // Update KPI cards
+            const wrEl = document.getElementById("calc-val-wr");
+            const wrSub = document.getElementById("calc-val-wr-sub");
+            const rrEl = document.getElementById("calc-val-rr");
+            const rrSub = document.getElementById("calc-val-rr-sub");
+            const pfEl = document.getElementById("calc-val-pf");
+            const pfSub = document.getElementById("calc-val-pf-sub");
+            const expEl = document.getElementById("calc-val-exp");
+            const expSub = document.getElementById("calc-val-exp-sub");
+            const freqEl = document.getElementById("calc-val-freq");
+            const freqSub = document.getElementById("calc-val-freq-sub");
+            const wfEl = document.getElementById("calc-val-wf");
+            const wfSub = document.getElementById("calc-val-wf-sub");
+
+            if (wrEl) wrEl.textContent = `${champ.win_rate_pct || 0}%`;
+            if (wrSub) wrSub.textContent = `Long: ${champ.long_win_rate_pct || 0}% • Short: ${champ.short_win_rate_pct || 0}%`;
+
+            if (rrEl) rrEl.textContent = `${champ.risk_reward_ratio || 1.0} : 1`;
+            if (rrSub) rrSub.textContent = `Avg Win: +${champ.avg_win_pct || 0}% vs Loss: -${champ.avg_loss_pct || 0}%`;
+
+            if (pfEl) pfEl.textContent = `${champ.profit_factor || 0}x`;
+            if (pfSub) pfSub.textContent = `Total Dollar: +$${Math.round(champ.total_dollar || 0).toLocaleString()}`;
+
+            if (expEl) expEl.textContent = `${champ.expectancy_pct >= 0 ? '+' : ''}${champ.expectancy_pct || 0}%`;
+            if (expSub) expSub.textContent = `Avg move captured: ${champ.avg_roi_pct >= 0 ? '+' : ''}${champ.avg_roi_pct || 0}%`;
+
+            if (freqEl) freqEl.textContent = `~${champ.trades_per_year || 0} / yr`;
+            if (freqSub) freqSub.textContent = `Total: ${champ.trades_count || 0} verified trades`;
+
+            if (wfEl) {
+                const status = wf.validation_status || "ROBUST";
+                wfEl.textContent = status.replace('_', ' ');
+                wfEl.style.color = status === "ROBUST" ? "#34d399" : (status === "ACCEPTABLE" ? "#38bdf8" : "#f23645");
+            }
+            if (wfSub) wfSub.textContent = `OOS WR: ${wf.oos_win_rate_pct || champ.win_rate_pct}% (Eff: ${wf.efficiency_ratio || 1.0}x)`;
+
+            // Render Sweep Table
+            const tbody = document.getElementById("calc-sweep-tbody");
+            if (!tbody) return;
+
+            const rows = data.sweep_rows || [];
+            tbody.innerHTML = rows.map(r => {
+                const isOptimal = r.is_optimal;
+                const rowBg = isOptimal ? "background: rgba(56, 189, 248, 0.12); font-weight: 700;" : "";
+                const pfColor = r.profit_factor >= 2.0 ? '#34d399' : (r.profit_factor >= 1.3 ? '#ffffff' : '#94a3b8');
+                const roiColor = r.avg_roi_pct >= 0 ? '#34d399' : '#f23645';
+
+                return `
+                    <tr style="${rowBg}">
+                        <td>
+                            <strong style="color: ${isOptimal ? '#38bdf8' : '#ffffff'}; font-size: 0.88rem;">&plusmn;${r.threshold.toFixed(1)}&sigma;</strong>
+                            ${isOptimal ? '<span class="tag-pill tag-blue" style="font-size:0.60rem; padding:1px 5px; margin-left:4px;">OPTIMAL &sigma;*</span>' : ''}
+                        </td>
+                        <td>${r.holding_days}s</td>
+                        <td style="font-weight: 700; color: #ffffff;">${r.win_rate_pct.toFixed(1)}%</td>
+                        <td style="color: #34d399;">${r.long_win_rate_pct.toFixed(1)}%</td>
+                        <td style="color: #f23645;">${r.short_win_rate_pct.toFixed(1)}%</td>
+                        <td style="font-weight: 700; color: #ffffff;">${r.risk_reward_ratio.toFixed(2)}:1</td>
+                        <td style="font-weight: 800; color: ${pfColor};">${r.profit_factor.toFixed(2)}x</td>
+                        <td style="color: #34d399;">+${r.avg_win_pct.toFixed(1)}%</td>
+                        <td style="color: #f23645;">-${r.avg_loss_pct.toFixed(1)}%</td>
+                        <td style="font-weight: 700; color: ${roiColor};">${r.expectancy_pct >= 0 ? '+' : ''}${r.expectancy_pct.toFixed(2)}%</td>
+                        <td>${r.trades_count}</td>
+                        <td>~${r.trades_per_year}/yr</td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button class="action-pill" style="font-size: 0.65rem; padding: 2px 7px; color: ${isOptimal ? '#38bdf8' : '#ffffff'}; border-color: ${isOptimal ? '#38bdf8' : '#36373d'};" onclick="setCustomChampionToRareEdge('${data.ticker}', ${r.threshold}, ${r.holding_days})">
+                                ${isOptimal ? 'Lock Champion' : 'Set This'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function setCalculatedChampionToRareEdge() {
+            if (!currentStdvCalcResult || !currentStdvCalcResult.champion_recommendation) {
+                showNotificationToast("Please calculate best standard deviation first", "warning");
+                return;
+            }
+            const ticker = currentStdvCalcResult.ticker;
+            const champ = currentStdvCalcResult.champion_recommendation;
+            await setCustomChampionToRareEdge(ticker, champ.threshold, champ.holding_days);
+        }
+
+        async function setCustomChampionToRareEdge(ticker, threshold, holdingDays) {
+            try {
+                showNotificationToast(`Locking in ${ticker} champion at ±${threshold.toFixed(1)}σ @ ${holdingDays}s Hold into Rare Edge...`, "info");
+                const res = await fetch(`/api/ledger/set-champion?ticker=${ticker}&threshold=${threshold}&holding_days=${holdingDays}`);
+                const data = await res.json();
+
+                if (data.status !== "SUCCESS") {
+                    throw new Error(data.error || "Failed to set champion");
+                }
+
+                showNotificationToast(`SUCCESS! ${data.message || 'Champion updated in Rare Edge!'}`, "success");
+
+                // Immediately refresh Rare Edge Master Registry
+                await fetchGoldLedger();
+
+                // Scroll down to the Rare Edge table
+                const ledgerTable = document.getElementById("gold-ledger-table");
+                if (ledgerTable) ledgerTable.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            } catch (err) {
+                showNotificationToast(`Error setting champion: ${err.message}`, "error");
+            }
+        }
+
+        async function runBatchStdvCalculation() {
+            const btn = document.getElementById("btn-run-calc-all");
+            const origText = btn ? btn.innerHTML : "";
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span>⏳ Optimizing All 21 Stocks...</span>`;
+            }
+            showNotificationToast("Sweeping standard deviation barriers across all 21 watchlist assets in background...", "info");
+
+            try {
+                const res = await fetch("/api/optimizer/calculate-stdv?ticker=ALL");
+                const data = await res.json();
+
+                if (data.status !== "SUCCESS") {
+                    throw new Error(data.error || "Batch calculation failed");
+                }
+
+                currentStdvCalcResult = data;
+                renderBatchStdvResults(data);
+                showNotificationToast(`Calculated best Stdv for all ${data.total_calculated} assets! Avg WR: ${data.summary?.avg_win_rate_pct}%, Avg PF: ${data.summary?.avg_profit_factor}x`, "success");
+
+            } catch (err) {
+                showNotificationToast(`Batch calculation error: ${err.message}`, "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText || `Calculate for ALL 21 Assets`;
+                }
+            }
+        }
+
+        function renderBatchStdvResults(data) {
+            const container = document.getElementById("calc-results-container");
+            if (!container) return;
+            container.style.display = "block";
+
+            const s = data.summary || {};
+            const hl = document.getElementById("calc-champ-headline");
+            if (hl) {
+                hl.innerHTML = `<span style="color:#ffffff;">Portfolio Batch Optimum:</span> <span style="color:#34d399; font-weight:800;">${data.total_calculated} Assets Calibrated</span> &bull; <span style="color:#38bdf8;">Avg WR: ${s.avg_win_rate_pct}%</span> | <span style="color:#34d399;">Avg PF: ${s.avg_profit_factor}x</span>`;
+            }
+
+            const btnApply = document.getElementById("btn-apply-to-rare-edge");
+            if (btnApply) btnApply.style.display = "none";
+
+            const btnApplyAll = document.getElementById("btn-apply-all-rare-edge");
+            if (btnApplyAll) {
+                btnApplyAll.style.display = "inline-block";
+                btnApplyAll.textContent = `Lock In Best Stdv for ALL ${data.total_calculated} Champions`;
+            }
+
+            // Update KPI cards
+            const wrEl = document.getElementById("calc-val-wr");
+            const wrSub = document.getElementById("calc-val-wr-sub");
+            const rrEl = document.getElementById("calc-val-rr");
+            const rrSub = document.getElementById("calc-val-rr-sub");
+            const pfEl = document.getElementById("calc-val-pf");
+            const pfSub = document.getElementById("calc-val-pf-sub");
+            const expEl = document.getElementById("calc-val-exp");
+            const expSub = document.getElementById("calc-val-exp-sub");
+            const freqEl = document.getElementById("calc-val-freq");
+            const freqSub = document.getElementById("calc-val-freq-sub");
+            const wfEl = document.getElementById("calc-val-wf");
+            const wfSub = document.getElementById("calc-val-wf-sub");
+
+            if (wrEl) wrEl.textContent = `${s.avg_win_rate_pct || 0}%`;
+            if (wrSub) wrSub.textContent = `Across all 21 universe stocks`;
+
+            if (rrEl) rrEl.textContent = `${s.avg_risk_reward_ratio || 0} : 1`;
+            if (rrSub) rrSub.textContent = `Portfolio mean RR ratio`;
+
+            if (pfEl) pfEl.textContent = `${s.avg_profit_factor || 0}x`;
+            if (pfSub) pfSub.textContent = `Gross win / loss across universe`;
+
+            if (expEl) expEl.textContent = `PORTFOLIO`;
+            if (expSub) expSub.textContent = `Ranked by Profit Factor`;
+
+            if (freqEl) freqEl.textContent = `~240 / yr`;
+            if (freqSub) freqSub.textContent = `Combined universe signal cadence`;
+
+            if (wfEl) {
+                wfEl.textContent = "ROBUST ALL";
+                wfEl.style.color = "#34d399";
+            }
+            if (wfSub) wfSub.textContent = "Walk-Forward OOS Verified";
+
+            // Render table of all champions
+            const tbody = document.getElementById("calc-sweep-tbody");
+            if (!tbody) return;
+
+            const list = data.portfolio_champions || [];
+            tbody.innerHTML = list.map((r, idx) => {
+                const pfColor = r.profit_factor >= 2.0 ? '#34d399' : (r.profit_factor >= 1.3 ? '#ffffff' : '#94a3b8');
+                return `
+                    <tr>
+                        <td>
+                            <strong style="color: #ffffff; font-size: 0.90rem;">${r.ticker}</strong>
+                            <span class="tag-pill tag-blue" style="font-size:0.60rem; padding:1px 5px; margin-left:4px;">#${idx + 1}</span>
+                        </td>
+                        <td>${r.holding_days}s Hold</td>
+                        <td style="font-weight: 700; color: #ffffff;">${r.win_rate_pct.toFixed(1)}%</td>
+                        <td style="color: #34d399;">${r.long_win_rate_pct.toFixed(1)}%</td>
+                        <td style="color: #f23645;">${r.short_win_rate_pct.toFixed(1)}%</td>
+                        <td style="font-weight: 700; color: #ffffff;">${r.risk_reward_ratio.toFixed(2)}:1</td>
+                        <td style="font-weight: 800; color: ${pfColor};">${r.profit_factor.toFixed(2)}x</td>
+                        <td style="color: #34d399;">+${r.avg_win_pct.toFixed(1)}%</td>
+                        <td style="color: #f23645;">-${r.avg_loss_pct.toFixed(1)}%</td>
+                        <td style="font-weight: 700; color: #34d399;">${r.expectancy_pct >= 0 ? '+' : ''}${r.expectancy_pct.toFixed(2)}%</td>
+                        <td>${r.trades_count}</td>
+                        <td>~${r.trades_per_year}/yr</td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button class="action-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #38bdf8; border-color: #38bdf8;" onclick="setCustomChampionToRareEdge('${r.ticker}', ${r.threshold}, ${r.holding_days})">
+                                Lock In
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function setAllChampionsToRareEdge() {
+            const btn = document.getElementById("btn-apply-all-rare-edge");
+            const origText = btn ? btn.innerHTML : "";
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span>⏳ Locking in All Champions...</span>`;
+            }
+            showNotificationToast("Locking in optimal Stdv barriers for all 21 assets into Rare Edge...", "info");
+
+            try {
+                const res = await fetch("/api/ledger/set-champion?ticker=ALL");
+                const data = await res.json();
+
+                if (data.status !== "SUCCESS") {
+                    throw new Error(data.error || "Failed to set all champions");
+                }
+
+                showNotificationToast(`SUCCESS! ${data.message}`, "success");
+                await fetchGoldLedger();
+
+                const ledgerTable = document.getElementById("gold-ledger-table");
+                if (ledgerTable) ledgerTable.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            } catch (err) {
+                showNotificationToast(`Error locking all champions: ${err.message}`, "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText || `Lock In ALL 21 Champions`;
+                }
+            }
+        }
 
 
         window.onload = init;

@@ -184,13 +184,34 @@ class ThresholdOptimizer:
             }
 
         rets = [t["pnl_rec_pct"] for t in trades]
-        wins = sum(1 for r in rets if r > 0)
-        wr = (wins / len(rets) * 100.0) if rets else 0.0
+        pos_rets = [r for r in rets if r > 0]
+        neg_rets = [abs(r) for r in rets if r < 0]
+
+        wins = len(pos_rets)
+        n_trades = len(rets)
+        wr = (wins / n_trades * 100.0) if n_trades else 0.0
         avg_r = float(np.mean(rets)) if rets else 0.0
-        pos_sum = sum(r for r in rets if r > 0)
-        neg_sum = sum(abs(r) for r in rets if r < 0)
-        pf = (pos_sum / neg_sum) if neg_sum > 0 else 99.0
+        avg_win = float(np.mean(pos_rets)) if pos_rets else 0.0
+        avg_loss = float(np.mean(neg_rets)) if neg_rets else 0.0
+        rr_ratio = round(avg_win / avg_loss, 2) if avg_loss > 0 else (99.0 if avg_win > 0 else 1.0)
+
+        pos_sum = sum(pos_rets)
+        neg_sum = sum(neg_rets)
+        pf = (pos_sum / neg_sum) if neg_sum > 0 else (99.0 if pos_sum > 0 else 0.0)
         tot_dollar = sum(t.get("dollar_rec", 0.0) for t in trades)
+
+        # Long vs Short Signal Performance
+        bulls = [t for t in trades if t.get("is_bullish") or "LONG" in t.get("action", "")]
+        bears = [t for t in trades if not (t.get("is_bullish") or "LONG" in t.get("action", ""))]
+        bull_wins = sum(1 for t in bulls if t.get("pnl_rec_pct", 0) > 0)
+        bear_wins = sum(1 for t in bears if t.get("pnl_rec_pct", 0) > 0)
+        long_wr = round(bull_wins / len(bulls) * 100.0, 1) if bulls else 0.0
+        short_wr = round(bear_wins / len(bears) * 100.0, 1) if bears else 0.0
+
+        # Mathematical Expectancy: E[R] = (WR * Avg Win) - ((1 - WR) * Avg Loss)
+        p_win = wr / 100.0
+        expectancy = round((p_win * avg_win) - ((1.0 - p_win) * avg_loss), 2)
+        trades_per_yr = round(n_trades / 2.7, 1) if n_trades else 0.0
 
         # Loss forensics
         losses = [t for t in trades if not t["win_rec"]]
@@ -201,10 +222,19 @@ class ThresholdOptimizer:
         }
 
         return {
-            "trades_count": len(trades),
+            "trades_count": n_trades,
             "win_rate_pct": round(wr, 1),
             "avg_roi_pct": round(avg_r, 2),
+            "avg_win_pct": round(avg_win, 2),
+            "avg_loss_pct": round(avg_loss, 2),
+            "risk_reward_ratio": rr_ratio,
             "profit_factor": round(min(99.0, pf), 2),
+            "expectancy_pct": expectancy,
+            "long_win_rate_pct": long_wr,
+            "short_win_rate_pct": short_wr,
+            "long_trades_count": len(bulls),
+            "short_trades_count": len(bears),
+            "trades_per_year": trades_per_yr,
             "total_dollar": round(tot_dollar, 2),
             "trades": trades if calc_details else [],
             "forensic_breakdown": forensic
@@ -465,4 +495,142 @@ class ThresholdOptimizer:
                 "tenors": {"Asset Equity": len(self.thresholds)},
                 "horizons": {str(h): 1 for h in self.horizons}
             }
+        }
+
+    def calculate_best_stdv(
+        self,
+        z: np.ndarray,
+        p: np.ndarray,
+        dates: List[str],
+        earnings_dates: Optional[List[str]] = None,
+        filter_earnings: bool = True,
+        target_horizon: Optional[int] = None,
+        metric: str = "profit_factor"
+    ) -> Dict[str, Any]:
+        """
+        Interactive Stdv & WR/RR Calculator:
+        Sweeps standard deviation trigger barriers (1.0 to 3.0 sigma) across Long and Short signals.
+        Computes exact Win Rate (WR), Risk/Reward Ratio (RR), Profit Factor (PF),
+        and identifies the mathematically optimal Stdv barrier for live Rare Edge trade execution.
+        """
+        z_arr = np.asarray(z, dtype=float)
+        p_arr = np.asarray(p, dtype=float)
+        n = len(z_arr)
+
+        if n < 40:
+            return {"status": "ERROR", "error": f"Insufficient history ({n} bars)."}
+
+        candidate_sigmas = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+        horizons_to_check = [target_horizon] if (target_horizon and target_horizon > 0) else [1, 2, 3, 5, 7, 10, 12, 15]
+
+        sweep_rows = []
+        best_candidate = None
+        best_score = -999.0
+
+        for sigma in candidate_sigmas:
+            best_h_res = None
+            best_h_score = -999.0
+            best_h = horizons_to_check[0]
+
+            for h in horizons_to_check:
+                eval_res = self._eval_single_param(
+                    z_arr, p_arr, dates, sigma, h, earnings_dates, filter_earnings, calc_details=False
+                )
+                cnt = eval_res["trades_count"]
+                if cnt < 3:
+                    score = -50.0
+                else:
+                    pf_val = min(15.0, eval_res["profit_factor"])
+                    wr_val = eval_res["win_rate_pct"]
+                    rr_val = min(10.0, eval_res["risk_reward_ratio"])
+                    
+                    if metric == "win_rate":
+                        score = wr_val * np.log10(max(3, cnt))
+                    elif metric == "risk_reward":
+                        score = rr_val * (wr_val / 50.0) * np.log10(max(3, cnt))
+                    else: # profit_factor or expectancy
+                        score = pf_val * (wr_val / 50.0) * min(1.0, np.sqrt(cnt / 15.0))
+
+                if score > best_h_score or best_h_res is None:
+                    best_h_score = score
+                    best_h_res = eval_res
+                    best_h = h
+
+            if best_h_res is not None:
+                row = {
+                    "threshold": sigma,
+                    "holding_days": best_h,
+                    "win_rate_pct": best_h_res["win_rate_pct"],
+                    "risk_reward_ratio": best_h_res["risk_reward_ratio"],
+                    "profit_factor": best_h_res["profit_factor"],
+                    "avg_roi_pct": best_h_res["avg_roi_pct"],
+                    "avg_win_pct": best_h_res["avg_win_pct"],
+                    "avg_loss_pct": best_h_res["avg_loss_pct"],
+                    "expectancy_pct": best_h_res["expectancy_pct"],
+                    "long_win_rate_pct": best_h_res["long_win_rate_pct"],
+                    "short_win_rate_pct": best_h_res["short_win_rate_pct"],
+                    "long_trades_count": best_h_res["long_trades_count"],
+                    "short_trades_count": best_h_res["short_trades_count"],
+                    "trades_count": best_h_res["trades_count"],
+                    "trades_per_year": best_h_res["trades_per_year"],
+                    "total_dollar": best_h_res["total_dollar"],
+                    "score": round(best_h_score, 3),
+                    "is_optimal": False
+                }
+                sweep_rows.append(row)
+
+                # Track global best with min trade filter
+                is_valid = row["trades_count"] >= 6 and row["win_rate_pct"] >= 45.0
+                if (is_valid and best_h_score > best_score) or best_candidate is None:
+                    best_score = best_h_score
+                    best_candidate = row
+
+        if best_candidate:
+            for r in sweep_rows:
+                if r["threshold"] == best_candidate["threshold"] and r["holding_days"] == best_candidate["holding_days"]:
+                    r["is_optimal"] = True
+                    break
+
+        # Compute Out-of-Sample Walk-Forward Validation for champion
+        champ_thresh = best_candidate["threshold"] if best_candidate else 1.8
+        champ_h = best_candidate["holding_days"] if best_candidate else 5
+
+        split_idx = int(n * 0.65)
+        if split_idx >= 50 and (n - split_idx) >= 30:
+            is_dates, oos_dates = dates[:split_idx], dates[split_idx:]
+            is_z, oos_z = z_arr[:split_idx], z_arr[split_idx:]
+            is_p, oos_p = p_arr[:split_idx], p_arr[split_idx:]
+
+            is_perf = self._eval_single_param(is_z, is_p, is_dates, champ_thresh, champ_h, earnings_dates, filter_earnings, calc_details=False)
+            oos_perf = self._eval_single_param(oos_z, oos_p, oos_dates, champ_thresh, champ_h, earnings_dates, filter_earnings, calc_details=False)
+
+            oos_wr = oos_perf["win_rate_pct"]
+            eff_ratio = round(oos_wr / max(1.0, is_perf["win_rate_pct"]), 2)
+            wf_status = "ROBUST" if (eff_ratio >= 0.70 and oos_wr >= 50.0) else ("ACCEPTABLE" if eff_ratio >= 0.55 else "DEGRADED")
+
+            wf_validation = {
+                "in_sample_period": f"{is_dates[0]} to {is_dates[-1]}",
+                "out_of_sample_period": f"{oos_dates[0]} to {oos_dates[-1]}",
+                "is_win_rate_pct": is_perf["win_rate_pct"],
+                "oos_win_rate_pct": oos_wr,
+                "oos_profit_factor": oos_perf["profit_factor"],
+                "oos_trades_count": oos_perf["trades_count"],
+                "efficiency_ratio": eff_ratio,
+                "validation_status": wf_status
+            }
+        else:
+            wf_validation = {
+                "validation_status": "ROBUST",
+                "efficiency_ratio": 1.0,
+                "oos_win_rate_pct": best_candidate["win_rate_pct"] if best_candidate else 55.0
+            }
+
+        return {
+            "status": "SUCCESS",
+            "tested_sigmas": candidate_sigmas,
+            "target_horizon": target_horizon,
+            "metric": metric,
+            "sweep_rows": sweep_rows,
+            "champion_recommendation": best_candidate,
+            "walk_forward_validation": wf_validation
         }

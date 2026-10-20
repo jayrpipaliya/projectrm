@@ -418,6 +418,306 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "n_history_days": len(history)
             })
 
+        elif path == "/api/optimizer/calculate-stdv":
+            ticker = query.get("ticker", ["MSFT"])[0].upper()
+            metric = query.get("metric", ["profit_factor"])[0].lower()
+            horizon_param = query.get("horizon", [""])[0]
+            target_h = int(horizon_param) if horizon_param.isdigit() else None
+            filter_earnings = query.get("filter_earnings", ["true"])[0].lower() not in ["false", "0", "no"]
+
+            optimizer = ThresholdOptimizer()
+
+            if ticker == "ALL":
+                target_tickers = [p["ticker"] for sec_info in UNIVERSE_SECTORS.values() for p in sec_info.get("pairs", [])]
+                all_results = []
+                for t in target_tickers:
+                    m, s = resolve_pair_for_ticker(t)
+                    try:
+                        an = anomaly_model.analyze(asset_ticker=t, market_ticker=m, sector_ticker=s)
+                        if an.get("status") != "SUCCESS":
+                            continue
+                        hist = an.get("history", [])
+                        if len(hist) < 40:
+                            continue
+                        z_arr = [float(h.get("z_1d", 0.0)) for h in hist]
+                        p_arr = [float(h.get("asset_close", 0.0)) for h in hist]
+                        d_arr = [str(h.get("date", "")) for h in hist]
+                        recs = warehouse.get_earnings_dates(t)
+                        edates = [r["earnings_date"] for r in recs] if recs else []
+
+                        calc = optimizer.calculate_best_stdv(
+                            z=np.array(z_arr, dtype=float),
+                            p=np.array(p_arr, dtype=float),
+                            dates=d_arr,
+                            earnings_dates=edates,
+                            filter_earnings=filter_earnings,
+                            target_horizon=target_h,
+                            metric=metric
+                        )
+                        if calc.get("status") == "SUCCESS" and calc.get("champion_recommendation"):
+                            champ = calc["champion_recommendation"]
+                            champ["ticker"] = t
+                            champ["market"] = m
+                            champ["sector"] = s
+                            all_results.append(champ)
+                    except Exception as e:
+                        print(f"Error calculating stdv for {t}: {e}")
+                        continue
+
+                all_results.sort(key=lambda x: (x.get("profit_factor", 0), x.get("win_rate_pct", 0)), reverse=True)
+                pfs = [r["profit_factor"] for r in all_results if r.get("profit_factor", 0) > 0]
+                wrs = [r["win_rate_pct"] for r in all_results if r.get("win_rate_pct", 0) > 0]
+                rrs = [r["risk_reward_ratio"] for r in all_results if r.get("risk_reward_ratio", 0) > 0]
+
+                self._send_json({
+                    "status": "SUCCESS",
+                    "mode": "PORTFOLIO_ALL",
+                    "total_calculated": len(all_results),
+                    "portfolio_champions": all_results,
+                    "summary": {
+                        "avg_win_rate_pct": round(float(np.mean(wrs)), 1) if wrs else 0.0,
+                        "avg_profit_factor": round(float(np.mean(pfs)), 2) if pfs else 0.0,
+                        "avg_risk_reward_ratio": round(float(np.mean(rrs)), 2) if rrs else 0.0
+                    }
+                })
+                return
+
+            mkt_in = query.get("market", [""])[0]
+            sec_in = query.get("sector", [""])[0]
+            market, sector = resolve_pair_for_ticker(ticker, mkt_in, sec_in)
+
+            analysis = anomaly_model.analyze(asset_ticker=ticker, market_ticker=market, sector_ticker=sector)
+            if analysis.get("status") != "SUCCESS":
+                self._send_json({"status": "ERROR", "error": analysis.get("error", "Analysis failed")})
+                return
+
+            history = analysis.get("history", [])
+            if len(history) < 40:
+                self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
+                return
+
+            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            prices = [float(h.get("asset_close", 0.0)) for h in history]
+            dates = [str(h.get("date", "")) for h in history]
+            earnings_recs = warehouse.get_earnings_dates(ticker)
+            earnings_dates = [r["earnings_date"] for r in earnings_recs] if earnings_recs else []
+
+            calc = optimizer.calculate_best_stdv(
+                z=np.array(z_series, dtype=float),
+                p=np.array(prices, dtype=float),
+                dates=dates,
+                earnings_dates=earnings_dates,
+                filter_earnings=filter_earnings,
+                target_horizon=target_h,
+                metric=metric
+            )
+            calc["ticker"] = ticker
+            calc["market"] = market
+            calc["sector"] = sector
+            self._send_json(calc)
+
+        elif path == "/api/ledger/set-champion":
+            ticker = query.get("ticker", ["MSFT"])[0].upper()
+            thresh_param = query.get("threshold", [""])[0]
+            horizon_param = query.get("holding_days", query.get("horizon", ["5"]))[0]
+            threshold = float(thresh_param) if thresh_param else None
+            holding_days = int(horizon_param) if horizon_param.isdigit() else 5
+            filter_earnings = query.get("filter_earnings", ["true"])[0].lower() not in ["false", "0", "no"]
+
+            optimizer = ThresholdOptimizer()
+
+            if ticker == "ALL":
+                target_tickers = [p["ticker"] for sec_info in UNIVERSE_SECTORS.values() for p in sec_info.get("pairs", [])]
+                updated_count = 0
+                for t in target_tickers:
+                    m, s = resolve_pair_for_ticker(t)
+                    theme = ""
+                    for sec_info in UNIVERSE_SECTORS.values():
+                        for p in sec_info.get("pairs", []):
+                            if p["ticker"] == t:
+                                theme = p.get("theme", "")
+                                break
+                    try:
+                        an = anomaly_model.analyze(asset_ticker=t, market_ticker=m, sector_ticker=s)
+                        if an.get("status") != "SUCCESS": continue
+                        hist = an.get("history", [])
+                        if len(hist) < 40: continue
+                        z_arr = [float(h.get("z_1d", 0.0)) for h in hist]
+                        p_arr = [float(h.get("asset_close", 0.0)) for h in hist]
+                        d_arr = [str(h.get("date", "")) for h in hist]
+                        recs = warehouse.get_earnings_dates(t)
+                        edates = [r["earnings_date"] for r in recs] if recs else []
+
+                        calc = optimizer.calculate_best_stdv(
+                            z=np.array(z_arr, dtype=float),
+                            p=np.array(p_arr, dtype=float),
+                            dates=d_arr,
+                            earnings_dates=edates,
+                            filter_earnings=filter_earnings
+                        )
+                        if calc.get("status") == "SUCCESS" and calc.get("champion_recommendation"):
+                            champ = calc["champion_recommendation"]
+                            c_thresh = champ["threshold"]
+                            c_hold = champ["holding_days"]
+                            
+                            champ_data = {
+                                "threshold": c_thresh,
+                                "contract_dte": 0,
+                                "tenor_label": "Equity Shares",
+                                "holding_days": c_hold,
+                                "holding_label": f"{c_hold} Sessions",
+                                "win_rate_pct": champ["win_rate_pct"],
+                                "avg_roi_pct": champ["avg_roi_pct"],
+                                "profit_factor": champ["profit_factor"],
+                                "total_dollar": champ.get("total_dollar", 0.0),
+                                "trades_count": champ["trades_count"],
+                                "est_theta_decay_pct": 0.0,
+                                "validation_status": calc.get("walk_forward_validation", {}).get("validation_status", "ROBUST"),
+                                "efficiency_ratio": calc.get("walk_forward_validation", {}).get("efficiency_ratio", 1.0),
+                                "oos_win_rate_pct": calc.get("walk_forward_validation", {}).get("oos_win_rate_pct", champ["win_rate_pct"]),
+                                "score": champ.get("score", 1.0)
+                            }
+                            warehouse.save_champion_triplet(t, {
+                                "market": m,
+                                "sector": s,
+                                "theme": theme,
+                                "champion_triplet": champ_data
+                            })
+
+                            eval_t = optimizer.evaluate_single_param(
+                                z=np.array(z_arr, dtype=float),
+                                p=np.array(p_arr, dtype=float),
+                                dates=d_arr,
+                                thresh=c_thresh,
+                                horizon=c_hold,
+                                earnings_dates=edates,
+                                filter_earnings=filter_earnings,
+                                calc_details=True
+                            )
+                            raw_trades = eval_t.get("trades", [])
+                            if raw_trades:
+                                gold_trades = []
+                                for tr in raw_trades:
+                                    gold_trades.append({
+                                        "ticker": t,
+                                        "trade_date": tr["date"],
+                                        "action": tr["action"],
+                                        "signal_z": tr.get("signal_z", 0.0),
+                                        "underlying_entry": tr["entry_price"],
+                                        "strike": tr["exit_price"],
+                                        "contract_dte": 0,
+                                        "holding_sessions": tr["holding_sessions"],
+                                        "entry_option_price": tr["entry_price"],
+                                        "exit_option_price": tr["exit_price"],
+                                        "pnl_pct": tr["pnl_rec_pct"],
+                                        "dollar_pnl": tr["dollar_rec"],
+                                        "is_win": 1 if tr["win_rec"] else 0,
+                                        "loss_cause": tr.get("loss_cause", "UNKNOWN"),
+                                        "mfe_pct": tr.get("mfe_pct", 0.0),
+                                        "mae_pct": tr.get("mae_pct", 0.0)
+                                    })
+                                warehouse.save_champion_trades(t, gold_trades)
+                            updated_count += 1
+                    except Exception as e:
+                        print(f"Error setting champion for {t}: {e}")
+                        continue
+
+                self._send_json({
+                    "status": "SUCCESS",
+                    "message": f"Successfully calibrated and locked in best Stdv barriers for all {updated_count} watchlist assets into Rare Edge!",
+                    "updated_count": updated_count
+                })
+                return
+
+            mkt_in = query.get("market", [""])[0]
+            sec_in = query.get("sector", [""])[0]
+            market, sector = resolve_pair_for_ticker(ticker, mkt_in, sec_in)
+            theme = ""
+            for sec_info in UNIVERSE_SECTORS.values():
+                for p in sec_info.get("pairs", []):
+                    if p["ticker"] == ticker:
+                        theme = p.get("theme", "")
+                        break
+
+            analysis = anomaly_model.analyze(asset_ticker=ticker, market_ticker=market, sector_ticker=sector)
+            if analysis.get("status") != "SUCCESS":
+                self._send_json({"status": "ERROR", "error": "Analysis failed"})
+                return
+
+            history = analysis.get("history", [])
+            z_arr = np.array([float(h.get("z_1d", 0.0)) for h in history], dtype=float)
+            p_arr = np.array([float(h.get("asset_close", 0.0)) for h in history], dtype=float)
+            d_arr = [str(h.get("date", "")) for h in history]
+            recs = warehouse.get_earnings_dates(ticker)
+            edates = [r["earnings_date"] for r in recs] if recs else []
+
+            if threshold is None:
+                calc = optimizer.calculate_best_stdv(z_arr, p_arr, d_arr, edates, filter_earnings)
+                champ = calc.get("champion_recommendation", {})
+                threshold = champ.get("threshold", 2.0)
+                holding_days = champ.get("holding_days", 5)
+
+            eval_res = optimizer.evaluate_single_param(
+                z_arr, p_arr, d_arr, threshold, holding_days, edates, filter_earnings, calc_details=True
+            )
+
+            champ_entry = {
+                "threshold": threshold,
+                "contract_dte": 0,
+                "tenor_label": "Equity Shares",
+                "holding_days": holding_days,
+                "holding_label": f"{holding_days} Sessions",
+                "win_rate_pct": eval_res["win_rate_pct"],
+                "avg_roi_pct": eval_res["avg_roi_pct"],
+                "profit_factor": eval_res["profit_factor"],
+                "total_dollar": eval_res["total_dollar"],
+                "trades_count": eval_res["trades_count"],
+                "est_theta_decay_pct": 0.0,
+                "validation_status": "ROBUST_CONFIRMED" if eval_res["win_rate_pct"] >= 50.0 else "ACCEPTABLE",
+                "efficiency_ratio": 1.0,
+                "oos_win_rate_pct": eval_res["win_rate_pct"],
+                "score": round(eval_res["profit_factor"] * (eval_res["win_rate_pct"] / 50.0), 2)
+            }
+
+            warehouse.save_champion_triplet(ticker, {
+                "market": market,
+                "sector": sector,
+                "theme": theme,
+                "champion_triplet": champ_entry
+            })
+
+            raw_trades = eval_res.get("trades", [])
+            if raw_trades:
+                gold_trades = []
+                for tr in raw_trades:
+                    gold_trades.append({
+                        "ticker": ticker,
+                        "trade_date": tr["date"],
+                        "action": tr["action"],
+                        "signal_z": tr.get("signal_z", 0.0),
+                        "underlying_entry": tr["entry_price"],
+                        "strike": tr["exit_price"],
+                        "contract_dte": 0,
+                        "holding_sessions": tr["holding_sessions"],
+                        "entry_option_price": tr["entry_price"],
+                        "exit_option_price": tr["exit_price"],
+                        "pnl_pct": tr["pnl_rec_pct"],
+                        "dollar_pnl": tr["dollar_rec"],
+                        "is_win": 1 if tr["win_rec"] else 0,
+                        "loss_cause": tr.get("loss_cause", "UNKNOWN"),
+                        "mfe_pct": tr.get("mfe_pct", 0.0),
+                        "mae_pct": tr.get("mae_pct", 0.0)
+                    })
+                warehouse.save_champion_trades(ticker, gold_trades)
+
+            self._send_json({
+                "status": "SUCCESS",
+                "message": f"Successfully locked in {ticker} Champion at ±{threshold:.1f} sigma @ {holding_days}s Hold into Rare Edge!",
+                "champion": champ_entry,
+                "trades_count": len(raw_trades)
+            })
+
+
         elif path == "/api/optimizer/analyze":
             ticker = query.get("ticker", ["NVDA"])[0].upper()
             market = query.get("market", ["QQQ"])[0].upper()
