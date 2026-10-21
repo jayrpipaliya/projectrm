@@ -1905,8 +1905,8 @@
 
             <div style="margin-top: 12px; display: flex; gap: 20px; font-size: 0.74rem; color: var(--text-muted); flex-wrap: wrap; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
                 <span style="color: #ffffff;">— Daily Close Price</span>
-                <span id="asset-legend-bullish" style="color: #089981;">▲ Green: Bullish Snap-Back (Z &le; -1.8&sigma;)</span>
-                <span id="asset-legend-bearish" style="color: #f23645;">▼ Red: Bearish Snap-Back (Z &ge; +1.8&sigma;)</span>
+                <span id="asset-legend-bullish" style="color: #089981; font-weight: 600;">▲ Green Arrow: Bullish Snap-Back Trade (Long)</span>
+                <span id="asset-legend-bearish" style="color: #f23645; font-weight: 600;">▼ Red Arrow: Bearish Snap-Back Trade (Short)</span>
                 <span style="display: inline-flex; align-items: center; gap: 4px; color: #34d399;">
                     <span style="display: inline-block; width: 14px; height: 10px; background: rgba(8, 153, 129, 0.22); border: 1px solid rgba(8, 153, 129, 0.8); border-radius: 2px;"></span>Green Shading: Bullish Regime Shift (Upward Drift)
                 </span>
@@ -3067,6 +3067,8 @@
         let showAssetSignals = true;
         let allContractsData = [];
         let currentAnomalyHistory = [];
+        let currentAnomalyTrades = [];
+        window.currentAnomalyTrades = currentAnomalyTrades;
         let currentAnomalyAsset = 'MSFT';
         let cockpitView = 'snapback'; // 'snapback' | 'cusum' | 'multi'
         let modulesState = { ou: true, cusum: true, horizon: false };
@@ -3119,7 +3121,8 @@
 
             // Re-render both charts with new time slice
             renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
-            renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+            const tradesToUse = (activeDynamicTrades && activeDynamicTrades.length) ? activeDynamicTrades : window.currentAnomalyTrades;
+            renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset, tradesToUse);
         }
 
         function onChartZoomSliderChange(val) {
@@ -3147,7 +3150,8 @@
             });
 
             renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
-            renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+            const tradesToUse = (activeDynamicTrades && activeDynamicTrades.length) ? activeDynamicTrades : window.currentAnomalyTrades;
+            renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset, tradesToUse);
         }
 
         function getVisibleHistorySlice(history) {
@@ -3183,8 +3187,9 @@
                 btn.classList.remove("btn-primary");
                 btn.innerHTML = '○ Signals Off';
             }
-            if (currentAnomalyHistory.length >0) {
-                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+            if (currentAnomalyHistory.length > 0) {
+                const tradesToUse = (activeDynamicTrades && activeDynamicTrades.length) ? activeDynamicTrades : window.currentAnomalyTrades;
+                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset, tradesToUse);
             }
         }
 
@@ -3216,9 +3221,10 @@
                 lbl.style.color = isOpt ? "#38bdf8" : "#ffffff";
             }
             // Live responsive update as user drags slider
-            if (currentAnomalyHistory.length >0) {
+            if (currentAnomalyHistory.length > 0) {
                 renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
-                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset);
+                const tradesToUse = (activeDynamicTrades && activeDynamicTrades.length) ? activeDynamicTrades : window.currentAnomalyTrades;
+                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset, tradesToUse);
             }
             clearTimeout(sliderDebounceTimer);
             sliderDebounceTimer = setTimeout(() => {
@@ -3604,16 +3610,21 @@
 
                 // 2. Multi-Horizon Z-Scores (1 STDV, 5 STDV, 20 STDV)
                 const activeThreshold = ou.threshold || threshold;
-                const z1Color = Math.abs(m.z_score_1d) >= activeThreshold ? (m.z_score_1d >0 ? "var(--accent-green)" : "var(--accent-red)") : "#fff";
-                document.getElementById("val-z1d").innerHTML = `<span style="color: ${z1Color};">${m.z_score_1d >= 0 ? '+' : ''}${m.z_score_1d.toFixed(2)}&sigma;</span>`;
-                document.getElementById("val-z1d-sub").textContent = `Clean Innovation Shock (${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}%)`;
+                const isBullishZ1 = m.z_score_1d <= -activeThreshold;
+                const isBearishZ1 = m.z_score_1d >= activeThreshold;
+                const z1Color = isBullishZ1 ? "var(--accent-green)" : (isBearishZ1 ? "var(--accent-red)" : "#fff");
+                document.getElementById("val-z1d").innerHTML = `<span style="color: ${z1Color}; font-weight: 800;">${m.z_score_1d >= 0 ? '+' : ''}${m.z_score_1d.toFixed(2)}&sigma;</span>`;
+                const z1SubText = isBullishZ1
+                    ? `▲ Bullish Snap-Back Zone (Oversold Dip)`
+                    : (isBearishZ1 ? `▼ Bearish Snap-Back Zone (Overbought Spike)` : `Clean Innovation Shock (${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}%)`);
+                document.getElementById("val-z1d-sub").textContent = z1SubText;
 
                 const z5Val = typeof m.z_score_5d === 'number' ? m.z_score_5d : 0;
-                const z5Color = Math.abs(z5Val) >= 2.0 ? (z5Val >0 ? "var(--accent-green)" : "var(--accent-red)") : "var(--accent-amber)";
+                const z5Color = z5Val <= -2.0 ? "var(--accent-green)" : (z5Val >= 2.0 ? "var(--accent-red)" : "var(--accent-amber)");
                 document.getElementById("val-z5d").innerHTML = `<span style="color: ${z5Color};">${z5Val >= 0 ? '+' : ''}${z5Val.toFixed(2)}&sigma;</span>`;
 
                 const z20Val = typeof m.z_score_20d === 'number' ? m.z_score_20d : 0;
-                const z20Color = Math.abs(z20Val) >= 2.0 ? (z20Val >0 ? "var(--accent-green)" : "var(--accent-red)") : "var(--accent-purple)";
+                const z20Color = z20Val <= -2.0 ? "var(--accent-green)" : (z20Val >= 2.0 ? "var(--accent-red)" : "var(--accent-purple)");
                 document.getElementById("val-z20d").innerHTML = `<span style="color: ${z20Color};">${z20Val >= 0 ? '+' : ''}${z20Val.toFixed(2)}&sigma;</span>`;
 
                 // 3. Module A: O-U Snap-Back
@@ -3656,9 +3667,14 @@
                 document.getElementById("asset-chart-daily-change").innerHTML = `Daily: <span style="color: ${m.asset_return_pct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 600;">${dailyRet}</span>`;
 
                 currentAnomalyHistory = data.history;
+                window.currentAnomalyTrades = (data.asset_backtest && data.asset_backtest.trades) ? data.asset_backtest.trades : [];
                 renderAnomalyChart(data.history, asset);
-                renderTargetAssetChart(data.history, asset);
-                fetchDynamicTradesLog();
+                renderTargetAssetChart(data.history, asset, window.currentAnomalyTrades);
+
+                const optParams = data.optimal_params || {};
+                const optThresh = optParams.optimal_threshold || effThresh || 2.4;
+                const optHold = optParams.optimal_horizon || 5;
+                setTradesLogParams(optThresh, 21, optHold, true);
 
             } catch (e) {
                 console.error(e);
@@ -3820,6 +3836,9 @@
             if (!tbody) return;
 
             activeDynamicTrades = data.trades || [];
+            if (currentAnomalyHistory && currentAnomalyHistory.length > 0) {
+                renderTargetAssetChart(currentAnomalyHistory, currentAnomalyAsset, activeDynamicTrades);
+            }
             const countBadge = document.getElementById("trades-count-badge");
             if (countBadge) countBadge.textContent = `${activeDynamicTrades.length} Trades Fired`;
 
@@ -3942,10 +3961,10 @@
                 const triggerColor = isOptimal ? "rgba(56, 189, 248, 0.9)" : "rgba(245, 158, 11, 0.85)";
                 const triggerWidth = isOptimal ? 1.6 : 1.4;
 
-                const zValues = visibleSlice.map(h =>h.z_1d);
+                const zValues = visibleSlice.map(h => h.z_1d);
                 const pointColors = zValues.map(z => {
-                    if (z >= thr) return "#089981";
-                    if (z <= -thr) return "#f23645";
+                    if (z <= -thr) return "#089981"; // Bullish Oversold Snap-Back (Long)
+                    if (z >= thr) return "#f23645";  // Bearish Overbought Snap-Back (Short)
                     return "#ffffff";
                 });
                 const pointRadii = zValues.map(z =>Math.abs(z) >= thr ? 4.5 : 0);
@@ -4073,12 +4092,17 @@
                                 callbacks: {
                                     afterBody: (ctx) => {
                                         const row = visibleSlice[ctx[0].dataIndex];
-                                        const isTrigger = Math.abs(row.z_1d) >= thr;
+                                        if (!row) return [];
+                                        const isBullishZone = row.z_1d <= -thr;
+                                        const isBearishZone = row.z_1d >= thr;
+                                        const zoneLabel = isBullishZone
+                                            ? `▲ BULLISH SNAP-BACK ZONE (Oversold: Long Asset, Z ≤ -${thr.toFixed(1)}σ)`
+                                            : (isBearishZone ? `▼ BEARISH SNAP-BACK ZONE (Overbought: Short Asset, Z ≥ +${thr.toFixed(1)}σ)` : `✓ Normal co-movement`);
                                         return [
-                                            `Z-Score: ${row.z_1d}σ`,
-                                            `Residual: ${row.residual_pct}%`,
+                                            `1-Day Z-Score: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
+                                            `Idiosyncratic Residual: ${row.residual_pct >= 0 ? '+' : ''}${row.residual_pct}%`,
                                             `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`,
-                                            isTrigger ? `⚠ SNAP-BACK ZONE (|Z| ≥ ${thr.toFixed(1)}σ)` : `✓ Normal co-movement`,
+                                            zoneLabel,
                                             `5-Day Z: ${row.z_5d}σ | 20-Day Z: ${row.z_20d}σ`
                                         ];
                                     }
@@ -4222,41 +4246,92 @@
             }
         }
 
-        function renderTargetAssetChart(history, asset) {
+        // Generates pixel-sharp directional arrow markers for Chart.js
+        function createSignalArrowCanvas(direction, fillColor, strokeColor = "#ffffff") {
+            const size = 18;
+            const c = document.createElement("canvas");
+            c.width = size;
+            c.height = size;
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            if (direction === "up") {
+                // Equilateral Upward Triangle (▲ Bullish Long)
+                ctx.moveTo(size / 2, 2.5);
+                ctx.lineTo(size - 2.5, size - 3.5);
+                ctx.lineTo(2.5, size - 3.5);
+            } else {
+                // Equilateral Downward Triangle (▼ Bearish Short)
+                ctx.moveTo(2.5, 3.5);
+                ctx.lineTo(size - 2.5, 3.5);
+                ctx.lineTo(size / 2, size - 2.5);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            return c;
+        }
+
+        const greenUpArrowCanvas = createSignalArrowCanvas("up", "#089981");
+        const redDownArrowCanvas = createSignalArrowCanvas("down", "#f23645");
+
+        function renderTargetAssetChart(history, asset, trades = null) {
             const canvas = document.getElementById("targetAssetChart");
             if (!canvas) return;
             const ctx = canvas.getContext("2d");
             if (targetAssetChartInstance) targetAssetChartInstance.destroy();
 
             const visibleSlice = getVisibleHistorySlice(history);
+            if (!visibleSlice || !visibleSlice.length) return;
+
             const thresh = getCurrentThreshold();
-            const labels = visibleSlice.map(h =>h.date);
-            const prices = visibleSlice.map(h =>h.asset_close);
+            const labels = visibleSlice.map(h => h.date);
+            const prices = visibleSlice.map(h => h.asset_close);
 
-            const pointColors = visibleSlice.map(h => {
-                if (!showAssetSignals) return "transparent";
-                if (h.z_1d <= -thresh) return "#089981";    // Bullish Oversold Snap-Back (Z <= -thresh)
-                if (h.z_1d >= thresh) return "#f23645";     // Bearish Overbought Snap-Back (Z >= +thresh)
-                return "transparent";
+            // Resolve executed trades list from parameters or active state
+            let tradeList = trades;
+            if (!tradeList || !Array.isArray(tradeList) || tradeList.length === 0) {
+                tradeList = (activeDynamicTrades && activeDynamicTrades.length)
+                    ? activeDynamicTrades
+                    : (window.currentAnomalyTrades || []);
+            }
+
+            // Index executed trades 1:1 by entry date
+            const tradesByDate = {};
+            tradeList.forEach(t => {
+                if (t && t.date) {
+                    tradesByDate[t.date] = t;
+                }
             });
 
-            const pointRadii = visibleSlice.map(h => {
-                if (!showAssetSignals) return 0;
-                if (Math.abs(h.z_1d) >= thresh) return 5.5;
-                return 0;
-            });
+            const pointColors = [];
+            const pointRadii = [];
+            const pointHoverRadii = [];
+            const pointStyles = [];
 
-            const pointStyles = visibleSlice.map(h => {
-                if (h.z_1d <= -thresh) return "triangle";
-                if (h.z_1d >= thresh) return "triangle";
-                return "circle";
+            visibleSlice.forEach(h => {
+                const tr = tradesByDate[h.date];
+                if (showAssetSignals && tr) {
+                    const isLong = tr.is_bullish || (tr.action && tr.action.includes("LONG")) || (tr.action && tr.action.includes("CALL"));
+                    pointColors.push(isLong ? "#089981" : "#f23645");
+                    pointRadii.push(7.5);
+                    pointHoverRadii.push(9.5);
+                    pointStyles.push(isLong ? greenUpArrowCanvas : redDownArrowCanvas);
+                } else {
+                    pointColors.push("transparent");
+                    pointRadii.push(0);
+                    pointHoverRadii.push(4);
+                    pointStyles.push("circle");
+                }
             });
 
             // Update Section 1.5 legend text dynamically
             const assetLegendBullish = document.getElementById("asset-legend-bullish");
             const assetLegendBearish = document.getElementById("asset-legend-bearish");
-            if (assetLegendBullish) assetLegendBullish.innerHTML = `▲ Green: Bullish Snap-Back (Z &le; -${thresh.toFixed(1)}&sigma;)`;
-            if (assetLegendBearish) assetLegendBearish.innerHTML = `▼ Red: Bearish Snap-Back (Z &ge; +${thresh.toFixed(1)}&sigma;)`;
+            if (assetLegendBullish) assetLegendBullish.innerHTML = `▲ Green Arrow: Bullish Snap-Back Trade (Long, Z &le; -${thresh.toFixed(1)}&sigma;)`;
+            if (assetLegendBearish) assetLegendBearish.innerHTML = `▼ Red Arrow: Bearish Snap-Back Trade (Short, Z &ge; +${thresh.toFixed(1)}&sigma;)`;
 
             // Custom Chart.js Plugin: Directional Background Highlighter for Regime Drift / Alert days
             // Paints Green for Bullish regime shifts (positive drift S+) and Red for Bearish regime shifts (negative drift S-)
@@ -4327,6 +4402,7 @@
                             pointBorderColor: "#ffffff",
                             pointBorderWidth: 1.5,
                             pointRadius: pointRadii,
+                            pointHoverRadius: pointHoverRadii,
                             pointStyle: pointStyles,
                             tension: 0.15,
                             order: 1
@@ -4360,13 +4436,47 @@
                             callbacks: {
                                 label: ctx => `${asset} Close: $${Number(ctx.raw).toFixed(2)}`,
                                 afterBody: (ctx) => {
-                                    const row = history[ctx[0].dataIndex];
-                                    const lines = [
+                                    const idx = ctx[0].dataIndex;
+                                    const row = visibleSlice[idx];
+                                    if (!row) return [];
+                                    const tr = tradesByDate[row.date];
+                                    const lines = [];
+
+                                    if (tr) {
+                                        const isLong = tr.is_bullish || (tr.action && tr.action.includes("LONG")) || (tr.action && tr.action.includes("CALL"));
+                                        const actionLabel = isLong ? "▲ LONG ASSET (Bullish Snap-Back)" : "▼ SHORT ASSET (Bearish Snap-Back)";
+                                        const ret = Number(tr.pnl_rec_pct ?? tr.captured_move_pct ?? tr.pnl_pct ?? 0);
+                                        const isWin = tr.is_win ?? (ret > 0);
+                                        const holdSess = tr.holding_sessions || tr.holding_dte || 5;
+                                        const entryP = Number(tr.entry_price || tr.underlying_entry || row.asset_close || 0);
+                                        const exitP = Number(tr.exit_price || tr.strike || 0);
+                                        const dollarPnl = tr.dollar_pnl ?? tr.dollar_rec;
+
+                                        lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                                        lines.push(`TRADE: ${actionLabel}`);
+                                        lines.push(`Signal Shock Z: ${tr.signal_z >= 0 ? '+' : ''}${Number(tr.signal_z).toFixed(2)}σ`);
+                                        lines.push(`Entry: $${entryP.toFixed(2)} ➔ Exit: $${exitP.toFixed(2)} (${holdSess} sessions)`);
+                                        lines.push(`Return: ${ret >= 0 ? '+' : ''}${ret.toFixed(2)}% [${isWin ? 'PROFITABLE WIN' : 'LOSS'}]`);
+                                        if (dollarPnl != null) {
+                                            lines.push(`P&L ($10k): ${dollarPnl >= 0 ? '+$' : '-$'}${Math.abs(dollarPnl).toFixed(0)}`);
+                                        }
+                                        if (tr.mfe_pct != null && tr.mae_pct != null) {
+                                            lines.push(`Max Favorable (MFE): +${Number(tr.mfe_pct).toFixed(1)}%`);
+                                            lines.push(`Max Adverse (MAE): ${Number(tr.mae_pct).toFixed(1)}%`);
+                                        }
+                                        if (!isWin && tr.loss_cause) {
+                                            lines.push(`Failure Cause: ${tr.loss_cause.replace(/_/g, ' ')}`);
+                                        }
+                                        lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                                    }
+
+                                    lines.push(
                                         `Daily Return: ${row.asset_return_pct >= 0 ? '+' : ''}${row.asset_return_pct}%`,
-                                        `Relative Z-Score: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
+                                        `1-Day Shock Z: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
                                         `5-Day Z: ${row.z_5d}σ | 20-Day Z: ${row.z_20d}σ`,
                                         `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`
-                                    ];
+                                    );
+
                                     const alertVal = Number(row.regime_alert ?? row.cusum_alert ?? 0);
                                     const streakVal = Number(row.streak ?? row.cusum_streak ?? 0);
                                     if (alertVal !== 0 || Math.abs(streakVal) >= 4) {
@@ -4377,11 +4487,11 @@
                                             lines.push(`   Consecutive Streak: ${streakVal} days`);
                                         }
                                     }
-                                    if (row.z_1d <= -thresh) {
-                                        lines.push(`▲ BULLISH SNAP-BACK ZONE (Z ≤ -${thresh.toFixed(1)}σ)`);
-                                    } else if (row.z_1d >= thresh) {
-                                        lines.push(`▼ BEARISH SNAP-BACK ZONE (Z ≥ +${thresh.toFixed(1)}σ)`);
+
+                                    if (!tr && Math.abs(row.z_1d) >= thresh) {
+                                        lines.push(`[Signal Locked: Existing Position Active or Earnings Blackout]`);
                                     }
+
                                     return lines;
                                 }
                             }
