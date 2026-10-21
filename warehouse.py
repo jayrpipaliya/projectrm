@@ -161,6 +161,23 @@ class Warehouse:
                 )
             """)
 
+            # Ensure Asymmetric Directional Columns Exist
+            for col_name, col_type in [
+                ("trade_policy", "TEXT DEFAULT 'ASYMMETRIC_DUAL'"),
+                ("long_threshold", "REAL"),
+                ("long_holding_days", "INTEGER"),
+                ("long_win_rate_pct", "REAL"),
+                ("long_oos_wr_pct", "REAL"),
+                ("short_threshold", "REAL"),
+                ("short_holding_days", "INTEGER"),
+                ("short_win_rate_pct", "REAL"),
+                ("short_oos_wr_pct", "REAL"),
+            ]:
+                try:
+                    cursor.execute(f"ALTER TABLE champion_gold_ledger ADD COLUMN {col_name} {col_type}")
+                except Exception:
+                    pass
+
             # 9. Champion Triplet Historical Trades Log Table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS champion_gold_trades (
@@ -557,8 +574,11 @@ class Warehouse:
                     profit_factor, win_rate_pct, avg_roi_pct, total_dollar,
                     trades_count, est_theta_decay_pct, validation_status,
                     efficiency_ratio, oos_win_rate_pct, score, current_z,
-                    latest_close, signal_action, is_active, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    latest_close, signal_action, is_active,
+                    trade_policy, long_threshold, long_holding_days, long_win_rate_pct, long_oos_wr_pct,
+                    short_threshold, short_holding_days, short_win_rate_pct, short_oos_wr_pct,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(ticker) DO UPDATE SET
                     market=excluded.market,
                     sector=excluded.sector,
@@ -583,6 +603,15 @@ class Warehouse:
                     latest_close=COALESCE(excluded.latest_close, champion_gold_ledger.latest_close),
                     signal_action=COALESCE(excluded.signal_action, champion_gold_ledger.signal_action),
                     is_active=COALESCE(excluded.is_active, champion_gold_ledger.is_active),
+                    trade_policy=COALESCE(excluded.trade_policy, champion_gold_ledger.trade_policy),
+                    long_threshold=COALESCE(excluded.long_threshold, champion_gold_ledger.long_threshold),
+                    long_holding_days=COALESCE(excluded.long_holding_days, champion_gold_ledger.long_holding_days),
+                    long_win_rate_pct=COALESCE(excluded.long_win_rate_pct, champion_gold_ledger.long_win_rate_pct),
+                    long_oos_wr_pct=COALESCE(excluded.long_oos_wr_pct, champion_gold_ledger.long_oos_wr_pct),
+                    short_threshold=COALESCE(excluded.short_threshold, champion_gold_ledger.short_threshold),
+                    short_holding_days=COALESCE(excluded.short_holding_days, champion_gold_ledger.short_holding_days),
+                    short_win_rate_pct=COALESCE(excluded.short_win_rate_pct, champion_gold_ledger.short_win_rate_pct),
+                    short_oos_wr_pct=COALESCE(excluded.short_oos_wr_pct, champion_gold_ledger.short_oos_wr_pct),
                     updated_at=CURRENT_TIMESTAMP
             """, (
                 ticker.upper(),
@@ -608,7 +637,16 @@ class Warehouse:
                 float(data.get("current_z")) if data.get("current_z") is not None else None,
                 float(data.get("latest_close")) if data.get("latest_close") is not None else None,
                 data.get("signal_action"),
-                1 if data.get("is_active") else (0 if data.get("is_active") is not None else None)
+                1 if data.get("is_active") else (0 if data.get("is_active") is not None else None),
+                str(champ.get("trade_policy", "ASYMMETRIC_DUAL")),
+                float(champ["long_threshold"]) if champ.get("long_threshold") is not None else None,
+                int(champ["long_holding_days"]) if champ.get("long_holding_days") is not None else None,
+                float(champ["long_win_rate_pct"]) if champ.get("long_win_rate_pct") is not None else None,
+                float(champ["long_oos_wr_pct"]) if champ.get("long_oos_wr_pct") is not None else None,
+                float(champ["short_threshold"]) if champ.get("short_threshold") is not None else None,
+                int(champ["short_holding_days"]) if champ.get("short_holding_days") is not None else None,
+                float(champ["short_win_rate_pct"]) if champ.get("short_win_rate_pct") is not None else None,
+                float(champ["short_oos_wr_pct"]) if champ.get("short_oos_wr_pct") is not None else None
             ))
             # Also keep ticker_optimal_params synchronized
             cursor.execute("""

@@ -958,12 +958,45 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             active_signals = 0
             refresh_live = query.get("refresh", ["false"])[0].lower() in ["true", "1", "yes"]
 
+            # Determine latest date in stock_bars
+            try:
+                with warehouse._get_connection() as conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT MAX(trade_date) FROM stock_bars")
+                    row_max = cur.fetchone()
+                    latest_dataset_str = row_max[0] if (row_max and row_max[0]) else "2026-10-21"
+            except Exception:
+                latest_dataset_str = "2026-10-21"
+            import datetime as dt
+            latest_dataset_dt = dt.datetime.strptime(latest_dataset_str, "%Y-%m-%d").date()
+
             for row in rows:
                 t = row["ticker"]
                 m = row["market"]
                 s = row["sector"]
                 thresh = float(row.get("threshold", 2.0))
+                l_thresh = float(row.get("long_threshold") or thresh)
+                s_thresh = float(row.get("short_threshold") or thresh)
+                policy = str(row.get("trade_policy") or "ASYMMETRIC_DUAL")
+                is_long_only = (policy == "LONG_ONLY")
+                is_short_only = (policy == "SHORT_ONLY")
                 
+                # Check Corporate Earnings Blackout [E-1 to E+2]
+                is_blackout = False
+                blackout_ed = None
+                erecs = warehouse.get_earnings_dates(t)
+                if erecs and latest_dataset_dt:
+                    for er in erecs:
+                        try:
+                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                            diff_days = (latest_dataset_dt - ed_obj).days
+                            if -1 <= diff_days <= 2:
+                                is_blackout = True
+                                blackout_ed = er["earnings_date"]
+                                break
+                        except Exception:
+                            pass
+
                 # Use stored current_z if available, unless refresh explicitly requested
                 z_1d = float(row.get("current_z")) if (row.get("current_z") is not None and not refresh_live) else None
                 close_px = float(row.get("latest_close")) if (row.get("latest_close") is not None and not refresh_live) else None
@@ -975,21 +1008,38 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                             latest = analysis.get("latest_metrics", {})
                             z_1d = float(latest.get("z_score_1d", 0.0))
                             close_px = float(latest.get("asset_close", 0.0))
-                            # Cache into SQLite
-                            act = "LONG ASSET" if z_1d <= -thresh else ("SHORT ASSET" if z_1d >= thresh else "WAITING FOR BARRIER")
-                            warehouse.update_champion_live_signal(t, z_1d, close_px, act, bool(abs(z_1d) >= thresh))
+                            
+                            # Directional Asymmetric Trigger
+                            if is_blackout:
+                                act = "EARNINGS_BLACKOUT"
+                                is_br = False
+                            elif not is_short_only and z_1d <= -l_thresh:
+                                act = "LONG ASSET"
+                                is_br = True
+                            elif not is_long_only and z_1d >= s_thresh:
+                                act = "SHORT ASSET"
+                                is_br = True
+                            else:
+                                act = "WAITING FOR BARRIER"
+                                is_br = False
+                            warehouse.update_champion_live_signal(t, z_1d, close_px, act, is_br)
                     except Exception:
                         z_1d = 0.0
                         close_px = 0.0
 
-                # Signal state
-                if z_1d <= -thresh:
+                # Directional Asymmetric Signal state
+                if is_blackout:
+                    action = "EARNINGS_BLACKOUT"
+                    badge = "EARNINGS BLACKOUT"
+                    badge_class = "tag-amber"
+                    is_active = False
+                elif not is_short_only and z_1d <= -l_thresh:
                     action = "LONG ASSET"
                     badge = "ACTIVE BULLISH SIGNAL"
                     badge_class = "tag-green"
                     is_active = True
                     active_signals += 1
-                elif z_1d >= thresh:
+                elif not is_long_only and z_1d >= s_thresh:
                     action = "SHORT ASSET"
                     badge = "ACTIVE BEARISH SIGNAL"
                     badge_class = "tag-red"
@@ -1001,6 +1051,11 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     badge_class = "tag-blue"
                     is_active = False
 
+                # Proximity to nearest active barrier
+                dist_long = 999.0 if is_short_only else max(0.0, z_1d - (-l_thresh))
+                dist_short = 999.0 if is_long_only else max(0.0, s_thresh - z_1d)
+                dist_barrier = min(dist_long, dist_short)
+
                 item = dict(row)
                 item["theme"] = ticker_theme_map.get(t, ("", "", ""))[0] or item.get("theme", "")
                 item["current_z"] = round(z_1d, 2)
@@ -1009,7 +1064,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 item["action_badge"] = badge
                 item["badge_class"] = badge_class
                 item["is_active"] = is_active
-                item["dist_to_barrier"] = round(abs(abs(z_1d) - thresh), 2)
+                item["dist_to_barrier"] = round(dist_barrier, 2)
+                item["is_blackout"] = is_blackout
+                item["blackout_ed"] = blackout_ed
                 enriched.append(item)
 
             # Summary metrics
@@ -1164,53 +1221,31 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     recs = warehouse.get_earnings_dates(t)
                     edates = [r["earnings_date"] for r in recs] if recs else []
 
-                    opt = optimizer.evaluate_3d_global_optimum(
-                        z=np.array(z_series, dtype=float),
-                        p=np.array(prices, dtype=float),
-                        dates=dates,
-                        earnings_dates=edates,
-                        filter_earnings=True
-                    )
-                    if opt.get("status") == "SUCCESS" and opt.get("champion_triplet"):
-                        champ = opt["champion_triplet"]
-                        warehouse.save_champion_triplet(t, {
-                            "market": m,
-                            "sector": s,
-                            "theme": theme,
-                            "champion_triplet": champ
-                        })
-                        eval_t = optimizer.evaluate_single_param(
-                            z=np.array(z_series, dtype=float),
-                            p=np.array(prices, dtype=float),
-                            dates=dates,
-                            thresh=champ["threshold"],
-                            horizon=champ["holding_days"],
-                            earnings_dates=edates,
-                            filter_earnings=True,
-                            calc_details=True
-                        )
-                        raw_trades = eval_t.get("trades", [])
-                        gold_trades = []
-                        for tr in raw_trades:
-                            gold_trades.append({
-                                "ticker": t,
-                                "trade_date": tr["date"],
-                                "action": tr["action"],
-                                "signal_z": tr.get("signal_z", 0.0),
-                                "underlying_entry": tr["entry_price"],
-                                "strike": tr["exit_price"],
-                                "contract_dte": 0,
-                                "holding_sessions": tr["holding_sessions"],
-                                "entry_option_price": tr["entry_price"],
-                                "exit_option_price": tr["exit_price"],
-                                "pnl_pct": tr["pnl_rec_pct"],
-                                "dollar_pnl": tr["dollar_rec"],
-                                "is_win": 1 if tr["win_rec"] else 0,
-                                "loss_cause": tr.get("loss_cause", ""),
-                                "mfe_pct": tr.get("mfe_pct", 0.0),
-                                "mae_pct": tr.get("mae_pct", 0.0)
-                            })
-                        warehouse.save_champion_trades(t, gold_trades)
+                    # Safe Sync: Only updates live z-score and latest close without overwriting curated champion parameters
+                    latest = history[-1]
+                    latest_z = float(latest.get("z_1d", 0.0))
+                    latest_close = float(latest.get("asset_close", 0.0))
+                    
+                    # Fetch existing champion parameters to preserve them
+                    existing = warehouse.get_champion_triplet(t)
+                    if existing:
+                        policy = existing.get("trade_policy", "ASYMMETRIC_DUAL")
+                        l_sig = float(existing.get("long_threshold") or existing.get("threshold", 2.0))
+                        s_sig = float(existing.get("short_threshold") or existing.get("threshold", 2.0))
+                        
+                        if policy != "SHORT_ONLY" and latest_z <= -l_sig:
+                            act = "LONG ASSET"
+                            breached = True
+                        elif policy != "LONG_ONLY" and latest_z >= s_sig:
+                            act = "SHORT ASSET"
+                            breached = True
+                        else:
+                            act = "WAITING FOR BARRIER"
+                            breached = False
+                        
+                        warehouse.update_champion_live_signal(t, latest_z, latest_close, act, breached)
+                        synced.append(t)
+                    else:
                         synced.append(t)
                 except Exception as e:
                     print(f"Error syncing gold ledger for {t}: {e}")
@@ -1276,34 +1311,89 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             now_ny = dt.datetime.now()
             market_time_str = now_ny.strftime("%H:%M:%S EST")
 
+            # Determine latest date in stock_bars
+            try:
+                with warehouse._get_connection() as conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT MAX(trade_date) FROM stock_bars")
+                    row_max = cur.fetchone()
+                    latest_dataset_str = row_max[0] if (row_max and row_max[0]) else "2026-10-21"
+            except Exception:
+                latest_dataset_str = "2026-10-21"
+            latest_dataset_dt = dt.datetime.strptime(latest_dataset_str, "%Y-%m-%d").date()
+
             signals_firing = []
+            earnings_blocked = []
             monitoring_candidates = []
             enriched = []
 
             for row in rows:
                 t = row["ticker"]
                 thresh = float(row.get("threshold", 2.0))
+                l_thresh = float(row.get("long_threshold") or thresh)
+                s_thresh = float(row.get("short_threshold") or thresh)
+                policy = str(row.get("trade_policy") or "ASYMMETRIC_DUAL")
+                is_long_only = (policy == "LONG_ONLY")
+                is_short_only = (policy == "SHORT_ONLY")
+
+                # Check Corporate Earnings Blackout [E-1 to E+2]
+                is_blackout = False
+                blackout_ed = None
+                erecs = warehouse.get_earnings_dates(t)
+                if erecs and latest_dataset_dt:
+                    for er in erecs:
+                        try:
+                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                            diff_days = (latest_dataset_dt - ed_obj).days
+                            if -1 <= diff_days <= 2:
+                                is_blackout = True
+                                blackout_ed = er["earnings_date"]
+                                break
+                        except Exception:
+                            pass
+
                 z_1d = float(row.get("current_z", 0.0) or 0.0)
                 close_px = float(row.get("latest_close", 0.0) or 0.0)
                 tenor = int(row.get("contract_dte", 21))
-                hold = int(row.get("holding_days", 5))
+                l_hold = int(row.get("long_holding_days") or row.get("holding_days", 14))
+                s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
 
-                dist = round(abs(abs(z_1d) - thresh), 2)
                 is_active = False
                 action = "WAITING FOR BARRIER"
                 action_badge = "MONITORING"
                 badge_class = "tag-blue"
+                chosen_hold = row.get("holding_days", 5)
 
-                if z_1d <= -thresh:
+                if is_blackout:
+                    action = "EARNINGS_BLACKOUT"
+                    action_badge = "EARNINGS BLACKOUT"
+                    badge_class = "tag-amber"
+                    is_active = False
+                    dist = 999.0
+                    reason = f"BLOCKED: Earnings on {blackout_ed}. Blackout window [E-1, E+2] active."
+                elif not is_short_only and z_1d <= -l_thresh:
                     action = "LONG ASSET"
                     action_badge = "ACTIVE BULLISH SIGNAL"
                     badge_class = "tag-green"
                     is_active = True
-                elif z_1d >= thresh:
+                    chosen_hold = l_hold
+                    dist = round(abs(z_1d - (-l_thresh)), 2)
+                    reason = f"Z-score {z_1d:+.2f}σ breached Long barrier -{l_thresh:.1f}σ by {dist:.2f}σ"
+                elif not is_long_only and z_1d >= s_thresh:
                     action = "SHORT ASSET"
                     action_badge = "ACTIVE BEARISH SIGNAL"
                     badge_class = "tag-red"
                     is_active = True
+                    chosen_hold = s_hold
+                    dist = round(abs(z_1d - s_thresh), 2)
+                    reason = f"Z-score {z_1d:+.2f}σ breached Short barrier +{s_thresh:.1f}σ by {dist:.2f}σ"
+                else:
+                    dist_long = 999.0 if is_short_only else max(0.0, z_1d - (-l_thresh))
+                    dist_short = 999.0 if is_long_only else max(0.0, s_thresh - z_1d)
+                    dist = round(min(dist_long, dist_short), 2)
+                    reason = f"{dist:.2f}σ away from trigger"
+
+                warehouse.update_champion_live_signal(t, z_1d, close_px, action, is_active)
 
                 strike_est = round(close_px, 1)
 
@@ -1315,19 +1405,25 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 item["action_badge"] = action_badge
                 item["badge_class"] = badge_class
                 item["is_active"] = is_active
+                item["is_blackout"] = is_blackout
+                item["blackout_ed"] = blackout_ed
                 item["dist_to_barrier"] = dist
                 item["order_spec"] = {
-                    "action": action,
+                    "action": "BUY ATM CALL" if action == "LONG ASSET" else ("BUY ATM PUT" if action == "SHORT ASSET" else action),
                     "underlying": t,
-                    "execution_instrument": "Equity Shares (MOC)",
-                    "holding_horizon_days": hold,
+                    "target_strike": strike_est,
+                    "contract_tenor_dte": tenor,
+                    "execution_instrument": "Equity Shares or Options (MOC)",
+                    "holding_horizon_days": chosen_hold,
                     "execution_type": "MOC (Market-On-Close) 3:45–3:58 PM EST",
-                    "reason": f"Z-score {z_1d:+.2f}σ breached {thresh:.1f}σ barrier by {abs(abs(z_1d)-thresh):.2f}σ" if is_active else f"{dist:.2f}σ away from trigger"
+                    "reason": reason
                 }
                 enriched.append(item)
 
                 if is_active:
                     signals_firing.append(item)
+                elif is_blackout and ((not is_short_only and z_1d <= -l_thresh) or (not is_long_only and z_1d >= s_thresh)):
+                    earnings_blocked.append(item)
                 else:
                     monitoring_candidates.append(item)
 
@@ -1339,6 +1435,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "total_scanned": len(rows),
                 "firing_count": len(signals_firing),
                 "signals_firing": signals_firing,
+                "earnings_blocked_count": len(earnings_blocked),
+                "earnings_blocked": earnings_blocked,
                 "closest_candidates": monitoring_candidates[:3],
                 "ledger": enriched
             })
@@ -1518,7 +1616,17 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             holds = [t.get("holding_sessions", 5) for t in trades]
             avg_hold_sessions = round(float(np.mean(holds)), 1) if holds else 0.0
 
-            trades_per_year = round(total_count / 5.0, 1) if total_count > 0 else 0.0
+            if total_count > 1:
+                span_days = max(1, (date_objs[-1] - date_objs[0]).days)
+                span_years = max(0.5, span_days / 365.25)
+                trades_per_year = round(total_count / span_years, 1)
+            elif total_count == 1:
+                span_years = 1.0
+                trades_per_year = 1.0
+            else:
+                span_years = 0.0
+                trades_per_year = 0.0
+
             latest_trade_date = trades[0]["trade_date"] if total_count > 0 else "None"
 
             summary = {
@@ -1533,6 +1641,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "min_gap_days": min_gap,
                 "max_gap_days": max_gap,
                 "trades_per_year": trades_per_year,
+                "span_years": round(span_years, 1),
                 "optimal_firing_window": "3:45 PM - 3:58 PM EST (Market-On-Close)",
                 "latest_trade_date": latest_trade_date,
             }

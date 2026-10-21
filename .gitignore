@@ -19,3 +19,4 @@ Thumbs.db
 
 # Database backups
 data/*_backup.db
+data/raw_csv/

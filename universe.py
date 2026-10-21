@@ -14,6 +14,7 @@ UNIVERSE_SECTORS = {
             {"ticker": "NOW",  "market": "QQQ", "sector": "IGV", "theme": "Workflow cloud automation"},
             {"ticker": "ADBE", "market": "QQQ", "sector": "IGV", "theme": "Creative cloud software"},
             {"ticker": "ORCL", "market": "SPY", "sector": "IGV", "theme": "Database & cloud infrastructure"},
+            {"ticker": "PLTR", "market": "QQQ", "sector": "IGV", "theme": "Enterprise AI software & analytics"},
         ]
     },
     "cybersecurity": {
@@ -34,6 +35,10 @@ UNIVERSE_SECTORS = {
             {"ticker": "QCOM", "market": "QQQ", "sector": "SMH", "theme": "Wireless & mobile semiconductors"},
             {"ticker": "AMAT", "market": "QQQ", "sector": "SMH", "theme": "Semiconductor wafer equipment"},
             {"ticker": "MU",   "market": "QQQ", "sector": "SMH", "theme": "Memory & storage semiconductors"},
+            {"ticker": "LRCX", "market": "QQQ", "sector": "SMH", "theme": "Semiconductor etch & deposition tools"},
+            {"ticker": "MRVL", "market": "QQQ", "sector": "SMH", "theme": "AI networking & custom silicon"},
+            {"ticker": "TXN",  "market": "QQQ", "sector": "SMH", "theme": "Analog & embedded semiconductor chips"},
+            {"ticker": "WDC",  "market": "QQQ", "sector": "SMH", "theme": "NAND & memory storage hardware"},
         ]
     },
     "tech_hardware": {
@@ -46,12 +51,11 @@ UNIVERSE_SECTORS = {
     },
     "communications": {
         "name": "Digital Advertising, Media & Streaming",
-        "description": "Search advertising, social networks, streaming media & theme parks",
+        "description": "Search advertising, social networks, streaming media & broadband",
         "pairs": [
             {"ticker": "GOOGL", "market": "QQQ", "sector": "XLC", "theme": "Search, digital advertising & cloud"},
             {"ticker": "META",  "market": "QQQ", "sector": "XLC", "theme": "Social platforms & AI advertising"},
             {"ticker": "NFLX",  "market": "QQQ", "sector": "XLC", "theme": "Subscription streaming entertainment"},
-            {"ticker": "DIS",   "market": "DIA", "sector": "XLC", "theme": "Entertainment, studios & theme parks"},
             {"ticker": "CMCSA", "market": "SPY", "sector": "XLC", "theme": "Cable broadband & media entertainment"},
         ]
     },
@@ -72,10 +76,7 @@ UNIVERSE_SECTORS = {
         "name": "Consumer Staples & Wholesale",
         "description": "Household personal care, non-alcoholic beverages & discount groceries",
         "pairs": [
-            {"ticker": "PG",   "market": "DIA", "sector": "XLP", "theme": "Household & personal care products"},
             {"ticker": "KO",   "market": "DIA", "sector": "XLP", "theme": "Non-alcoholic beverages"},
-            {"ticker": "PEP",  "market": "QQQ", "sector": "XLP", "theme": "Beverages & global snacks"},
-            {"ticker": "COST", "market": "QQQ", "sector": "XLP", "theme": "Wholesale club retail"},
             {"ticker": "WMT",  "market": "DIA", "sector": "XLP", "theme": "Discount retail & grocery"},
         ]
     },
@@ -86,8 +87,6 @@ UNIVERSE_SECTORS = {
             {"ticker": "JPM", "market": "SPY", "sector": "XLF", "theme": "Money center banking & markets"},
             {"ticker": "BAC", "market": "SPY", "sector": "XLF", "theme": "Consumer & commercial banking"},
             {"ticker": "WFC", "market": "SPY", "sector": "XLF", "theme": "Commercial & retail banking"},
-            {"ticker": "GS",  "market": "DIA", "sector": "XLF", "theme": "Investment banking & global markets"},
-            {"ticker": "MS",  "market": "SPY", "sector": "XLF", "theme": "Wealth management & investment banking"},
             {"ticker": "V",   "market": "DIA", "sector": "XLF", "theme": "Global digital payments network"},
             {"ticker": "USB", "market": "IWM", "sector": "KRE", "theme": "Regional & commercial banking"},
         ]
@@ -97,7 +96,6 @@ UNIVERSE_SECTORS = {
         "description": "Integrated energy, exploration, production & oilfield technology",
         "pairs": [
             {"ticker": "XOM", "market": "SPY", "sector": "XLE", "theme": "Integrated energy & refining"},
-            {"ticker": "CVX", "market": "DIA", "sector": "XLE", "theme": "Integrated oil & gas operations"},
             {"ticker": "COP", "market": "SPY", "sector": "XLE", "theme": "Oil & gas exploration & production"},
             {"ticker": "SLB", "market": "SPY", "sector": "OIH", "theme": "Oilfield equipment & technology"},
         ]
@@ -117,7 +115,6 @@ UNIVERSE_SECTORS = {
         "description": "Heavy industrial machinery, aerospace defense & global copper mining",
         "pairs": [
             {"ticker": "CAT", "market": "DIA", "sector": "XLI",  "theme": "Heavy machinery & construction equipment"},
-            {"ticker": "BA",  "market": "DIA", "sector": "ITA",  "theme": "Commercial aerospace & defense systems"},
             {"ticker": "FCX", "market": "SPY", "sector": "COPX", "theme": "Copper mining & basic materials"},
         ]
     }

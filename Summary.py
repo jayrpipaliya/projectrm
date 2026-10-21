@@ -200,29 +200,30 @@ Implementation:
     - Multi-horizon residual Z-scores (1-day, 5-day, 20-day).
     - Continuous Ornstein-Uhlenbeck half-life reversion monitor.
     - Two-sided Page's CUSUM drift alert engine.
-    - Unified Trade Execution Blueprint with target strike, tenor, and holding horizon.
+    - Unified Trade Execution Blueprint strictly evaluating pure underlying asset return %.
 
 9.2 Rare Edge ('gold-ledger'):
-    - Watchlist Champion Registry tracking globally optimal triplets (sigma*, tau*, H*)
-      across 21 core liquid watchlist assets.
+    - Watchlist Champion Registry tracking globally optimal parameters (sigma*, H*)
+      across all 47 core liquid watchlist champions.
+    - Calibrated strictly on pure underlying asset return % (R = delta_P / P_entry).
     - Pre-Close 3:45 PM Market-On-Close (MOC) Screener: Scans between 3:45 PM and 3:58 PM EST
       to identify active trigger barrier breaches (|Z_t| >= sigma*).
     - Executive summary KPI cards and signal cadence metrics styled with clean grey borders
       and grey/white text.
 
 9.3 Tri-Surface Edge ('tenor-sweep'):
-    - Interactive 3D parameter surface explorer across trigger barriers and option tenors.
-    - 2D heatmap grid toggleable by Profit Factor, Win Rate, ROI %, and Dollar P&L.
+    - Interactive 2D/3D parameter surface explorer across trigger barriers and holding horizons.
+    - 2D heatmap grid toggleable by Profit Factor, Win Rate, Asset ROI %, and Dollar P&L.
     - Full day-by-day holding duration curve (1 to 21 sessions).
-    - Single dedicated "Run 3D Global Optimum" header button with plateau smoothing.
+    - Single dedicated "Run Global Optimum" header button with plateau smoothing.
 
 9.4 Cadence Edge ('income-strategy'):
-    - High-velocity weekly cashflow engine with short holding periods (1 to 5 sessions).
+    - High-velocity cashflow engine with calibrated holding periods (1 to 21 sessions).
     - 3:45 PM to 4:00 PM MOC Proximity Radar:
       Evaluates standard deviation distance to trigger barrier:
       delta_sigma = max(0.0, sigma* - |Z_t|).
     - Multi-asset basket simulator calculating aggregate portfolio arrival frequency
-      (trades/wk), weighted win rate, and blended profit factor.
+      (trades/yr), weighted win rate, and blended profit factor based on underlying equity returns.
 
 9.5 Atlas Edge ('price-action'):
     - Multi-timeframe technical structure and candlestick geometry.
@@ -230,10 +231,11 @@ Implementation:
     - Highlights confluence between technical support/resistance and residual triggers.
 
 9.6 Dossier Edge ('trades-log'):
-    - Forensic walk-forward trade execution journal.
+    - Forensic walk-forward trade execution journal based on pure underlying asset return %.
+    - Dedicated Direction Filter: All Trades, Long Only, Short Only.
     - Session-by-session trade lifecycle tracking from entry to exit.
     - Corporate earnings announcement blackout filter toggle and audit counters.
-    - Forensic loss categorization (REGIME_DRIFT, THETA_BLEED, WHIPSAW).
+    - Forensic loss categorization (REGIME_DRIFT, VOLATILITY_EXPANSION).
 
 9.7 Diagnostic Edge ('diagnostics'):
     - Interactive Any-Ticker Explorer: Input box allowing on-demand querying of any equity

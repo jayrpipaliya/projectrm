@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard RM Version 3 &bull; Quantitative Relative Mispricing Cockpit</title>
+    <title>Edge V4 &bull; Quantitative Relative Mispricing Cockpit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1405,13 +1405,12 @@
     <aside class="sidebar">
         <!-- Workspace / Engine Dropdown -->
         <div class="workspace-badge">
-            <div class="workspace-icon">RM</div>
+            <div class="workspace-icon">E4</div>
             <div class="workspace-info">
                 <div class="workspace-name">
-                    <span>Project RM</span>
+                    <span>Edge V4</span>
                     <span style="font-size: 0.7rem; color: var(--text-dim);">▾</span>
                 </div>
-                <div class="workspace-sub" style="color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>Asset Returns Edition</div>
             </div>
         </div>
 
@@ -1440,9 +1439,6 @@
         <div>
             <div class="nav-group-title">Warehouse</div>
             <nav class="nav-links">
-                <div class="nav-item" onclick="syncCockpitHistoricalData()" style="cursor: pointer;">
-                    <span>Sync 5Y History (yfinance)</span>
-                </div>
                 <div class="nav-item" onclick="triggerSync()" style="cursor: pointer;">
                     <span>Sync SQLite Data</span>
                 </div>
@@ -1451,10 +1447,6 @@
 
         <!-- Sidebar Footer Status -->
         <div class="sidebar-footer">
-            <div class="connection-pill">
-                <span class="connection-dot"></span>
-                <span>Polygon API Connected</span>
-            </div>
             <div style="font-size: 0.72rem; color: var(--text-dim); padding: 0 4px;">Storage: SQLite (data/warehouse.db)
             </div>
         </div>
@@ -1468,13 +1460,8 @@
         <!-- Top Header Navigation -->
         <header class="top-header">
             <div class="page-title-row" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span style="font-size: 1.25rem; color: #2962ff; "></span>
-                <h1 class="page-title">Dashboard RM <span class="badge-subtle" style="background: rgba(41, 98, 255, 0.15); border: 1px solid #2962ff; color: #2962ff; font-weight: 700; font-family: var(--font-mono);">PRO V3</span></h1>
-                <span id="active-tool-title-badge" class="badge-subtle" style="font-size: 0.74rem; border-color: rgba(41, 98, 255, 0.4); color: #2962ff; background: #1e222d; padding: 4px 10px; font-weight: 700;">Dynamic Edge</span>
-                <span class="badge-subtle" style="background: rgba(8, 153, 129, 0.2); border: 1px solid #089981; color: #34d399; font-weight: 800; font-family: var(--font-mono); font-size: 0.74rem; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; box-shadow: 0 0 12px rgba(8, 153, 129, 0.25);">
-                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block; box-shadow: 0 0 8px #34d399;"></span>
-                    BRANCH: ASSET-RETURNS-ONLY (PURE EQUITY %)
-                </span>
+                <h1 class="page-title">Edge V4</h1>
+                <span id="active-tool-title-badge" style="display: none;">Dynamic Edge</span>
                 
                 <!-- Small Triple Current Trifecta Badge (Always visible above everything) -->
                 <div class="current-trifecta-badge" id="current-trifecta-display" style="display: inline-flex; align-items: center; gap: 8px; background: #131722; border: 1px solid #2a2e39; border-radius: 4px; padding: 3px 10px; font-family: var(--font-mono); font-size: 0.76rem;" title="Current stock triple asset under Kalman active measurement">
@@ -1482,10 +1469,29 @@
                     <span style="color: #363a45;">|</span>
                     <span style="color: #ffffff; font-weight: 800; font-size: 0.82rem;" id="trifecta-asset">MSFT</span>
                     <span style="color: #787b86; font-size: 0.70rem;">vs</span>
-                    <span style="color: #38bdf8; font-weight: 700;" id="trifecta-market">QQQ</span>
+                    <span style="color: #f23645; font-weight: 700;" id="trifecta-market">QQQ</span>
                     <span style="color: #787b86; font-size: 0.70rem;">&bull;</span>
-                    <span style="color: #a78bfa; font-weight: 700;" id="trifecta-sector">IGV</span>
+                    <span style="color: #2962ff; font-weight: 700;" id="trifecta-sector">IGV</span>
                 </div>
+
+                <!-- Horizontal Tool Switcher Tabs Bar (Right next to Current Trifecta) -->
+                <nav class="tool-tabs-bar" style="display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 0; border: none;">
+                    <button class="tool-tab-btn active" id="tab-btn-cockpit" onclick="switchActiveView('cockpit')">
+                        <span style="color: #2962ff !important; font-weight: 700;">Dynamic Edge</span>
+                    </button>
+                    <button class="tool-tab-btn" id="tab-btn-gold-ledger" onclick="switchActiveView('gold-ledger')">
+                        <span style="color: #f23645 !important; font-weight: 700;">Rare Edge</span>
+                    </button>
+                    <button class="tool-tab-btn" id="tab-btn-price-action" onclick="switchActiveView('price-action')">
+                        <span style="color: #ffffff !important; font-weight: 700;">Atlas Edge</span>
+                    </button>
+                    <button class="tool-tab-btn" id="tab-btn-trades-log" onclick="switchActiveView('trades-log')">
+                        <span style="color: #ffffff !important; font-weight: 700;">Dossier Edge</span>
+                    </button>
+                    <button class="tool-tab-btn" id="tab-btn-diagnostics" onclick="switchActiveView('diagnostics')">
+                        <span style="color: #ffffff !important; font-weight: 700;">Diagnostic Edge</span>
+                    </button>
+                </nav>
             </div>
 
             <div class="header-action-pills">
@@ -1493,31 +1499,8 @@
                     <span>Tools Hub ▾</span>
                     <span style="background: rgba(0, 0, 0, 0.35); padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; color: #e2e8f0; font-family: var(--font-mono);">⌘K</span>
                 </button>
-                <button id="btn-top-sync-yfinance" class="action-pill" style="background: rgba(8, 153, 129, 0.15); border: 1px solid rgba(8, 153, 129, 0.6); color: #34d399; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="syncCockpitHistoricalData()" title="Sync 5-year historical daily bars via Yahoo Finance for active asset, market, and sector">
-                    <span>Sync 5Y History</span>
-                </button>
-                <button class="action-pill" onclick="triggerSync()" title="Sync Polygon QQQ daily bars & options">Polygon Sync</button>
             </div>
         </header>
-
-        <!-- Horizontal Tool Switcher Tabs Bar -->
-        <nav class="tool-tabs-bar">
-            <button class="tool-tab-btn active" id="tab-btn-cockpit" onclick="switchActiveView('cockpit')">
-                <span style="color: #2962ff !important; font-weight: 700;">Dynamic Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-gold-ledger" onclick="switchActiveView('gold-ledger')">
-                <span style="color: #f23645 !important; font-weight: 700;">Rare Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-price-action" onclick="switchActiveView('price-action')">
-                <span style="color: #ffffff !important; font-weight: 700;">Atlas Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-trades-log" onclick="switchActiveView('trades-log')">
-                <span style="color: #ffffff !important; font-weight: 700;">Dossier Edge</span>
-            </button>
-            <button class="tool-tab-btn" id="tab-btn-diagnostics" onclick="switchActiveView('diagnostics')">
-                <span style="color: #ffffff !important; font-weight: 700;">Diagnostic Edge</span>
-            </button>
-        </nav>
 
         <!-- =================================================================== -->
         <!-- SECTION 1: RELATIVE ANOMALY COCKPIT                                 -->
@@ -1528,7 +1511,6 @@
             <div class="module-playbook-card" id="playbook-cockpit">
                 <div class="playbook-header">
                     <div class="playbook-title">
-                        <span style="color: #2962ff;"></span>
                         <span>Dynamic Edge Playbook</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -1561,7 +1543,7 @@
                             <strong>Go Long on Green (Oversold), Go Short on Red (Overbought).</strong> When the meter hits <strong>Green (Z &le; -&sigma;*)</strong>, enter a <strong>Long Asset</strong> position in underlying shares because the stock is statistically primed to mean-revert back upward. When it hits <strong>Red (Z &ge; +&sigma;*)</strong>, enter a <strong>Short Asset</strong> position because the stock is overstretched. Exit the trade after reaching the calibrated holding horizon sessions.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Formulates an <strong>Ornstein-Uhlenbeck boundary crossing policy</strong>: execute long ATM Call when normalized 1-day innovation shock $Z_t \le -\sigma^*$ ($E[\Delta X_{t+h} | Z_t \le -\sigma^*] >0$) and long ATM Put when $Z_t \ge +\sigma^*$. Position sizing is governed by calibrated half-life $\tau = \ln(2)/\kappa$, liquidating upon ribbon convergence $|Z_{t+k}| \le 0.5\sigma$ or mandatory expiration at $H^*$ sessions.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Formulates an <strong>Ornstein-Uhlenbeck boundary crossing policy</strong>: execute a <strong>Long Asset</strong> position in underlying shares when normalized 1-day innovation shock $Z_t \le -\sigma^*$ ($E[R_{\text{long}, t+h} \mid Z_t \le -\sigma^*] > 0$) and a <strong>Short Asset</strong> position when $Z_t \ge +\sigma^*$ ($E[R_{\text{short}, t+h} \mid Z_t \ge +\sigma^*] > 0$). Evaluates purely on <strong>underlying asset return %</strong> ($R_{\text{long}} = (P_{\text{exit}} - P_{\text{entry}}) / P_{\text{entry}}$, $R_{\text{short}} = (P_{\text{entry}} - P_{\text{exit}}) / P_{\text{entry}}$), eliminating option theta bleed, implied volatility crush, and contract pricing distortions. Unwinds upon ribbon convergence $|Z_{t+k}| \le 0.5\sigma$ or holding horizon $H^*$ sessions.
                         </div>
                     </div>
                 </div>
@@ -1573,56 +1555,53 @@
                     <label>Target Asset</label>
                     <input type="text" id="target-asset" list="target-asset-datalist" value="MSFT" style="width: 100px; font-family: var(--font-headings); font-weight: 700;" autocomplete="off" onchange="onTargetAssetInputChange(this.value)">
                     <datalist id="target-asset-datalist">
-                        <option value="MSFT">MSFT (Enterprise cloud & software) — QQQ/IGV</option>
-                        <option value="CRM">CRM (Cloud CRM software) — QQQ/IGV</option>
-                        <option value="NOW">NOW (Workflow cloud automation) — QQQ/IGV</option>
+                        <option value="AAPL">AAPL (Consumer electronics & ecosystem) — QQQ/XLK</option>
                         <option value="ADBE">ADBE (Creative cloud software) — QQQ/IGV</option>
+                        <option value="AMAT">AMAT (Semiconductor wafer equipment) — QQQ/SMH</option>
+                        <option value="AMD">AMD (Advanced micro devices & x86/GPU) — QQQ/SMH</option>
+                        <option value="AMZN">AMZN (E-commerce & AWS cloud) — QQQ/XLY</option>
+                        <option value="AVGO">AVGO (Custom silicon & networking chips) — QQQ/SMH</option>
+                        <option value="BAC">BAC (Consumer & commercial banking) — SPY/XLF</option>
+                        <option value="CAT">CAT (Heavy machinery & construction equipment) — DIA/XLI</option>
+                        <option value="CMCSA">CMCSA (Cable broadband & media entertainment) — SPY/XLC</option>
+                        <option value="COP">COP (Oil & gas exploration & production) — SPY/XLE</option>
+                        <option value="CRM">CRM (Cloud CRM software) — QQQ/IGV</option>
+                        <option value="CRWD">CRWD (Cybersecurity endpoint & threat intel) — QQQ/CIBR</option>
+                        <option value="DELL">DELL (Enterprise IT hardware & servers) — SPY/XLK</option>
+                        <option value="FCX">FCX (Copper mining & basic materials) — SPY/COPX</option>
+                        <option value="GOOGL">GOOGL (Search, digital advertising & cloud) — QQQ/XLC</option>
+                        <option value="HD">HD (Home improvement retail) — DIA/XLY</option>
+                        <option value="JPM">JPM (Money center banking & markets) — SPY/XLF</option>
+                        <option value="KO">KO (Non-alcoholic beverages) — DIA/XLP</option>
+                        <option value="LLY">LLY (Pharmaceuticals & GLP-1 therapies) — SPY/XLV</option>
+                        <option value="LRCX">LRCX (Semiconductor etch & deposition tools) — QQQ/SMH</option>
+                        <option value="MCD">MCD (Fast food franchising & dining) — DIA/XLY</option>
+                        <option value="META">META (Social platforms & AI advertising) — QQQ/XLC</option>
+                        <option value="MRVL">MRVL (AI networking & custom silicon) — QQQ/SMH</option>
+                        <option value="MSFT">MSFT (Enterprise cloud & software) — QQQ/IGV</option>
+                        <option value="MU">MU (Memory & storage semiconductors) — QQQ/SMH</option>
+                        <option value="NFLX">NFLX (Subscription streaming entertainment) — QQQ/XLC</option>
+                        <option value="NKE">NKE (Athletic footwear & apparel) — DIA/XLY</option>
+                        <option value="NOW">NOW (Workflow cloud automation) — QQQ/IGV</option>
+                        <option value="NVDA">NVDA (AI chips & GPU compute) — QQQ/SMH</option>
                         <option value="ORCL">ORCL (Database & cloud infrastructure) — SPY/IGV</option>
                         <option value="PANW">PANW (Cybersecurity platform architecture) — QQQ/CIBR</option>
-                        <option value="CRWD">CRWD (Cybersecurity endpoint & threat intel) — QQQ/CIBR</option>
-                        <option value="NVDA">NVDA (AI chips & GPU compute) — QQQ/SMH</option>
-                        <option value="AMD">AMD (Advanced micro devices & x86/GPU) — QQQ/SMH</option>
-                        <option value="AVGO">AVGO (Custom silicon & networking chips) — QQQ/SMH</option>
-                        <option value="QCOM">QCOM (Wireless & mobile semiconductors) — QQQ/SMH</option>
-                        <option value="AMAT">AMAT (Semiconductor wafer equipment) — QQQ/SMH</option>
-                        <option value="MU">MU (Memory & storage semiconductors) — QQQ/SMH</option>
-                        <option value="AAPL">AAPL (Consumer electronics & ecosystem) — QQQ/XLK</option>
-                        <option value="DELL">DELL (Enterprise IT hardware & servers) — SPY/XLK</option>
-                        <option value="GOOGL">GOOGL (Search, digital advertising & cloud) — QQQ/XLC</option>
-                        <option value="META">META (Social platforms & AI advertising) — QQQ/XLC</option>
-                        <option value="NFLX">NFLX (Subscription streaming entertainment) — QQQ/XLC</option>
-                        <option value="DIS">DIS (Entertainment, studios & theme parks) — DIA/XLC</option>
-                        <option value="CMCSA">CMCSA (Cable broadband & media entertainment) — SPY/XLC</option>
-                        <option value="AMZN">AMZN (E-commerce & AWS cloud) — QQQ/XLY</option>
-                        <option value="TSLA">TSLA (EV, autonomy & clean energy) — QQQ/XLY</option>
-                        <option value="HD">HD (Home improvement retail) — DIA/XLY</option>
-                        <option value="NKE">NKE (Athletic footwear & apparel) — DIA/XLY</option>
-                        <option value="MCD">MCD (Fast food franchising & dining) — DIA/XLY</option>
-                        <option value="SBUX">SBUX (Retail coffee & dining) — SPY/XLY</option>
-                        <option value="TGT">TGT (Discount department store retail) — SPY/XLY</option>
-                        <option value="PG">PG (Household & personal care products) — DIA/XLP</option>
-                        <option value="KO">KO (Non-alcoholic beverages) — DIA/XLP</option>
-                        <option value="PEP">PEP (Beverages & global snacks) — QQQ/XLP</option>
-                        <option value="COST">COST (Wholesale club retail) — QQQ/XLP</option>
-                        <option value="WMT">WMT (Discount retail & grocery) — DIA/XLP</option>
-                        <option value="JPM">JPM (Money center banking & markets) — SPY/XLF</option>
-                        <option value="BAC">BAC (Consumer & commercial banking) — SPY/XLF</option>
-                        <option value="WFC">WFC (Commercial & retail banking) — SPY/XLF</option>
-                        <option value="GS">GS (Investment banking & global markets) — DIA/XLF</option>
-                        <option value="MS">MS (Wealth management & investment banking) — SPY/XLF</option>
-                        <option value="V">V (Global digital payments network) — DIA/XLF</option>
-                        <option value="USB">USB (Regional & commercial banking) — IWM/KRE</option>
-                        <option value="XOM">XOM (Integrated energy & refining) — SPY/XLE</option>
-                        <option value="CVX">CVX (Integrated oil & gas operations) — DIA/XLE</option>
-                        <option value="COP">COP (Oil & gas exploration & production) — SPY/XLE</option>
-                        <option value="SLB">SLB (Oilfield equipment & technology) — SPY/OIH</option>
-                        <option value="LLY">LLY (Pharmaceuticals & GLP-1 therapies) — SPY/XLV</option>
-                        <option value="UNH">UNH (Managed healthcare & Optum services) — DIA/XLV</option>
                         <option value="PFE">PFE (Biopharmaceuticals & vaccines) — SPY/XLV</option>
+                        <option value="PLTR">PLTR (Enterprise AI software & analytics) — QQQ/IGV</option>
+                        <option value="QCOM">QCOM (Wireless & mobile semiconductors) — QQQ/SMH</option>
+                        <option value="SBUX">SBUX (Retail coffee & dining) — SPY/XLY</option>
+                        <option value="SLB">SLB (Oilfield equipment & technology) — SPY/OIH</option>
+                        <option value="TGT">TGT (Discount department store retail) — SPY/XLY</option>
+                        <option value="TSLA">TSLA (EV, autonomy & clean energy) — QQQ/XLY</option>
+                        <option value="TXN">TXN (Analog & embedded semiconductor chips) — QQQ/SMH</option>
+                        <option value="UNH">UNH (Managed healthcare & Optum services) — DIA/XLV</option>
+                        <option value="USB">USB (Regional & commercial banking) — IWM/KRE</option>
+                        <option value="V">V (Global digital payments network) — DIA/XLF</option>
                         <option value="VRTX">VRTX (Biotechnology & CF therapies) — QQQ/XBI</option>
-                        <option value="CAT">CAT (Heavy machinery & construction equipment) — DIA/XLI</option>
-                        <option value="BA">BA (Commercial aerospace & defense systems) — DIA/ITA</option>
-                        <option value="FCX">FCX (Copper mining & basic materials) — SPY/COPX</option>
+                        <option value="WDC">WDC (NAND & memory storage hardware) — QQQ/SMH</option>
+                        <option value="WFC">WFC (Commercial & retail banking) — SPY/XLF</option>
+                        <option value="WMT">WMT (Discount retail & grocery) — DIA/XLP</option>
+                        <option value="XOM">XOM (Integrated energy & refining) — SPY/XLE</option>
                     </datalist>
                 </div>
                 <div class="input-item">
@@ -1654,29 +1633,15 @@
                 </div>
 
                 <div class="input-item" style="margin-left: 4px;">
-                    <label>Presets</label>
+                    <label>Presets (Mag 7)</label>
                     <div class="preset-pill-group">
-                        <button class="preset-pill" onclick="applyPreset('NKE', 'DIA', 'XLY')">NKE</button>
-                        <button class="preset-pill" onclick="applyPreset('KO', 'DIA', 'XLP')">KO</button>
+                        <button class="preset-pill active" onclick="applyPreset('MSFT', 'QQQ', 'IGV')">MSFT</button>
+                        <button class="preset-pill" onclick="applyPreset('AAPL', 'QQQ', 'XLK')">AAPL</button>
                         <button class="preset-pill" onclick="applyPreset('NVDA', 'QQQ', 'SMH')">NVDA</button>
-                        <button class="preset-pill" onclick="applyPreset('CRWD', 'QQQ', 'CIBR')">CRWD</button>
-                        <button class="preset-pill" onclick="applyPreset('MCD', 'DIA', 'XLY')">MCD</button>
-                        <button class="preset-pill" onclick="applyPreset('MSFT', 'QQQ', 'IGV')">MSFT</button>
-                        <button class="preset-pill" onclick="applyPreset('TSLA', 'QQQ', 'XLY')">TSLA</button>
-                        <button class="preset-pill" onclick="applyPreset('MU', 'QQQ', 'DRAM')">MU</button>
-                        <button class="preset-pill" onclick="applyPreset('ADBE', 'QQQ', 'IGV')">ADBE</button>
-                        <button class="preset-pill" onclick="applyPreset('WMT', 'DIA', 'XLP')">WMT</button>
-                        <button class="preset-pill" onclick="applyPreset('AMD', 'QQQ', 'SMH')">AMD</button>
-                        <button class="preset-pill" onclick="applyPreset('VRTX', 'QQQ', 'XBI')">VRTX</button>
-                        <button class="preset-pill" onclick="applyPreset('XOM', 'SPY', 'XLE')">XOM</button>
-                        <button class="preset-pill" onclick="applyPreset('DIS', 'DIA', 'XLC')">DIS</button>
-                        <button class="preset-pill" onclick="applyPreset('UNH', 'SPY', 'XLV')">UNH</button>
-                        <button class="preset-pill" onclick="applyPreset('INTC', 'QQQ', 'SMH')">INTC</button>
-                        <button class="preset-pill" onclick="applyPreset('META', 'QQQ', 'XLC')">META</button>
-                        <button class="preset-pill" onclick="applyPreset('LLY', 'SPY', 'XLV')">LLY</button>
                         <button class="preset-pill" onclick="applyPreset('AMZN', 'QQQ', 'XLY')">AMZN</button>
-                        <button class="preset-pill" onclick="applyPreset('JPM', 'SPY', 'XLF')">JPM</button>
-                        <button class="preset-pill" onclick="applyPreset('SBUX', 'SPY', 'XLY')">SBUX</button>
+                        <button class="preset-pill" onclick="applyPreset('GOOGL', 'QQQ', 'XLC')">GOOGL</button>
+                        <button class="preset-pill" onclick="applyPreset('META', 'QQQ', 'XLC')">META</button>
+                        <button class="preset-pill" onclick="applyPreset('TSLA', 'QQQ', 'XLY')">TSLA</button>
                     </div>
                 </div>
 
@@ -1825,7 +1790,6 @@
             <div class="module-playbook-card" id="playbook-price-action">
                 <div class="playbook-header">
                     <div class="playbook-title">
-                        <span style="color: #38BDF8;"></span>
                         <span>Atlas Edge Playbook</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -1855,10 +1819,10 @@
                         </div>
                         <!-- Retail Plain-English Mode -->
                         <div class="playbook-col-text mode-retail">
-                            <strong>Trade with the background, not against it.</strong> If you see a green buy arrow and the background is neutral, buy the call. But if the background turns <strong>solid Red (Bearish Drift)</strong>, avoid buying calls even if an arrow appears—the stock is in a macro markdown. Use the zoom slider to inspect how past arrows caught major swing bottoms and tops.
+                            <strong>Trade with the background, not against it.</strong> If you see a green buy arrow and the background is neutral, enter a <strong>Long Asset</strong> position in underlying shares to capture the expected positive asset return %. But if the background turns <strong>solid Red (Bearish Drift)</strong>, avoid going long even if an arrow appears—the stock is in a macro markdown. If you see a red sell arrow with neutral or bearish background, enter a <strong>Short Asset</strong> position to capture downward mean-reversion.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Employs a <strong>Page's CUSUM sequential test of log-likelihood ratios</strong> $S_t = \max(0, S_{t-1} + \ln(f_1(y_t)/f_0(y_t)))$ to detect persistent non-stationary structural drift breaks. Mean-reversion entries are conditionally gated: execution is suspended when the CUSUM drift statistic exceeds barrier $h$, preventing catastrophic counter-trend option theta bleed during macro regime shifts.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Employs a <strong>Page's CUSUM sequential test of log-likelihood ratios</strong> $S_t = \max(0, S_{t-1} + \ln(f_1(y_t)/f_0(y_t)))$ to detect persistent non-stationary structural drift breaks. Mean-reversion entries are conditionally gated: execution is suspended when the CUSUM drift statistic exceeds barrier $h$, preventing catastrophic counter-trend drawdowns and false dip-buying during macro regime shifts to preserve strict asset return % and profit factor.
                         </div>
                     </div>
                 </div>
@@ -1928,7 +1892,6 @@
             <div class="module-playbook-card theme-red" id="playbook-gold-ledger" style="border-color: var(--border-subtle);">
                 <div class="playbook-header">
                     <div class="playbook-title">
-                        <span ></span>
                         <span style="color: #f23645;">Rare Edge Playbook</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -1946,10 +1909,10 @@
                             <span>What This Module Does</span>
                         </div>
                         <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">Instead of guessing which expiration date (DTE) or strike to buy, or when to take profits, this master registry has already <strong>backtested and locked in the winning formula</strong> for each stock on your watchlist. Right before market close (at 3:55 PM EST), the scanner lights up if any stock just triggered an official, high-win-rate trade.
+                        <div class="playbook-col-text mode-retail">Instead of guessing entry barriers or holding durations, this master registry has already <strong>empirically backtested and locked in the winning formula</strong> for each stock on your watchlist, measured strictly on <strong>underlying asset return %</strong>. Right before market close (at 3:55 PM EST), the scanner lights up if any stock just breached its champion standard deviation barrier (&sigma;*) for an actionable high-probability trade.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>Champion Setup (&sigma;* &times; Tenor* &times; Hold H*)</strong> across all 50 core watchlist stocks. Continually monitors incoming market close bars against live Kalman innovation thresholds.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Central institutional database indexing the mathematically validated <strong>Champion Setup (&sigma;* Barrier &times; Hold H* Sessions)</strong> across all core watchlist champions. Evaluated on <strong>pure asset return %</strong> with realistic execution slippage and Walk-Forward out-of-sample validation. Continually monitors incoming market close bars against live Kalman innovation thresholds.
                         </div>
                     </div>
                     <div class="playbook-col">
@@ -1958,20 +1921,19 @@
                         </div>
                         <!-- Retail Plain-English Mode -->
                         <div class="playbook-col-text mode-retail">
-                            <strong>Set an alarm for 3:55 PM EST.</strong> Click <strong>"Search for the Rare Edge"</strong>. If any stock lights up: 1. Buy the exact <strong>Contract Tenor</strong> listed (e.g. 30 DTE Call if Green, Put if Red); 2. Hold the trade for the exact <strong>Holding Days</strong> shown (e.g. 12 trading days); 3. That's it! You are trading with audited historical win rates and verified edge, zero guessing needed.
+                            <strong>Set an alarm for 3:55 PM EST.</strong> Click <strong>"Search for the Rare Edge"</strong>. If any stock lights up: 1. Follow the verified directional setup (Long Asset on Green oversold breach, Short Asset on Red overbought breach); 2. Hold the underlying shares for the exact <strong>Holding Days (H*)</strong> calibrated for that stock (e.g. 14 trading days); 3. That's it! You capture the clean statistical asset return % with audited historical win rates, zero guessing needed.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Implements an automated institutional <strong>Market-On-Close (MOC) execution protocol</strong>. At 15:55 EST, residual innovations are evaluated across the 50-asset universe against Walk-Forward Pareto-optimal triplets $(\sigma^*_i, \text{Tenor}^*_i, H^*_i)$. Signals trigger MOC orders at 16:00 EST close price $S_0$, hedging directional index beta while capturing pure idiosyncratic alpha with pre-scheduled $H^*$-day programmatic unwinds.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Implements an automated institutional <strong>Market-On-Close (MOC) execution protocol</strong>. At 15:55 EST, residual innovations are evaluated across the universe against Walk-Forward Pareto-optimal pairs $(\sigma^*_i, H^*_i)$. Signals trigger MOC orders at 16:00 EST close price $P_0$, hedging directional index beta while capturing pure idiosyncratic asset return % ($R_{\text{asset}} = \Delta P / P_0$) with pre-scheduled $H^*$-day programmatic unwinds.
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="panel-header" style="border-bottom: 1px solid rgba(242, 54, 69, 0.25);">
+            <div class="panel-header">
                 <div>
                     <h2 class="panel-title" style="display: flex; align-items: center; gap: 8px;">
-                        <span >Rare Edge</span>
-                        <span class="tag-pill" style="background: rgba(242, 54, 69, 0.15); color: #f23645; border: 1px solid rgba(242, 54, 69, 0.4); font-size: 0.72rem; font-weight: 800;">Watchlist Champion Master Registry</span>
+                        <span>Rare Edge</span>
                     </h2>
                     
                 </div>
@@ -1981,8 +1943,6 @@
                     <button id="btn-ledger-sync-stocks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerStocks()" title="High-speed sync of all 50 core watchlist stocks">Sharpen Watchlist Stocks
                     </button>
                     <button id="btn-ledger-sync-benchmarks" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncLedgerBenchmarks()" title="High-speed sync of all 12 market and sector benchmark ETFs">Sharpen Benchmarks
-                    </button>
-                    <button id="btn-sync-gold-ledger" class="action-pill" style="color: #ffffff; border-color: #36373d; padding: 6px 13px; font-weight: 600; font-size: 0.76rem;" onclick="syncGoldLedgerAll()" title="Recalibrate optimal trigger barriers (σ*) and holding horizons (H*) for all watchlist assets">Calibrate Barriers
                     </button>
                 </div>
             </div>
@@ -2084,7 +2044,7 @@
                                 <option value="CAT">CAT (Heavy machinery & construction equipment)</option>
                                 <option value="BA">BA (Commercial aerospace & defense systems)</option>
                                 <option value="FCX">FCX (Copper mining & basic materials)</option>
-                                <option value="ALL">ALL 50 WATCHLIST ASSETS</option>
+                                <option value="ALL">ALL WATCHLIST CHAMPIONS</option>
                             </select>
                         </div>
 
@@ -2114,11 +2074,11 @@
                         </div>
 
                         <div style="display: flex; gap: 8px; align-items: flex-end; margin-top: 18px;">
-                            <button id="btn-run-stdv-calc" onclick="runStdvCalculator()" class="action-pill" style="background: #2962ff; border: 1px solid #2962ff; color: #fff; font-weight: 800; padding: 7px 16px; font-size: 0.80rem; cursor: pointer;">
-                                Calculate Best Stdv
+                            <button id="btn-run-stdv-calc" onclick="runStdvCalculator()" class="action-pill" style="background: #27272a; border: 1px solid #36373d; color: #ffffff; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;">
+                                Calculate the Best STDV
                             </button>
-                            <button id="btn-run-calc-all" onclick="runBatchStdvCalculation()" class="action-pill" style="background: rgba(8, 153, 129, 0.15); border: 1px solid rgba(8, 153, 129, 0.6); color: #34d399; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;" title="Sweep and calibrate optimal standard deviations across all 50 universe assets">
-                                Calculate for ALL 50 Assets
+                            <button id="btn-run-calc-all" onclick="runBatchStdvCalculation()" class="action-pill" style="background: #27272a; border: 1px solid #36373d; color: #ffffff; font-weight: 700; padding: 7px 14px; font-size: 0.80rem; cursor: pointer;" title="Sweep and calibrate optimal standard deviations across all assets">
+                                Calculate for All Assets
                             </button>
                         </div>
                     </div>
@@ -2255,7 +2215,7 @@
                             <th style="width: 50px;">Rank</th>
                             <th>Asset & Theme</th>
                             <th>Sector Pair</th>
-                            <th>Optimal Execution (&sigma;* &bull; H* Sessions)</th>
+                            <th>Directional Setup (Long vs Short)</th>
                             <th>Live Signal State</th>
                             <th>Current Z-Score</th>
                             <th>Barrier Proximity</th>
@@ -2300,8 +2260,8 @@
                 <div class="metric-cards-row" style="margin-bottom: 14px;">
                     <div class="stat-card-sm" style="border: 1px solid #36373d;">
                         <div class="stat-card-label" style="color: var(--text-muted);">Average Signal Cadence</div>
-                        <div class="stat-card-value" style="color: #ffffff;" id="stat-signal-cadence">Every 3.9 Sessions</div>
-                        <div class="stat-card-sub" id="stat-signal-cadence-sub">~5.5 calendar days across universe</div>
+                        <div class="stat-card-value" style="color: #ffffff;" id="stat-signal-cadence">Every 1.7 Sessions</div>
+                        <div class="stat-card-sub" id="stat-signal-cadence-sub">~2.4 calendar days across universe</div>
                     </div>
                     <div class="stat-card-sm" style="border: 1px solid #36373d;">
                         <div class="stat-card-label" style="color: var(--text-muted);">Optimal Firing Window</div>
@@ -2315,8 +2275,8 @@
                     </div>
                     <div class="stat-card-sm" style="border: 1px solid #36373d;">
                         <div class="stat-card-label" style="color: var(--text-muted);">Annual Signal Frequency</div>
-                        <div class="stat-card-value" style="color: #ffffff;" id="stat-signal-freq">~66 Signals / Yr</div>
-                        <div class="stat-card-sub" id="stat-signal-freq-sub">Across 14-stock champion portfolio</div>
+                        <div class="stat-card-value" style="color: #ffffff;" id="stat-signal-freq">~153 Signals / Yr</div>
+                        <div class="stat-card-sub" id="stat-signal-freq-sub">Across 42-stock champion portfolio</div>
                     </div>
                 </div>
 
@@ -2351,7 +2311,7 @@
         </section>
 
         <!-- =================================================================== -->
-        <!-- SECTION 1.10: DYNAMIC SIMULATED ASSET TRADES LOG (DOSSIER EDGE)      -->               -->
+        <!-- SECTION 1.10: DYNAMIC SIMULATED ASSET TRADES LOG (DOSSIER EDGE)      -->
         <!-- (Interactive log filtered by Trigger σ, Contract Tenor, & Hold H)   -->
         <!-- =================================================================== -->
         <section id="trades-log-section" class="panel tool-view">
@@ -2360,7 +2320,6 @@
             <div class="module-playbook-card" id="playbook-trades-log">
                 <div class="playbook-header">
                     <div class="playbook-title">
-                        <span style="color: #2962ff;"></span>
                         <span>Dossier Edge Playbook</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -2378,10 +2337,10 @@
                             <span>What This Module Does</span>
                         </div>
                         <!-- Retail Plain-English Mode -->
-                        <div class="playbook-col-text mode-retail">A complete <strong>trade diary</strong> tracking every simulated ATM Call and Put trade from entry to exit. It factors in real-world option prices, daily theta decay, and volatility swings so you see realistic dollar gains and losses. If a trade lost money, it gives you a straight-talk <strong>post-mortem diagnosis of why</strong> (e.g. killed by theta bleed or the stock kept trending against you).
+                        <div class="playbook-col-text mode-retail">A complete <strong>trade diary</strong> tracking every simulated mean-reversion trade from entry to exit, evaluated strictly on <strong>underlying asset return %</strong> ($R = \Delta P / P_{\text{entry}}$). It records exact entry price, exit price, percentage return, and holding days with zero option pricing noise, theta bleed, or IV distortions. If a trade lost money, it provides an objective <strong>post-mortem diagnosis of why</strong> (e.g. structural trend continuation or regime drift).
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Maintains a chronological, trade-by-trade audit journal of simulated ATM Calls and Puts ($K = \text{round}(S_{\text{entry}})$) dynamically filtered by Barrier &sigma;, Tenor, and Holding Days. Models exact Black-Scholes option pricing with 20D Realized Volatility and non-linear theta decay.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Maintains a chronological, trade-by-trade audit journal of simulated mean-reversion trades dynamically filtered by Barrier &sigma;, Holding Horizon ($H$), and Direction (Long / Short). Computes exact underlying equity asset return percentages: $R_{\text{long}} = (P_{\text{exit}} - P_{\text{entry}}) / P_{\text{entry}}$ and $R_{\text{short}} = (P_{\text{entry}} - P_{\text{exit}}) / P_{\text{entry}}$, incorporating 5 bps per side realistic execution friction.
                         </div>
                     </div>
                     <div class="playbook-col">
@@ -2390,10 +2349,10 @@
                         </div>
                         <!-- Retail Plain-English Mode -->
                         <div class="playbook-col-text mode-retail">
-                            <strong>Review your scorecard before putting real money on the line.</strong> Look at the <strong>Win Rate %</strong> and <strong>Total Dollar P&amp;L</strong>. Then look down the list at the losing trades: if the <strong>Failure Cause</strong> says "Theta Bleed", holding that long ate up option value, so shorten your holding days or pick a longer expiration date next time.
+                            <strong>Review your scorecard before putting real money on the line.</strong> Filter by <strong>Long Only</strong> or <strong>Short Only</strong> to inspect directional edge. Look at the <strong>Win Rate %</strong>, <strong>Average ROI %</strong>, and <strong>Profit Factor</strong>. Inspect the losing trades down the list: if the <strong>Failure Cause</strong> says "Regime Drift", the stock drifted during a macro trend, verifying why our CUSUM filter and directional policies protect capital.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Provides complete option attribution: $\Delta V = \Delta \cdot \Delta S + \frac{1}{2}\Gamma(\Delta S)^2 + \Theta \cdot \Delta t + \nu \cdot \Delta \sigma_{20\text{D}}$. Each simulated execution parses path-dependent theta burn against drift velocity. Unprofitable trajectories are algorithmically classified by root-cause failure vectors (Theta Decay $>60\%$ of loss vs Structural Drift Continuation) for empirical hyperparameter re-calibration.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Calculates discrete path-dependent trajectory attribution: Maximum Favorable Excursion ($\text{MFE} = \max_t (P_t - P_0)/P_0$) and Maximum Adverse Excursion ($\text{MAE} = \min_t (P_t - P_0)/P_0$). Unprofitable trajectories are algorithmically classified by root-cause failure vectors (Structural Drift Continuation vs Volatility Expansion) to validate optimal holding horizons ($H^*$) and robust stop/unwind parameters.
                         </div>
                     </div>
                 </div>
@@ -2453,18 +2412,24 @@
                         </select>
                     </div>
 
+                    <!-- Direction Split Filter Pills (Long vs Short) -->
+                    <div style="display: flex; align-items: center; gap: 4px; background: #16171a; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 2px;">
+                        <button id="dossier-dir-all" class="pill-tab active" onclick="setDossierDirectionFilter('ALL')" style="font-size: 0.72rem; padding: 3px 9px;">All Trades</button>
+                        <button id="dossier-dir-long" class="pill-tab" onclick="setDossierDirectionFilter('LONG')" style="font-size: 0.72rem; padding: 3px 9px; color: #34d399;">Long Only</button>
+                        <button id="dossier-dir-short" class="pill-tab" onclick="setDossierDirectionFilter('SHORT')" style="font-size: 0.72rem; padding: 3px 9px; color: #f23645;">Short Only</button>
+                    </div>
+
                     <!-- Sync to 3D Champion Button -->
                     <button id="btn-sync-to-optimal" class="action-pill" style="border-color: #36373d; color: #ffffff; font-weight: 600;" onclick="syncTradesLogToOptimal()" title="Load Champion Setup (σ*, Tenor*, H*) discovered by Parameter Optimizer">Sync to Champion (σ*, H* Hold)
                     </button>
 
-                    <!-- Earnings Blackout Toggle -->
-                    <button id="toggle-earnings-filter" class="action-pill" style="border-color: #3f3f46; color: var(--accent-amber);" onclick="toggleEarningsFilter()">Earnings Blackout: ON
+                    <!-- Earnings Blackout Toggle (Single Unified Button) -->
+                    <button id="toggle-earnings-filter" class="action-pill" style="border-color: rgba(245, 158, 11, 0.4); color: var(--accent-amber); font-weight: 700;" onclick="toggleEarningsFilter()">🛡️ Earnings Blackout: ON
                     </button>
-                    <span id="earnings-excluded-badge" class="tag-pill tag-planned" style="font-size: 0.72rem; display: none;">0 Earnings Blocked</span>
 
                     <!-- Search Filter Box -->
                     <div class="table-search-box">
-                        <input type="text" id="trades-search-input" placeholder="Filter CALL / PUT / Date..." oninput="filterTradesTable(this.value)">
+                        <input type="text" id="trades-search-input" placeholder="Filter Date / Result..." oninput="applyDossierFilters()">
                     </div>
                 </div>
             </div>
@@ -2529,7 +2494,6 @@
             <div class="module-playbook-card" id="playbook-diagnostics">
                 <div class="playbook-header">
                     <div class="playbook-title">
-                        <span style="color: #38BDF8;"></span>
                         <span>Diagnostic Edge Playbook</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -2559,10 +2523,10 @@
                         </div>
                         <!-- Retail Plain-English Mode -->
                         <div class="playbook-col-text mode-retail">
-                            <strong>Check your instruments before flying.</strong> Before placing trades, ensure the green status dots are lit and market prices match reality. Check the <strong>20-Day Realized Volatility</strong>: if a stock's volatility is abnormally elevated (e.g. ahead of earnings), option contracts will be expensive, so adjust your position size smaller.
+                            <strong>Check your instruments before flying.</strong> Before placing trades, ensure the green status dots are lit and market prices match reality. Check the <strong>20-Day Realized Volatility</strong>: if a stock's volatility is abnormally elevated (e.g. ahead of earnings), price swings will be wider, so scale your asset position sizing accordingly to maintain strict risk tolerance.
                         </div>
                         <!-- The Quant Answer Mode -->
-                        <div class="playbook-col-text mode-quant" style="display: none;">Guarantees algorithmic data integrity and market microstructure validation. Computes annualized rolling realized quadratic variation $\sigma_{\text{realized}} = \sqrt{\frac{252}{N} \sum_{k=1}^N r_k^2}$ to calibrate dynamic Black-Scholes implied pricing baselines. Validates REST API latency thresholds and ensures zero-lookahead bias across the persistent SQLite time-series data warehouse.
+                        <div class="playbook-col-text mode-quant" style="display: none;">Guarantees algorithmic data integrity and market microstructure validation. Computes annualized rolling realized quadratic variation $\sigma_{\text{realized}} = \sqrt{\frac{252}{N} \sum_{k=1}^N r_k^2}$ to calibrate baseline asset return dispersion. Validates REST API latency thresholds and ensures zero-lookahead bias across the persistent SQLite time-series data warehouse.
                         </div>
                     </div>
                 </div>
@@ -2571,9 +2535,9 @@
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
-                        <span>Historical Data & Options Explorer (Diagnostic Edge)</span>
+                        <span>Historical Data & Warehouse Explorer (Diagnostic Edge)</span>
                     </h2>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Raw OHLCV bars, annualized 20-day Realized Volatility (&sigma; &times; &radic;252), SQLite storage, and live option chains for any asset.
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Raw OHLCV bars, annualized 20-day Realized Volatility (&sigma; &times; &radic;252), and persistent SQLite storage for any asset.
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -2594,7 +2558,7 @@
                     <span style="font-size: 1.1rem;">⏸️</span>
                     <div>
                         <div style="font-weight: 700; color: #ffffff; font-size: 0.84rem;">Diagnostic Edge is in On-Demand Mode</div>
-                        <div style="font-size: 0.74rem; color: var(--text-muted);">Historical benchmark bars, annualized RV series, and live option chains load only on demand to ensure instant dashboard bootup.</div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Historical benchmark bars, annualized RV series, and underlying asset data load only on demand to ensure instant dashboard bootup.</div>
                     </div>
                 </div>
                 <button class="action-pill btn-primary" onclick="loadDiagnosticsLab()" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; white-space: nowrap;">Load Diagnostic Edge Now
@@ -2740,7 +2704,7 @@
                             <span style="color: #f23645; font-weight: 700;">Rare Edge</span>
                             <span class="tool-key-badge" style="border-color: rgba(242, 54, 69, 0.4); color: #f23645;">Key 2</span>
                         </div>
-                        <div class="tool-card-desc">Watchlist champion master registry (&sigma;* &times; Tenor* &times; Hold H*), pre-close 4 PM MOC scans, and signal firing cadence.
+                        <div class="tool-card-desc">Watchlist champion master registry (&sigma;* Barrier &times; Hold H* Sessions), pre-close 4 PM MOC scans, and pure asset return % cadence.
                         </div>
                     </div>
                 </div>
@@ -2759,19 +2723,6 @@
                 </div>
 
                 <!-- Tool 4: Dossier Edge -->
-                <div class="tool-card" onclick="switchActiveView('price-action')">
-                    <div class="tool-card-icon"></div>
-                    <div class="tool-card-content">
-                        <div class="tool-card-title">
-                            <span style="color: #ffffff; font-weight: 700;">Atlas Edge</span>
-                            <span class="tool-key-badge">Key 5</span>
-                        </div>
-                        <div class="tool-card-desc">Target asset daily close trajectory aligned with Kalman relative innovation shocks and CUSUM regime drift shading.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tool 6: Dossier Edge -->
                 <div class="tool-card" onclick="switchActiveView('trades-log')">
                     <div class="tool-card-icon"></div>
                     <div class="tool-card-content">
@@ -2779,7 +2730,7 @@
                             <span style="color: #ffffff; font-weight: 700;">Dossier Edge</span>
                             <span class="tool-key-badge">Key 4</span>
                         </div>
-                        <div class="tool-card-desc">Dynamic simulated ATM option execution ledger with Black-Scholes theta decay and post-mortem failure cause analytics.
+                        <div class="tool-card-desc">Dynamic simulated underlying asset execution ledger with pure asset return %, directional Long/Short filters, and failure diagnostics.
                         </div>
                     </div>
                 </div>
@@ -3162,19 +3113,26 @@
 
         function toggleEarningsFilter() {
             filterEarningsState = !filterEarningsState;
-            const btn = document.getElementById("toggle-earnings-filter");
-            if (btn) {
-                if (filterEarningsState) {
-                    btn.innerHTML = 'Earnings Blackout: ON';
-                    btn.style.color = 'var(--accent-amber)';
-                    btn.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-                } else {
-                    btn.innerHTML = 'Earnings Blackout: OFF';
-                    btn.style.color = 'var(--text-muted)';
-                    btn.style.borderColor = 'var(--border-subtle)';
-                }
-            }
+            updateEarningsFilterButton();
             runAnomalyAnalysis();
+            if (typeof fetchDynamicTradesLog === "function") {
+                fetchDynamicTradesLog();
+            }
+        }
+
+        function updateEarningsFilterButton(blockedCount = null) {
+            const btn = document.getElementById("toggle-earnings-filter");
+            if (!btn) return;
+            if (filterEarningsState) {
+                const countText = (blockedCount && blockedCount > 0) ? ` (${blockedCount} Blocked)` : '';
+                btn.innerHTML = `🛡️ Earnings Blackout: ON${countText}`;
+                btn.style.color = 'var(--accent-amber)';
+                btn.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+            } else {
+                btn.innerHTML = 'Earnings Blackout: OFF';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderColor = 'var(--border-subtle)';
+            }
         }
 
         function toggleAssetSignals() {
@@ -3247,128 +3205,130 @@
         }
 
         const CHAMPION_OPTIMAL_MAP = {
+            'AAPL': { threshold: 2.8, holding: 14, market: 'QQQ', sector: 'XLK' },
+            'ADBE': { threshold: 3.0, holding: 18, market: 'QQQ', sector: 'IGV' },
+            'AMAT': { threshold: 2.8, holding: 18, market: 'QQQ', sector: 'SMH' },
+            'AMD': { threshold: 2.4, holding: 21, market: 'QQQ', sector: 'SMH' },
+            'AMZN': { threshold: 1.6, holding: 21, market: 'QQQ', sector: 'XLY' },
+            'AVGO': { threshold: 1.2, holding: 18, market: 'QQQ', sector: 'SMH' },
+            'BAC': { threshold: 1.4, holding: 18, market: 'SPY', sector: 'XLF' },
+            'CAT': { threshold: 1.4, holding: 14, market: 'DIA', sector: 'XLI' },
+            'CMCSA': { threshold: 2.2, holding: 21, market: 'SPY', sector: 'XLC' },
+            'COP': { threshold: 2.8, holding: 21, market: 'SPY', sector: 'XLE' },
+            'CRM': { threshold: 3.0, holding: 14, market: 'QQQ', sector: 'IGV' },
+            'CRWD': { threshold: 2.4, holding: 18, market: 'QQQ', sector: 'CIBR' },
+            'DELL': { threshold: 2.2, holding: 14, market: 'SPY', sector: 'XLK' },
+            'FCX': { threshold: 1.4, holding: 14, market: 'SPY', sector: 'COPX' },
+            'GOOGL': { threshold: 2.4, holding: 14, market: 'QQQ', sector: 'XLC' },
+            'HD': { threshold: 2.8, holding: 14, market: 'DIA', sector: 'XLY' },
+            'JPM': { threshold: 2.8, holding: 21, market: 'SPY', sector: 'XLF' },
+            'KO': { threshold: 1.4, holding: 7, market: 'DIA', sector: 'XLP' },
+            'LLY': { threshold: 3.0, holding: 18, market: 'SPY', sector: 'XLV' },
+            'LRCX': { threshold: 3.0, holding: 18, market: 'QQQ', sector: 'SMH' },
+            'MCD': { threshold: 3.0, holding: 21, market: 'DIA', sector: 'XLY' },
+            'META': { threshold: 2.0, holding: 18, market: 'QQQ', sector: 'XLC' },
+            'MRVL': { threshold: 3.0, holding: 18, market: 'QQQ', sector: 'SMH' },
             'MSFT': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'IGV' },
-            'CRM': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'IGV' },
-            'NOW': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'IGV' },
-            'ADBE': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'IGV' },
-            'ORCL': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'IGV' },
-            'PANW': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'CIBR' },
-            'CRWD': { threshold: 2.2, holding: 7, market: 'QQQ', sector: 'CIBR' },
-            'NVDA': { threshold: 2.6, holding: 18, market: 'QQQ', sector: 'SMH' },
-            'AMD': { threshold: 1.8, holding: 2, market: 'QQQ', sector: 'SMH' },
-            'AVGO': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
-            'QCOM': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
-            'AMAT': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'SMH' },
-            'MU': { threshold: 1.4, holding: 2, market: 'QQQ', sector: 'SMH' },
-            'AAPL': { threshold: 2.0, holding: 10, market: 'QQQ', sector: 'XLK' },
-            'DELL': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLK' },
-            'GOOGL': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLC' },
-            'META': { threshold: 1.4, holding: 18, market: 'QQQ', sector: 'XLC' },
-            'NFLX': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLC' },
-            'DIS': { threshold: 2.0, holding: 7, market: 'DIA', sector: 'XLC' },
-            'CMCSA': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLC' },
-            'AMZN': { threshold: 2.0, holding: 14, market: 'QQQ', sector: 'XLY' },
-            'TSLA': { threshold: 1.4, holding: 3, market: 'QQQ', sector: 'XLY' },
-            'HD': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLY' },
-            'NKE': { threshold: 2.6, holding: 18, market: 'DIA', sector: 'XLY' },
-            'MCD': { threshold: 2.6, holding: 3, market: 'DIA', sector: 'XLY' },
-            'SBUX': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLY' },
-            'TGT': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLY' },
-            'PG': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLP' },
-            'KO': { threshold: 2.6, holding: 2, market: 'DIA', sector: 'XLP' },
-            'PEP': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLP' },
-            'COST': { threshold: 2.0, holding: 5, market: 'QQQ', sector: 'XLP' },
-            'WMT': { threshold: 2.0, holding: 18, market: 'DIA', sector: 'XLP' },
-            'JPM': { threshold: 2.0, holding: 18, market: 'SPY', sector: 'XLF' },
-            'BAC': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
-            'WFC': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
-            'GS': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLF' },
-            'MS': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLF' },
-            'V': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLF' },
-            'USB': { threshold: 2.0, holding: 5, market: 'IWM', sector: 'KRE' },
-            'XOM': { threshold: 2.2, holding: 10, market: 'SPY', sector: 'XLE' },
-            'CVX': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLE' },
-            'COP': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLE' },
-            'SLB': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'OIH' },
-            'LLY': { threshold: 1.6, holding: 18, market: 'SPY', sector: 'XLV' },
-            'UNH': { threshold: 2.6, holding: 14, market: 'DIA', sector: 'XLV' },
-            'PFE': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'XLV' },
-            'VRTX': { threshold: 2.0, holding: 18, market: 'QQQ', sector: 'XBI' },
-            'CAT': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'XLI' },
-            'BA': { threshold: 2.0, holding: 5, market: 'DIA', sector: 'ITA' },
-            'FCX': { threshold: 2.0, holding: 5, market: 'SPY', sector: 'COPX' },
+            'MU': { threshold: 2.0, holding: 21, market: 'QQQ', sector: 'SMH' },
+            'NFLX': { threshold: 2.0, holding: 14, market: 'QQQ', sector: 'XLC' },
+            'NKE': { threshold: 3.0, holding: 14, market: 'DIA', sector: 'XLY' },
+            'NOW': { threshold: 2.4, holding: 21, market: 'QQQ', sector: 'IGV' },
+            'NVDA': { threshold: 2.4, holding: 18, market: 'QQQ', sector: 'SMH' },
+            'ORCL': { threshold: 2.4, holding: 7, market: 'SPY', sector: 'IGV' },
+            'PANW': { threshold: 2.2, holding: 21, market: 'QQQ', sector: 'CIBR' },
+            'PFE': { threshold: 2.8, holding: 18, market: 'SPY', sector: 'XLV' },
+            'PLTR': { threshold: 1.8, holding: 18, market: 'QQQ', sector: 'IGV' },
+            'QCOM': { threshold: 2.2, holding: 5, market: 'QQQ', sector: 'SMH' },
+            'SBUX': { threshold: 3.0, holding: 14, market: 'SPY', sector: 'XLY' },
+            'SLB': { threshold: 2.4, holding: 18, market: 'SPY', sector: 'OIH' },
+            'TGT': { threshold: 2.2, holding: 21, market: 'SPY', sector: 'XLY' },
+            'TSLA': { threshold: 2.8, holding: 21, market: 'QQQ', sector: 'XLY' },
+            'TXN': { threshold: 3.0, holding: 10, market: 'QQQ', sector: 'SMH' },
+            'UNH': { threshold: 3.0, holding: 21, market: 'DIA', sector: 'XLV' },
+            'USB': { threshold: 2.4, holding: 10, market: 'IWM', sector: 'KRE' },
+            'V': { threshold: 3.0, holding: 18, market: 'DIA', sector: 'XLF' },
+            'VRTX': { threshold: 1.8, holding: 21, market: 'QQQ', sector: 'XBI' },
+            'WDC': { threshold: 3.0, holding: 14, market: 'QQQ', sector: 'SMH' },
+            'WFC': { threshold: 2.2, holding: 21, market: 'SPY', sector: 'XLF' },
+            'WMT': { threshold: 1.8, holding: 21, market: 'DIA', sector: 'XLP' },
+            'XOM': { threshold: 2.4, holding: 21, market: 'SPY', sector: 'XLE' }
         };
 
         const ALL_MEASURED_STOCKS = [
-            { ticker: "MSFT", market: "QQQ", sector: "IGV", name: "Enterprise cloud & software" },
-            { ticker: "CRM", market: "QQQ", sector: "IGV", name: "Cloud CRM software" },
-            { ticker: "NOW", market: "QQQ", sector: "IGV", name: "Workflow cloud automation" },
+            { ticker: "AAPL", market: "QQQ", sector: "XLK", name: "Consumer electronics & ecosystem" },
             { ticker: "ADBE", market: "QQQ", sector: "IGV", name: "Creative cloud software" },
+            { ticker: "AMAT", market: "QQQ", sector: "SMH", name: "Semiconductor wafer equipment" },
+            { ticker: "AMD", market: "QQQ", sector: "SMH", name: "Advanced micro devices & x86/GPU" },
+            { ticker: "AMZN", market: "QQQ", sector: "XLY", name: "E-commerce & AWS cloud" },
+            { ticker: "AVGO", market: "QQQ", sector: "SMH", name: "Custom silicon & networking chips" },
+            { ticker: "BAC", market: "SPY", sector: "XLF", name: "Consumer & commercial banking" },
+            { ticker: "CAT", market: "DIA", sector: "XLI", name: "Heavy machinery & construction equipment" },
+            { ticker: "CMCSA", market: "SPY", sector: "XLC", name: "Cable broadband & media entertainment" },
+            { ticker: "COP", market: "SPY", sector: "XLE", name: "Oil & gas exploration & production" },
+            { ticker: "CRM", market: "QQQ", sector: "IGV", name: "Cloud CRM software" },
+            { ticker: "CRWD", market: "QQQ", sector: "CIBR", name: "Cybersecurity endpoint & threat intel" },
+            { ticker: "DELL", market: "SPY", sector: "XLK", name: "Enterprise IT hardware & servers" },
+            { ticker: "FCX", market: "SPY", sector: "COPX", name: "Copper mining & basic materials" },
+            { ticker: "GOOGL", market: "QQQ", sector: "XLC", name: "Search, digital advertising & cloud" },
+            { ticker: "HD", market: "DIA", sector: "XLY", name: "Home improvement retail" },
+            { ticker: "JPM", market: "SPY", sector: "XLF", name: "Money center banking & markets" },
+            { ticker: "KO", market: "DIA", sector: "XLP", name: "Non-alcoholic beverages" },
+            { ticker: "LLY", market: "SPY", sector: "XLV", name: "Pharmaceuticals & GLP-1 therapies" },
+            { ticker: "LRCX", market: "QQQ", sector: "SMH", name: "Semiconductor etch & deposition tools" },
+            { ticker: "MCD", market: "DIA", sector: "XLY", name: "Fast food franchising & dining" },
+            { ticker: "META", market: "QQQ", sector: "XLC", name: "Social platforms & AI advertising" },
+            { ticker: "MRVL", market: "QQQ", sector: "SMH", name: "AI networking & custom silicon" },
+            { ticker: "MSFT", market: "QQQ", sector: "IGV", name: "Enterprise cloud & software" },
+            { ticker: "MU", market: "QQQ", sector: "SMH", name: "Memory & storage semiconductors" },
+            { ticker: "NFLX", market: "QQQ", sector: "XLC", name: "Subscription streaming entertainment" },
+            { ticker: "NKE", market: "DIA", sector: "XLY", name: "Athletic footwear & apparel" },
+            { ticker: "NOW", market: "QQQ", sector: "IGV", name: "Workflow cloud automation" },
+            { ticker: "NVDA", market: "QQQ", sector: "SMH", name: "AI chips & GPU compute" },
             { ticker: "ORCL", market: "SPY", sector: "IGV", name: "Database & cloud infrastructure" },
             { ticker: "PANW", market: "QQQ", sector: "CIBR", name: "Cybersecurity platform architecture" },
-            { ticker: "CRWD", market: "QQQ", sector: "CIBR", name: "Cybersecurity endpoint & threat intel" },
-            { ticker: "NVDA", market: "QQQ", sector: "SMH", name: "AI chips & GPU compute" },
-            { ticker: "AMD", market: "QQQ", sector: "SMH", name: "Advanced micro devices & x86/GPU" },
-            { ticker: "AVGO", market: "QQQ", sector: "SMH", name: "Custom silicon & networking chips" },
-            { ticker: "QCOM", market: "QQQ", sector: "SMH", name: "Wireless & mobile semiconductors" },
-            { ticker: "AMAT", market: "QQQ", sector: "SMH", name: "Semiconductor wafer equipment" },
-            { ticker: "MU", market: "QQQ", sector: "SMH", name: "Memory & storage semiconductors" },
-            { ticker: "AAPL", market: "QQQ", sector: "XLK", name: "Consumer electronics & ecosystem" },
-            { ticker: "DELL", market: "SPY", sector: "XLK", name: "Enterprise IT hardware & servers" },
-            { ticker: "GOOGL", market: "QQQ", sector: "XLC", name: "Search, digital advertising & cloud" },
-            { ticker: "META", market: "QQQ", sector: "XLC", name: "Social platforms & AI advertising" },
-            { ticker: "NFLX", market: "QQQ", sector: "XLC", name: "Subscription streaming entertainment" },
-            { ticker: "DIS", market: "DIA", sector: "XLC", name: "Entertainment, studios & theme parks" },
-            { ticker: "CMCSA", market: "SPY", sector: "XLC", name: "Cable broadband & media entertainment" },
-            { ticker: "AMZN", market: "QQQ", sector: "XLY", name: "E-commerce & AWS cloud" },
-            { ticker: "TSLA", market: "QQQ", sector: "XLY", name: "EV, autonomy & clean energy" },
-            { ticker: "HD", market: "DIA", sector: "XLY", name: "Home improvement retail" },
-            { ticker: "NKE", market: "DIA", sector: "XLY", name: "Athletic footwear & apparel" },
-            { ticker: "MCD", market: "DIA", sector: "XLY", name: "Fast food franchising & dining" },
-            { ticker: "SBUX", market: "SPY", sector: "XLY", name: "Retail coffee & dining" },
-            { ticker: "TGT", market: "SPY", sector: "XLY", name: "Discount department store retail" },
-            { ticker: "PG", market: "DIA", sector: "XLP", name: "Household & personal care products" },
-            { ticker: "KO", market: "DIA", sector: "XLP", name: "Non-alcoholic beverages" },
-            { ticker: "PEP", market: "QQQ", sector: "XLP", name: "Beverages & global snacks" },
-            { ticker: "COST", market: "QQQ", sector: "XLP", name: "Wholesale club retail" },
-            { ticker: "WMT", market: "DIA", sector: "XLP", name: "Discount retail & grocery" },
-            { ticker: "JPM", market: "SPY", sector: "XLF", name: "Money center banking & markets" },
-            { ticker: "BAC", market: "SPY", sector: "XLF", name: "Consumer & commercial banking" },
-            { ticker: "WFC", market: "SPY", sector: "XLF", name: "Commercial & retail banking" },
-            { ticker: "GS", market: "DIA", sector: "XLF", name: "Investment banking & global markets" },
-            { ticker: "MS", market: "SPY", sector: "XLF", name: "Wealth management & investment banking" },
-            { ticker: "V", market: "DIA", sector: "XLF", name: "Global digital payments network" },
-            { ticker: "USB", market: "IWM", sector: "KRE", name: "Regional & commercial banking" },
-            { ticker: "XOM", market: "SPY", sector: "XLE", name: "Integrated energy & refining" },
-            { ticker: "CVX", market: "DIA", sector: "XLE", name: "Integrated oil & gas operations" },
-            { ticker: "COP", market: "SPY", sector: "XLE", name: "Oil & gas exploration & production" },
-            { ticker: "SLB", market: "SPY", sector: "OIH", name: "Oilfield equipment & technology" },
-            { ticker: "LLY", market: "SPY", sector: "XLV", name: "Pharmaceuticals & GLP-1 therapies" },
-            { ticker: "UNH", market: "DIA", sector: "XLV", name: "Managed healthcare & Optum services" },
             { ticker: "PFE", market: "SPY", sector: "XLV", name: "Biopharmaceuticals & vaccines" },
+            { ticker: "PLTR", market: "QQQ", sector: "IGV", name: "Enterprise AI software & analytics" },
+            { ticker: "QCOM", market: "QQQ", sector: "SMH", name: "Wireless & mobile semiconductors" },
+            { ticker: "SBUX", market: "SPY", sector: "XLY", name: "Retail coffee & dining" },
+            { ticker: "SLB", market: "SPY", sector: "OIH", name: "Oilfield equipment & technology" },
+            { ticker: "TGT", market: "SPY", sector: "XLY", name: "Discount department store retail" },
+            { ticker: "TSLA", market: "QQQ", sector: "XLY", name: "EV, autonomy & clean energy" },
+            { ticker: "TXN", market: "QQQ", sector: "SMH", name: "Analog & embedded semiconductor chips" },
+            { ticker: "UNH", market: "DIA", sector: "XLV", name: "Managed healthcare & Optum services" },
+            { ticker: "USB", market: "IWM", sector: "KRE", name: "Regional & commercial banking" },
+            { ticker: "V", market: "DIA", sector: "XLF", name: "Global digital payments network" },
             { ticker: "VRTX", market: "QQQ", sector: "XBI", name: "Biotechnology & CF therapies" },
-            { ticker: "CAT", market: "DIA", sector: "XLI", name: "Heavy machinery & construction equipment" },
-            { ticker: "BA", market: "DIA", sector: "ITA", name: "Commercial aerospace & defense systems" },
-            { ticker: "FCX", market: "SPY", sector: "COPX", name: "Copper mining & basic materials" },
+            { ticker: "WDC", market: "QQQ", sector: "SMH", name: "NAND & memory storage hardware" },
+            { ticker: "WFC", market: "SPY", sector: "XLF", name: "Commercial & retail banking" },
+            { ticker: "WMT", market: "DIA", sector: "XLP", name: "Discount retail & grocery" },
+            { ticker: "XOM", market: "SPY", sector: "XLE", name: "Integrated energy & refining" }
         ];
 
         function populateMeasuredStocksDropdown() {
             const sel = document.getElementById("all-measured-stocks-select");
             if (!sel) return;
             const currentVal = sel.value;
-            sel.innerHTML = '<option value="">▾ All Measured Stocks (' + ALL_MEASURED_STOCKS.length + ')...</option>';
-            ALL_MEASURED_STOCKS.forEach(s => {
+            const stockList = (window.currentGoldLedgerData && window.currentGoldLedgerData.length > 0)
+                ? window.currentGoldLedgerData.map(r => ({ ticker: r.ticker, market: r.market, sector: r.sector, name: r.theme || '' }))
+                : ALL_MEASURED_STOCKS;
+            sel.innerHTML = '<option value="">▾ All Measured Stocks (' + stockList.length + ')...</option>';
+            stockList.forEach(s => {
                 const opt = document.createElement("option");
                 opt.value = s.ticker;
-                opt.textContent = `${s.ticker} (${s.name}) — ${s.market}/${s.sector}`;
+                opt.textContent = `${s.ticker}${s.name ? ' (' + s.name + ')' : ''} — ${s.market}/${s.sector}`;
                 sel.appendChild(opt);
             });
-            if (currentVal) sel.value = currentVal;
+            if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+                sel.value = currentVal;
+            }
         }
 
         function onSelectMeasuredStock(ticker) {
             if (!ticker) return;
-            const item = ALL_MEASURED_STOCKS.find(s =>s.ticker === ticker);
+            const stockList = (window.currentGoldLedgerData && window.currentGoldLedgerData.length > 0)
+                ? window.currentGoldLedgerData
+                : ALL_MEASURED_STOCKS;
+            const item = stockList.find(s => s.ticker === ticker);
             if (!item) return;
             applyPreset(item.ticker, item.market, item.sector);
         }
@@ -3806,7 +3766,7 @@
             const tbody = document.getElementById("trades-only-body");
             if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--text-dim); padding: 30px;">
-                    <span style="display:inline-block; animation: spin 1s linear infinite; margin-right: 8px;">⏳</span>Simulating ATM option trades for ${asset} @ &plusmn;${sigma.toFixed(1)}&sigma; &bull; ${tenor}d DTE (Hold: ${dte} sessions)...
+                    <span style="display:inline-block; animation: spin 1s linear infinite; margin-right: 8px;">⏳</span>Simulating underlying asset trades for ${asset} @ &plusmn;${sigma.toFixed(1)}&sigma; (Hold: ${dte} sessions)...
                 </td></tr>`;
             }
 
@@ -3842,22 +3802,9 @@
             const countBadge = document.getElementById("trades-count-badge");
             if (countBadge) countBadge.textContent = `${activeDynamicTrades.length} Trades Fired`;
 
-            // Update Earnings Excluded Badge
+            // Update Unified Earnings Blackout Button
             const ef = data.earnings_filter || {};
-            const excludedBadge = document.getElementById("earnings-excluded-badge");
-            if (excludedBadge) {
-                if (ef.enabled && ef.excluded_trades_count > 0) {
-                    excludedBadge.style.display = "inline-block";
-                    excludedBadge.textContent = `${ef.excluded_trades_count} Earnings Trades Blocked`;
-                    excludedBadge.className = "tag-pill tag-yellow";
-                } else if (!ef.enabled) {
-                    excludedBadge.style.display = "inline-block";
-                    excludedBadge.textContent = "Earnings Filter: OFF";
-                    excludedBadge.className = "tag-pill tag-blue";
-                } else {
-                    excludedBadge.style.display = "none";
-                }
-            }
+            updateEarningsFilterButton(ef.enabled ? ef.excluded_trades_count : null);
 
             // Update Mini Summary Bar
             const winRateEl = document.getElementById("trades-sum-win1");
@@ -3904,6 +3851,11 @@
                 const capMovePct = t.captured_move_pct != null ? Number(t.captured_move_pct) : Number(t.pnl_pct || 0);
                 const isWin = t.result === "WIN" || capMovePct > 0 || (t.dollar_pnl || 0) > 0;
 
+                tr.setAttribute("data-is-long", isLong ? "true" : "false");
+                tr.setAttribute("data-is-win", isWin ? "true" : "false");
+                tr.setAttribute("data-roi", capMovePct.toFixed(4));
+                tr.setAttribute("data-dollar", (t.dollar_pnl || 0).toFixed(2));
+
                 const roiColor = capMovePct >= 0 ? "#34d399" : "#f23645";
                 const moveColor = moveDollar >= 0 ? "#34d399" : "#f23645";
                 const dollarColor = (t.dollar_pnl || 0) >= 0 ? "#34d399" : "#f23645";
@@ -3935,15 +3887,106 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            applyDossierFilters();
+        }
+
+        let dossierDirectionFilter = 'ALL';
+
+        function setDossierDirectionFilter(dir) {
+            dossierDirectionFilter = (dir || 'ALL').toUpperCase();
+            ['all', 'long', 'short'].forEach(d => {
+                const btn = document.getElementById(`dossier-dir-${d}`);
+                if (btn) {
+                    if (d === dossierDirectionFilter.toLowerCase()) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+            applyDossierFilters();
+        }
+
+        function applyDossierFilters() {
+            const searchVal = (document.getElementById("trades-search-input")?.value || "").toLowerCase().trim();
+            const rows = document.querySelectorAll("#trades-only-body tr");
+            if (!rows.length) return;
+
+            let visibleCount = 0;
+            let winCount = 0;
+            let sumRoi = 0.0;
+            let sumDollar = 0.0;
+            let longCount = 0;
+            let shortCount = 0;
+            let longWins = 0;
+            let shortWins = 0;
+
+            rows.forEach(r => {
+                const isLong = r.getAttribute("data-is-long") === "true";
+                const isWin = r.getAttribute("data-is-win") === "true";
+                const roi = parseFloat(r.getAttribute("data-roi") || 0);
+                const dollar = parseFloat(r.getAttribute("data-dollar") || 0);
+                const text = r.textContent.toLowerCase();
+
+                let dirMatch = true;
+                if (dossierDirectionFilter === 'LONG' && !isLong) dirMatch = false;
+                if (dossierDirectionFilter === 'SHORT' && isLong) dirMatch = false;
+
+                const searchMatch = !searchVal || text.includes(searchVal);
+
+                if (dirMatch && searchMatch) {
+                    r.style.display = "";
+                    visibleCount++;
+                    if (isWin) winCount++;
+                    sumRoi += roi;
+                    sumDollar += dollar;
+                    if (isLong) {
+                        longCount++;
+                        if (isWin) longWins++;
+                    } else {
+                        shortCount++;
+                        if (isWin) shortWins++;
+                    }
+                } else {
+                    r.style.display = "none";
+                }
+            });
+
+            const countBadge = document.getElementById("trades-count-badge");
+            const winRateEl = document.getElementById("trades-sum-win1");
+            const avgRoiEl = document.getElementById("trades-sum-roi1");
+            const bullBearEl = document.getElementById("trades-sum-win7");
+            const pnlEl = document.getElementById("trades-sum-pnl");
+
+            if (countBadge) {
+                const dirLabel = dossierDirectionFilter === 'LONG' ? 'Long' : (dossierDirectionFilter === 'SHORT' ? 'Short' : 'Total');
+                countBadge.textContent = `${visibleCount} ${dirLabel} Trades`;
+            }
+
+            if (winRateEl) {
+                const wr = visibleCount > 0 ? (winCount / visibleCount * 100.0).toFixed(1) : '0.0';
+                winRateEl.textContent = `${wr}%`;
+            }
+
+            if (avgRoiEl) {
+                const avgRoi = visibleCount > 0 ? (sumRoi / visibleCount) : 0.0;
+                avgRoiEl.innerHTML = `<span style="color: ${avgRoi >= 0 ? '#34d399' : '#f23645'}; font-weight:700;">${avgRoi >= 0 ? '+' : ''}${avgRoi.toFixed(2)}%</span>`;
+            }
+
+            if (bullBearEl) {
+                const lWr = longCount > 0 ? (longWins / longCount * 100.0).toFixed(0) : '0';
+                const sWr = shortCount > 0 ? (shortWins / shortCount * 100.0).toFixed(0) : '0';
+                bullBearEl.textContent = `Long: ${lWr}% (${longCount}) / Short: ${sWr}% (${shortCount})`;
+            }
+
+            if (pnlEl) {
+                pnlEl.innerHTML = `<span style="color: ${sumDollar >= 0 ? '#34d399' : '#f23645'}; font-weight:800;">${sumDollar >= 0 ? '+$' : '-$'}${Math.abs(sumDollar).toFixed(0)}</span>`;
+            }
         }
 
         function filterTradesTable(query) {
-            query = (query || "").toLowerCase();
-            const rows = document.querySelectorAll("#trades-only-body tr");
-            rows.forEach(r => {
-                const text = r.textContent.toLowerCase();
-                r.style.display = text.includes(query) ? "" : "none";
-            });
+            applyDossierFilters();
         }
 
         function renderAnomalyChart(history, asset) {
@@ -5046,8 +5089,8 @@
                 const firing = data.signals_firing || [];
                 const closest = data.closest_candidates || [];
 
-                if (firing.length >0) {
-                    if (bannerIcon) bannerIcon.textContent = "";
+                if (firing.length > 0) {
+                    if (bannerIcon) bannerIcon.textContent = "⚡";
                     if (bannerTitle) bannerTitle.innerHTML = `<span style="color:#f23645;">ACTIVE 4 PM MOC SIGNALS DETECTED (${firing.length} ASSETS)</span>`;
                     if (bannerBadge) {
                         bannerBadge.className = "tag-pill tag-red";
@@ -5057,28 +5100,46 @@
                     let firingCardsHtml = `<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">`;
                     firing.forEach(f => {
                         const o = f.order_spec || {};
-                        const dirColor = o.action === "BUY ATM CALL" ? "#ffffff" : "#f23645";
+                        const isCall = (o.action === "BUY ATM CALL" || f.signal_action === "LONG ASSET");
+                        const dirColor = isCall ? "#34d399" : "#f23645";
                         const zFormatted = (f.current_z >= 0 ? '+' : '') + Number(f.current_z).toFixed(2);
+                        const barrierFormatted = isCall 
+                            ? `-${Number(f.long_threshold || f.threshold).toFixed(1)}` 
+                            : `+${Number(f.short_threshold || f.threshold).toFixed(1)}`;
+                        const holdDays = isCall 
+                            ? (f.long_holding_days || o.holding_horizon_days || f.holding_days || 14) 
+                            : (f.short_holding_days || o.holding_horizon_days || f.holding_days || 7);
+                        const wr = isCall ? (f.long_win_rate_pct || f.win_rate_pct) : (f.short_win_rate_pct || f.win_rate_pct);
+
                         firingCardsHtml += `
                             <div style="background:#16171a; border:1px solid ${dirColor}; border-radius:4px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                                 <div>
                                     <div style="font-weight:800; font-size:0.88rem; color:#fff;">
-                                        <span style="color:${dirColor}; font-weight:900;">${o.action}</span> &bull; ${f.ticker} (Strike $${o.target_strike})
+                                        <span style="color:${dirColor}; font-weight:900;">${o.action || f.signal_action}</span> &bull; ${f.ticker} (Ref $${Number(f.latest_close || o.target_strike).toFixed(2)})
                                     </div>
-                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Champion Tenor: <strong style="color:#ffffff;">${o.contract_tenor_dte}d DTE</strong> &bull; Holding Exit: <strong style="color:#d1d4dc;">${o.holding_horizon_days} Sessions</strong> &bull; Current Z: <strong style="color:#fff;">${zFormatted}&sigma;</strong> vs Barrier <strong style="color:#fff;">&plusmn;${Number(f.threshold).toFixed(1)}&sigma;</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Signal: <strong style="color:${dirColor};">${isCall ? 'BULLISH REVERSION' : 'BEARISH EXTENSION/REVERSION'}</strong> &bull; Holding Exit: <strong style="color:#d1d4dc;">${holdDays} Sessions</strong> &bull; Current Z: <strong style="color:#fff;">${zFormatted}&sigma;</strong> vs Barrier <strong style="color:#fff;">${barrierFormatted}&sigma;</strong>
                                     </div>
-                                    <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Execution Window: <strong>3:45 PM &ndash; 3:58 PM EST (Market-On-Close)</strong> &bull; Historical Edge: PF ${f.profit_factor}x, WR ${f.win_rate_pct}%, ROI +${f.avg_roi_pct}%
+                                    <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Execution Window: <strong>3:45 PM &ndash; 3:58 PM EST (Market-On-Close)</strong> &bull; Historical Edge: PF ${f.profit_factor}x, WR ${Number(wr).toFixed(1)}%, ROI +${f.avg_roi_pct}%
                                     </div>
                                 </div>
-                                <button class="action-pill btn-primary" onclick="loadChampionToCockpit('${f.ticker}', '${f.market}', '${f.sector}', ${f.threshold}, ${f.contract_dte}, ${f.holding_days})" style="font-size:0.75rem; padding:5px 12px;">Load Cockpit
+                                <button class="action-pill btn-primary" onclick="loadChampionToCockpit('${f.ticker}', '${f.market}', '${f.sector}', ${f.threshold}, ${f.contract_dte || 21}, ${holdDays})" style="font-size:0.75rem; padding:5px 12px;">Load Trifecta
                                 </button>
                             </div>
                         `;
                     });
+                    if (data.earnings_blocked && data.earnings_blocked.length > 0) {
+                        firingCardsHtml += `
+                            <div style="background: rgba(245,158,11,0.08); border: 1px dashed rgba(245,158,11,0.5); border-radius: 4px; padding: 8px 12px; margin-top: 6px; font-size: 0.75rem; color: #fcd34d;">
+                                🛡️ <strong>Earnings Blackout Active (${data.earnings_blocked.length} Assets Protected):</strong> 
+                                ${data.earnings_blocked.map(b => `<strong style="color:#ffffff;">${b.ticker}</strong> (Z=${b.current_z >= 0 ? '+' : ''}${b.current_z}&sigma; &bull; Earnings on ${b.blackout_ed || 'Recent'})`).join(' &bull; ')}
+                                <span style="display:block; font-size:0.70rem; color:var(--text-dim); margin-top:2px;">Signal suppressed to prevent catching Post-Earnings Announcement Drift (PEAD).</span>
+                            </div>
+                        `;
+                    }
                     firingCardsHtml += `</div>`;
                     if (bannerContent) bannerContent.innerHTML = firingCardsHtml;
 
-                    showNotificationToast(` ${firing.length} Pre-Close 4 PM Signals Firing! Auto-filtering table.`, "warning");
+                    showNotificationToast(`⚡ ${firing.length} Pre-Close 4 PM Signals Firing! Auto-filtering table.`, "warning");
                     setLedgerFilter('ACTIVE');
                 } else {
                     const totalScanned = data.total_scanned || (data.ledger ? data.ledger.length : 50);
@@ -5092,10 +5153,22 @@
 
                     let closestHtml = `<div style="font-size:0.78rem; color:var(--text-secondary);">`;
                     closestHtml += `All ${totalScanned} watchlist assets are within their optimal tolerance bands. No Market-On-Close (MOC) entries required today.<br>`;
+                    if (data.earnings_blocked && data.earnings_blocked.length > 0) {
+                        closestHtml += `
+                            <div style="background: rgba(245,158,11,0.08); border: 1px dashed rgba(245,158,11,0.5); border-radius: 4px; padding: 6px 10px; margin: 6px 0; font-size: 0.75rem; color: #fcd34d;">
+                                🛡️ <strong>Earnings Blackout Active (${data.earnings_blocked.length} Assets Protected):</strong> 
+                                ${data.earnings_blocked.map(b => `<strong style="color:#ffffff;">${b.ticker}</strong> (Z=${b.current_z >= 0 ? '+' : ''}${b.current_z}&sigma; &bull; Earnings on ${b.blackout_ed || 'Recent'})`).join(' &bull; ')}
+                            </div>
+                        `;
+                    }
                     closestHtml += `<span style="color:var(--text-dim); font-size:0.74rem;">Closest candidates approaching trigger barriers: </span>`;
                     closestHtml += closest.map(c => {
                         const zFormatted = (c.current_z >= 0 ? '+' : '') + Number(c.current_z).toFixed(2);
-                        return `<strong style="color:#f23645;">${c.ticker}</strong> (Z = ${zFormatted}&sigma;, <span style="color:#d1d4dc;">${Number(c.dist_to_barrier).toFixed(2)}&sigma;</span> away from &plusmn;${Number(c.threshold).toFixed(1)}&sigma;)`;
+                        const isLongOnly = c.trade_policy === 'LONG_ONLY';
+                        const lThresh = c.long_threshold || c.threshold || 2.0;
+                        const sThresh = c.short_threshold || c.threshold || 2.0;
+                        const targetBarrier = (c.current_z < 0 || isLongOnly) ? `-${Number(lThresh).toFixed(1)}` : `+${Number(sThresh).toFixed(1)}`;
+                        return `<strong style="color:#f23645;">${c.ticker}</strong> (Z = ${zFormatted}&sigma;, <span style="color:#d1d4dc;">${Number(c.dist_to_barrier).toFixed(2)}&sigma;</span> away from ${targetBarrier}&sigma;)`;
                     }).join(' &bull; ');
                     closestHtml += `</div>`;
                     if (bannerContent) bannerContent.innerHTML = closestHtml;
@@ -5106,7 +5179,7 @@
 
                 if (data.ledger) {
                     currentGoldLedgerData = data.ledger;
-                    renderGoldLedgerTable(currentGoldLedgerData);
+                    filterLedgerTable();
                     const kpiSig = document.getElementById("ledger-kpi-signals");
                     if (kpiSig) kpiSig.textContent = `${firing.length} Active`;
                 }
@@ -5129,6 +5202,22 @@
         let currentGoldLedgerData = [];
         let currentLedgerFilter = "ALL";
 
+        function isRecordTriggered(r) {
+            if (!r) return false;
+            if (r.signal_action === "EARNINGS_BLACKOUT" || r.action_badge === "EARNINGS BLACKOUT" || r.is_blackout) {
+                return false;
+            }
+            const z = r.current_z !== undefined ? Number(r.current_z) : 0.0;
+            const thresh = Number(r.threshold || 2.0);
+            const isLongOnly = r.trade_policy === 'LONG_ONLY';
+            const isShortOnly = r.trade_policy === 'SHORT_ONLY';
+            const lThresh = isShortOnly ? 999.0 : Number(r.long_threshold || thresh);
+            const sThresh = isLongOnly ? 999.0 : Number(r.short_threshold || thresh);
+            const isBull = !isShortOnly && (z <= -lThresh);
+            const isBear = !isLongOnly && (z >= sThresh);
+            return (isBull || isBear) && r.is_active !== false && r.is_active !== 0;
+        }
+
         async function fetchGoldLedger() {
             const tbody = document.getElementById("gold-ledger-body");
             try {
@@ -5148,12 +5237,13 @@
                 const kpiWr = document.getElementById("ledger-kpi-wr");
                 const kpiSig = document.getElementById("ledger-kpi-signals");
 
+                const activeCount = currentGoldLedgerData.filter(r => isRecordTriggered(r)).length;
                 if (kpiCount) kpiCount.textContent = `${s.total_champions || currentGoldLedgerData.length} Assets`;
                 if (kpiPf) kpiPf.textContent = `${(s.avg_profit_factor || 0).toFixed(2)}x`;
                 if (kpiWr) kpiWr.textContent = `${(s.avg_win_rate_pct || 0).toFixed(1)}%`;
-                if (kpiSig) kpiSig.textContent = `${s.active_signals_count || 0} Triggers`;
+                if (kpiSig) kpiSig.textContent = `${activeCount} Triggers`;
 
-                renderGoldLedgerTable(currentGoldLedgerData);
+                filterLedgerTable();
 
                 // Dynamically populate gold-trades-ticker-select from active ledger items
                 const tickerSel = document.getElementById("gold-trades-ticker-select");
@@ -5183,7 +5273,7 @@
                         const theme = r.theme ? ` (${r.theme})` : "";
                         calcOpts += `<option value="${r.ticker}">${r.ticker}${theme}</option>`;
                     });
-                    calcOpts += `<option value="ALL">ALL 50 WATCHLIST ASSETS</option>`;
+                    calcOpts += `<option value="ALL">ALL WATCHLIST CHAMPIONS (${currentGoldLedgerData.length} Assets)</option>`;
                     calcSel.innerHTML = calcOpts;
                     if (prevCalcVal && Array.from(calcSel.options).some(o => o.value === prevCalcVal)) {
                         calcSel.value = prevCalcVal;
@@ -5191,6 +5281,9 @@
                         calcSel.value = "MSFT";
                     }
                 }
+
+                // Keep measured stocks dropdown in sync
+                populateMeasuredStocksDropdown();
 
                 fetchGoldTradesHistory(currentSelectedTicker);
             } catch (err) {
@@ -5211,9 +5304,9 @@
             let filtered = currentGoldLedgerData;
 
             if (currentLedgerFilter === "ACTIVE") {
-                filtered = filtered.filter(r =>r.is_active);
+                filtered = filtered.filter(r => isRecordTriggered(r));
             } else if (currentLedgerFilter === "MONITORING") {
-                filtered = filtered.filter(r => !r.is_active);
+                filtered = filtered.filter(r => !isRecordTriggered(r));
             }
 
             if (query) {
@@ -5245,23 +5338,71 @@
                 const z = r.current_z || 0.0;
                 const thresh = r.threshold || 2.0;
 
-                const isTriggered = Math.abs(z) >= thresh;
-                const isBull = z <= -thresh;
-                const isBear = z >= thresh;
+                const isLongOnly = r.trade_policy === 'LONG_ONLY';
+                const isShortOnly = r.trade_policy === 'SHORT_ONLY';
+                const lThresh = isShortOnly ? 999.0 : (r.long_threshold || thresh);
+                const sThresh = isLongOnly ? 999.0 : (r.short_threshold || thresh);
+                const lHold = r.long_holding_days || r.holding_days || 14;
+                const sHold = r.short_holding_days || r.holding_days || 7;
+
+                const isBlackout = r.signal_action === 'EARNINGS_BLACKOUT' || r.action_badge === 'EARNINGS BLACKOUT' || r.is_blackout;
+                const isBull = !isBlackout && !isShortOnly && (z <= -lThresh);
+                const isBear = !isBlackout && !isLongOnly && (z >= sThresh);
+                const isTriggered = isBull || isBear;
 
                 // Sharp, high-contrast, mathematically correct colors
                 let zColor = '#ffffff';
                 let signalBadge = `<span class="tag-pill" style="font-size:0.66rem; font-weight:600; background:rgba(255,255,255,0.06); color:#94a3b8; border:1px solid #36373d;">MONITORING</span>`;
-                let proximityHtml = `<span style="color:#cbd5e1; font-family:var(--font-mono);">${(thresh - Math.abs(z)).toFixed(2)}&sigma; away</span>`;
+                let proximityHtml = '';
 
-                if (isBull) {
+                if (isBlackout) {
+                    zColor = '#fcd34d';
+                    signalBadge = `<span class="tag-pill" style="font-size:0.68rem; font-weight:800; background:rgba(245,158,11,0.22); color:#fcd34d; border:1px solid #f59e0b; box-shadow:0 0 6px rgba(245,158,11,0.3);">EARNINGS BLACKOUT</span>`;
+                    proximityHtml = `<span style="color:#fcd34d; font-family:var(--font-mono); font-weight:700;">BLOCKED (${r.blackout_ed || 'Earnings Window'})</span>`;
+                } else if (isBull) {
                     zColor = '#34d399';
                     signalBadge = `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.22); color:#34d399; border:1px solid #089981; box-shadow:0 0 8px rgba(52,211,153,0.3);">LONG ASSET (BUY)</span>`;
-                    proximityHtml = `<span style="color:#34d399; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(Math.abs(z) - thresh).toFixed(2)}&sigma;)</span>`;
+                    proximityHtml = `<span style="color:#34d399; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(Math.abs(z) - lThresh).toFixed(2)}&sigma;)</span>`;
                 } else if (isBear) {
                     zColor = '#f23645';
                     signalBadge = `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:800; background:rgba(242,54,69,0.22); color:#f23645; border:1px solid #f23645; box-shadow:0 0 8px rgba(242,54,69,0.3);">SHORT ASSET (SELL)</span>`;
-                    proximityHtml = `<span style="color:#f23645; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(Math.abs(z) - thresh).toFixed(2)}&sigma;)</span>`;
+                    proximityHtml = `<span style="color:#f23645; font-weight:800; font-family:var(--font-mono);">TRIGGERED (+${(z - sThresh).toFixed(2)}&sigma;)</span>`;
+                } else {
+                    const distToLong = isShortOnly ? 999.0 : Math.max(0, z - (-lThresh));
+                    const distToShort = isLongOnly ? 999.0 : Math.max(0, sThresh - z);
+                    if (distToLong <= distToShort) {
+                        proximityHtml = `<span style="color:#34d399; font-family:var(--font-mono);">${distToLong.toFixed(2)}&sigma; to Buy</span>`;
+                    } else {
+                        proximityHtml = `<span style="color:#f87171; font-family:var(--font-mono);">${distToShort.toFixed(2)}&sigma; to Sell</span>`;
+                    }
+                }
+
+                let setupHtml = '';
+                if (isLongOnly) {
+                    setupHtml = `
+                        <div style="font-family: var(--font-headings); font-weight: 800; color: #34d399; font-size: 0.85rem; letter-spacing: -0.01em;">
+                            🟢 Long: -${lThresh.toFixed(1)}&sigma; &bull; ${lHold}d Hold
+                        </div>
+                        <div style="font-size: 0.65rem; color: #38bdf8; font-weight: 700; margin-top: 2px;">
+                            <span class="tag-pill" style="font-size: 0.60rem; padding: 1px 5px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4);">LONG ONLY POLICY</span>
+                        </div>
+                    `;
+                } else if (isShortOnly) {
+                    setupHtml = `
+                        <div style="font-family: var(--font-headings); font-weight: 800; color: #f87171; font-size: 0.85rem; letter-spacing: -0.01em;">
+                            🔴 Short: +${sThresh.toFixed(1)}&sigma; &bull; ${sHold}d Hold
+                        </div>
+                        <div style="font-size: 0.65rem; color: #f23645; font-weight: 700; margin-top: 2px;">
+                            <span class="tag-pill" style="font-size: 0.60rem; padding: 1px 5px; background: rgba(242,54,69,0.15); color: #f23645; border: 1px solid rgba(242,54,69,0.4);">SHORT ONLY POLICY</span>
+                        </div>
+                    `;
+                } else {
+                    setupHtml = `
+                        <div style="font-family: var(--font-headings); font-weight: 800; font-size: 0.82rem; letter-spacing: -0.01em; display: flex; flex-direction: column; gap: 2px;">
+                            <span style="color: #34d399;">🟢 Long: -${lThresh.toFixed(1)}&sigma; &bull; ${lHold}d</span>
+                            <span style="color: #f87171;">🔴 Short: +${sThresh.toFixed(1)}&sigma; &bull; ${sHold}d</span>
+                        </div>
+                    `;
                 }
 
                 const pfColor = pf >= 2.0 ? '#ffffff' : (pf >= 1.3 ? '#fcd34d' : '#94a3b8');
@@ -5279,7 +5420,9 @@
                     ? (isBull ? "background: rgba(8, 153, 129, 0.08); border-left: 3px solid #34d399;" : "background: rgba(242, 54, 69, 0.08); border-left: 3px solid #f23645;")
                     : (isChampTop ? "background: rgba(255, 255, 255, 0.03); border-left: 3px solid #38bdf8;" : "");
 
-                const tradesYr = r.trades_per_year || Math.round((r.trades_count || 32) / 2.7);
+                const tradesYr = r.trades_per_year !== undefined ? Number(r.trades_per_year).toFixed(1) : Math.round((r.trades_count || 32) / 2.7);
+                const cadenceLabel = r.cadence_label || `~${tradesYr} / yr`;
+                const spanYrs = r.span_years ? `${r.span_years}y` : '21y';
 
                 return `
                     <tr style="cursor: pointer; ${rowBg}" onclick="onGoldLedgerRowClick('${r.ticker}')" title="Click to inspect complete trade firing history & cadence for ${r.ticker}">
@@ -5296,9 +5439,7 @@
                             <span>${r.market}</span> &bull; <strong style="color:#cbd5e1;">${r.sector}</strong>
                         </td>
                         <td>
-                            <div style="font-family: var(--font-headings); font-weight: 800; color: #ffffff; font-size: 0.88rem; letter-spacing: -0.01em;">
-                                ±${thresh.toFixed(1)}&sigma; &bull; ${r.holding_days || 5}s Hold
-                            </div>
+                            ${setupHtml}
                         </td>
                         <td>
                             ${signalBadge}
@@ -5318,8 +5459,9 @@
                         <td style="font-family: var(--font-mono); font-weight: 700; color: ${roiColor}; font-size: 0.88rem;">
                             ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%
                         </td>
-                        <td style="font-family: var(--font-mono); color: #cbd5e1; font-size: 0.78rem;">
-                            ~${tradesYr} / yr
+                        <td style="font-family: var(--font-mono); font-size: 0.78rem;">
+                            <div style="font-weight: 700; color: #ffffff;">${cadenceLabel}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 1px;">${r.trades_count} trades in ${spanYrs}</div>
                         </td>
                         <td>
                             <span class="tag-pill" style="font-size: 0.65rem; padding: 2px 6px; ${valStyle}">
@@ -5328,7 +5470,7 @@
                         </td>
                         <td style="text-align: right; white-space: nowrap;">
                             <button class="action-pill" style="font-size: 0.68rem; padding: 3px 8px; color: #38bdf8; border-color: rgba(56,189,248,0.5);"
-                                onclick="event.stopPropagation(); loadChampionToCockpit('${r.ticker}', '${r.market}', '${r.sector}', ${thresh}, 21, ${r.holding_days || 5})">Load Cockpit
+                                onclick="event.stopPropagation(); loadChampionToCockpit('${r.ticker}', '${r.market}', '${r.sector}', ${thresh}, 21, ${r.holding_days || 5})">Load Trifecta
                             </button>
                         </td>
                     </tr>
@@ -5341,6 +5483,9 @@
             document.getElementById("market-index").value = market;
             document.getElementById("sector-etf").value = sector;
             updateTrifectaDisplay();
+
+            const measuredSel = document.getElementById("all-measured-stocks-select");
+            if (measuredSel) measuredSel.value = ticker;
 
             document.querySelectorAll(".preset-pill").forEach(p => {
                 p.classList.toggle("active", p.textContent.trim().toUpperCase() === ticker.toUpperCase());
@@ -5407,7 +5552,9 @@
                 if (durEl) durEl.textContent = `${s.avg_holding_sessions} Sessions`;
                 if (freqEl) {
                     freqEl.textContent = `~${s.trades_per_year} Signals / Yr`;
-                    if (freqSub) freqSub.textContent = ticker === "ALL" ? "Across 14-stock champion portfolio" : `For ${ticker} champion (${s.total_trades} trades in 5Y)`;
+                    if (freqSub) freqSub.textContent = ticker === "ALL" 
+                        ? `Across 42-stock champion portfolio (${s.total_trades} trades in ${s.span_years || 21}Y)` 
+                        : `For ${ticker} champion (${s.total_trades} trades in ${s.span_years || 21}Y)`;
                 }
                 if (badgeEl) badgeEl.textContent = `${s.total_trades} Total Trades`;
 
@@ -5564,7 +5711,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || `Calculate Best Stdv`;
+                    btn.innerHTML = origText || `Calculate the Best STDV`;
                 }
             }
         }
@@ -5719,7 +5866,7 @@
             const origText = btn ? btn.innerHTML : "";
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = `<span>⏳ Optimizing All 50 Stocks...</span>`;
+                btn.innerHTML = `<span>⏳ Optimizing All Assets...</span>`;
             }
             showNotificationToast("Sweeping standard deviation barriers across all 50 watchlist assets in background...", "info");
 
@@ -5740,7 +5887,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || `Calculate for ALL 50 Assets`;
+                    btn.innerHTML = origText || `Calculate for All Assets`;
                 }
             }
         }
