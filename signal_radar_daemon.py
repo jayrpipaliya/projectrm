@@ -39,7 +39,6 @@ def format_alert_sms(sig):
     roi = float(sig.get("avg_roi_pct", 0.0))
 
     msg = (
-        f"Edge V4 Alert\n\n"
         f"{ticker} -> {direction} for {hold} sessions\n"
         f"AVG WR: {wr:.1f}% / AVG Return {roi:+.2f}%\n"
     )
@@ -54,7 +53,8 @@ def send_tmobile_sms(msg_text):
 
     try:
         msg = MIMEText(msg_text)
-        # Omit Subject to prevent T-Mobile gateway from prepending a slash '/'
+        # Use Subject as the title so T-Mobile places 'Edge V4 Alert /' naturally at the start
+        msg["Subject"] = "Edge V4 Alert"
         msg["From"] = SMTP_USER
         msg["To"] = TMOBILE_SMS_GATEWAY
 
