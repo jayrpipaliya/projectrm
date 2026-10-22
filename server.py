@@ -981,18 +981,25 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 is_long_only = (policy == "LONG_ONLY")
                 is_short_only = (policy == "SHORT_ONLY")
                 
-                # Check Corporate Earnings Blackout [E-1 to E+2]
+                l_hold = int(row.get("long_holding_days") or row.get("holding_days", 14))
+                s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
+                max_hold = max(l_hold, s_hold)
+
+                # Check Corporate Earnings Blackout:
+                # Blocks if earnings is today, yesterday, or scheduled within the upcoming trade holding window [E-1 to E+max_hold+2]
                 is_blackout = False
                 blackout_ed = None
+                blackout_days_away = 0
                 erecs = warehouse.get_earnings_dates(t)
                 if erecs and latest_dataset_dt:
                     for er in erecs:
                         try:
                             ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
-                            diff_days = (latest_dataset_dt - ed_obj).days
-                            if -1 <= diff_days <= 2:
+                            days_ahead = (ed_obj - latest_dataset_dt).days
+                            if -1 <= days_ahead <= (max_hold + 2):
                                 is_blackout = True
                                 blackout_ed = er["earnings_date"]
+                                blackout_days_away = days_ahead
                                 break
                         except Exception:
                             pass
@@ -1302,6 +1309,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "message": f"Successfully updated {len(synced)}/{len(stocks)} watchlist stocks via high-speed feed."
             })
 
+        elif path == "/api/warehouse/sync-earnings":
+            res = warehouse.sync_upcoming_earnings()
+            self._send_json(res)
+
         elif path == "/api/ledger/pre-close-scan":
             import datetime as dt
             rows = warehouse.get_all_champion_triplets()
@@ -1336,27 +1347,31 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 is_long_only = (policy == "LONG_ONLY")
                 is_short_only = (policy == "SHORT_ONLY")
 
-                # Check Corporate Earnings Blackout [E-1 to E+2]
-                is_blackout = False
-                blackout_ed = None
-                erecs = warehouse.get_earnings_dates(t)
-                if erecs and latest_dataset_dt:
-                    for er in erecs:
-                        try:
-                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
-                            diff_days = (latest_dataset_dt - ed_obj).days
-                            if -1 <= diff_days <= 2:
-                                is_blackout = True
-                                blackout_ed = er["earnings_date"]
-                                break
-                        except Exception:
-                            pass
-
                 z_1d = float(row.get("current_z", 0.0) or 0.0)
                 close_px = float(row.get("latest_close", 0.0) or 0.0)
                 tenor = int(row.get("contract_dte", 21))
                 l_hold = int(row.get("long_holding_days") or row.get("holding_days", 14))
                 s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
+                max_hold = max(l_hold, s_hold)
+
+                # Check Corporate Earnings Blackout:
+                # Blocks if earnings is today, yesterday, or scheduled within the upcoming trade holding window [E-1 to E+max_hold+2]
+                is_blackout = False
+                blackout_ed = None
+                blackout_days_away = 0
+                erecs = warehouse.get_earnings_dates(t)
+                if erecs and latest_dataset_dt:
+                    for er in erecs:
+                        try:
+                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                            days_ahead = (ed_obj - latest_dataset_dt).days
+                            if -1 <= days_ahead <= (max_hold + 2):
+                                is_blackout = True
+                                blackout_ed = er["earnings_date"]
+                                blackout_days_away = days_ahead
+                                break
+                        except Exception:
+                            pass
 
                 is_active = False
                 action = "WAITING FOR BARRIER"
@@ -1370,7 +1385,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     badge_class = "tag-amber"
                     is_active = False
                     dist = 999.0
-                    reason = f"BLOCKED: Earnings on {blackout_ed}. Blackout window [E-1, E+2] active."
+                    reason = f"BLOCKED: Earnings on {blackout_ed} ({blackout_days_away}d away, overlaps with {max_hold}-session hold)."
                 elif not is_short_only and z_1d <= -l_thresh:
                     action = "LONG ASSET"
                     action_badge = "ACTIVE BULLISH SIGNAL"

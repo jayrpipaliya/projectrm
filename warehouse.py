@@ -494,6 +494,44 @@ class Warehouse:
             """, (ticker.upper(),))
             return [dict(row) for row in cursor.fetchall()]
 
+    def sync_upcoming_earnings(self, tickers: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Fetch and cache upcoming earnings announcement dates from Yahoo Finance into warehouse."""
+        import yfinance as yf
+        import universe
+
+        target_tickers = tickers or universe.get_all_tickers()
+        saved_total = 0
+        results_by_ticker = {}
+        today_str = datetime.date.today().strftime("%Y-%m-%d")
+
+        for t in target_tickers:
+            t_upper = t.upper()
+            try:
+                tk = yf.Ticker(t_upper)
+                cal = tk.calendar
+                ed_list = []
+                if isinstance(cal, dict) and cal.get("Earnings Date"):
+                    ed_list = [str(d) for d in cal["Earnings Date"]]
+                else:
+                    ed_df = tk.earnings_dates
+                    if ed_df is not None and len(ed_df) > 0:
+                        future = [idx.strftime("%Y-%m-%d") for idx in ed_df.index if idx.strftime("%Y-%m-%d") >= today_str]
+                        ed_list = future[:3]
+
+                records = [{"earnings_date": d, "acceptance_time": "", "form": "EARNINGS", "source": "YFINANCE"} for d in ed_list]
+                saved = self.save_earnings_dates(t_upper, records)
+                saved_total += saved
+                results_by_ticker[t_upper] = ed_list
+            except Exception as e:
+                results_by_ticker[t_upper] = []
+
+        return {
+            "status": "SUCCESS",
+            "tickers_checked": len(target_tickers),
+            "dates_saved": saved_total,
+            "upcoming_earnings": results_by_ticker
+        }
+
     def get_warehouse_stats(self) -> Dict[str, Any]:
         """Summary of data stored in the local SQL database."""
         with self._get_connection() as conn:

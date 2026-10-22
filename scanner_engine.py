@@ -144,16 +144,29 @@ class UniverseScannerEngine:
                 streak = int(cs.get("current_streak_days", 0))
                 is_streak_extreme = abs(streak) >= 4
 
-                # Check if latest date is inside earnings blackout
+                # Check if latest date or upcoming hold window intersects earnings announcement
                 is_earnings_blackout = False
                 earnings_date_ref = ""
                 cached_earnings = self.warehouse.get_earnings_dates(ticker)
                 if cached_earnings:
-                    # Check if today is earnings announcement or next trading day
-                    dates_list = [row["earnings_date"] for row in cached_earnings]
-                    if last_date in dates_list:
-                        is_earnings_blackout = True
-                        earnings_date_ref = last_date
+                    try:
+                        from datetime import datetime, timedelta
+                        curr_dt = datetime.strptime(last_date, "%Y-%m-%d") if last_date else datetime.now()
+                        window_start = (curr_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+                        window_end = (curr_dt + timedelta(days=int(hold_sessions * 1.5) + 2)).strftime("%Y-%m-%d")
+
+                        earnings_in_window = [
+                            row["earnings_date"] for row in cached_earnings
+                            if window_start <= row["earnings_date"] <= window_end
+                        ]
+                        if earnings_in_window:
+                            is_earnings_blackout = True
+                            earnings_date_ref = earnings_in_window[0]
+                    except Exception:
+                        dates_list = [row["earnings_date"] for row in cached_earnings]
+                        if last_date in dates_list:
+                            is_earnings_blackout = True
+                            earnings_date_ref = last_date
 
                 # Determine Signal & Action based on stock's barrier (optimal sigma*)
                 is_bullish = z1 <= -barrier
@@ -278,6 +291,7 @@ class UniverseScannerEngine:
                     "regime_alert": is_alert,
                     "streak_days": streak,
                     "earnings_blackout": is_earnings_blackout,
+                    "earnings_date_ref": earnings_date_ref,
                     # Semi-Markov overlay fields
                     "smm_regime": smm_regime,
                     "smm_days_in": smm_days_in,
