@@ -39,7 +39,8 @@ def format_alert_sms(sig):
     roi = float(sig.get("avg_roi_pct", 0.0))
 
     msg = (
-        f"\n\n{ticker} -> {direction} for {hold} sessions\n"
+        f"---\n"
+        f"{ticker} -> {direction} for {hold} sessions\n"
         f"AVG WR: {wr:.1f}% / AVG Return {roi:+.2f}%\n"
     )
     return msg
