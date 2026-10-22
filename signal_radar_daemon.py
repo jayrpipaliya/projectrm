@@ -27,22 +27,17 @@ SMTP_PASS = os.getenv("SMTP_PASS", "")
 def format_alert_sms(sig):
     ticker = sig["ticker"]
     action = sig["signal_action"]
-    z = sig.get("current_z", 0.0)
-    px = sig.get("latest_close", 0.0)
-    hold = sig.get("holding_horizon_days", 7)
-    reason = sig.get("reason", "")
-    badge = sig.get("action_badge", action)
-
     is_long = "LONG" in action
-    direction = "LONG (BUY DIP)" if is_long else "SHORT (SELL SPIKE)"
+    direction = "LONG" if is_long else "SHORT"
+    
+    hold = sig.get("holding_horizon_days") or sig.get("holding_days", 7)
+    wr = float(sig.get("long_win_rate_pct" if is_long else "short_win_rate_pct") or sig.get("win_rate_pct", 0.0))
+    roi = float(sig.get("avg_roi_pct", 0.0))
 
     msg = (
-        f"[EDGE V4 RADAR] 3:45 PM ALERT\n"
-        f"{ticker} -> {direction}\n"
-        f"Price: ${px:.2f} | Z-Score: {z:+.2f} sigma\n"
-        f"Target Hold: {hold} sessions\n"
-        f"Status: {badge}\n"
-        f"15m to market close! Check chart on Robinhood before entering."
+        f"[EDGE V4 RADAR]\n\n"
+        f"{ticker} -> {direction} for {hold} sessions\n"
+        f"AVG WR: {wr:.1f}% / AVG Return {roi:+.2f}%\n"
     )
     return msg
 
