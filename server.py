@@ -1691,6 +1691,115 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "trades": trades[:limit]
             })
 
+        elif path == "/api/ledger/trade-chart":
+            trade_id = query.get("trade_id", [None])[0]
+            ticker = query.get("ticker", [None])[0]
+            trade_date = query.get("trade_date", [None])[0]
+
+            with warehouse._get_connection() as conn:
+                c = conn.cursor()
+                if trade_id:
+                    c.execute("""
+                        SELECT id, ticker, trade_date, action, signal_z, underlying_entry, strike, holding_sessions, pnl_pct, dollar_pnl, is_win, loss_cause
+                        FROM champion_gold_trades
+                        WHERE id = ?
+                    """, (int(trade_id),))
+                elif ticker and trade_date:
+                    c.execute("""
+                        SELECT id, ticker, trade_date, action, signal_z, underlying_entry, strike, holding_sessions, pnl_pct, dollar_pnl, is_win, loss_cause
+                        FROM champion_gold_trades
+                        WHERE ticker = ? AND trade_date = ?
+                        ORDER BY id DESC LIMIT 1
+                    """, (ticker.upper(), trade_date))
+                elif ticker:
+                    c.execute("""
+                        SELECT id, ticker, trade_date, action, signal_z, underlying_entry, strike, holding_sessions, pnl_pct, dollar_pnl, is_win, loss_cause
+                        FROM champion_gold_trades
+                        WHERE ticker = ?
+                        ORDER BY trade_date DESC LIMIT 1
+                    """, (ticker.upper(),))
+                else:
+                    c.execute("""
+                        SELECT id, ticker, trade_date, action, signal_z, underlying_entry, strike, holding_sessions, pnl_pct, dollar_pnl, is_win, loss_cause
+                        FROM champion_gold_trades
+                        ORDER BY trade_date DESC LIMIT 1
+                    """)
+                tr_row = c.fetchone()
+                if not tr_row:
+                    self._send_json({"status": "ERROR", "error": "Trade not found"}, status=404)
+                    return
+
+                tr = dict(tr_row)
+                t_ticker = tr["ticker"]
+                t_date = tr["trade_date"]
+                h_sess = int(tr.get("holding_sessions", 5) or 5)
+
+                c.execute("""
+                    SELECT trade_date, open, high, low, close, volume
+                    FROM stock_bars
+                    WHERE ticker = ?
+                    ORDER BY trade_date ASC
+                """, (t_ticker,))
+                bars = c.fetchall()
+
+            all_dates = [b["trade_date"] for b in bars]
+            if t_date not in all_dates:
+                self._send_json({"status": "ERROR", "error": f"No bar data found for {t_ticker} on {t_date}"}, status=404)
+                return
+
+            idx = all_dates.index(t_date)
+            start_idx = max(0, idx - 6)
+            exit_idx = min(len(bars) - 1, idx + h_sess)
+            end_idx = min(len(bars), exit_idx + 7)
+
+            sub_bars = bars[start_idx:end_idx]
+            exit_date_actual = bars[exit_idx]["trade_date"]
+
+            chart_bars = []
+            for b in sub_bars:
+                d = b["trade_date"]
+                chart_bars.append({
+                    "date": d,
+                    "open": round(float(b["open"]), 2),
+                    "high": round(float(b["high"]), 2),
+                    "low": round(float(b["low"]), 2),
+                    "close": round(float(b["close"]), 2),
+                    "volume": int(b["volume"] or 0),
+                    "is_entry": (d == t_date),
+                    "is_exit": (d == exit_date_actual),
+                    "in_trade": (t_date <= d <= exit_date_actual)
+                })
+
+            earnings_in_window = []
+            try:
+                erecs = warehouse.get_earnings_dates(t_ticker)
+                w_start = chart_bars[0]["date"]
+                w_end = chart_bars[-1]["date"]
+                earnings_in_window = [er["earnings_date"] for er in erecs if w_start <= er["earnings_date"] <= w_end]
+            except Exception:
+                pass
+
+            self._send_json({
+                "status": "SUCCESS",
+                "trade": {
+                    "id": tr["id"],
+                    "ticker": tr["ticker"],
+                    "trade_date": tr["trade_date"],
+                    "action": tr["action"],
+                    "signal_z": round(float(tr.get("signal_z", 0.0) or 0.0), 2),
+                    "entry_price": round(float(tr.get("underlying_entry", 0.0) or 0.0), 2),
+                    "exit_price": round(float(tr.get("strike", 0.0) or 0.0), 2),
+                    "holding_sessions": h_sess,
+                    "pnl_pct": round(float(tr.get("pnl_pct", 0.0) or 0.0), 2),
+                    "dollar_pnl": round(float(tr.get("dollar_pnl", 0.0) or 0.0), 2),
+                    "is_win": bool(tr.get("is_win", 0)),
+                    "loss_cause": tr.get("loss_cause", ""),
+                    "exit_date": exit_date_actual
+                },
+                "bars": chart_bars,
+                "earnings_dates": earnings_in_window
+            })
+
         elif path == "/api/history/sync-yfinance":
             ticker_param = query.get("ticker", [""])[0]
             period = query.get("period", ["5y"])[0]
