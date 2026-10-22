@@ -985,9 +985,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
                 max_hold = max(l_hold, s_hold)
 
-                # Check Corporate Earnings Blackout:
-                # Blocks if earnings is today, yesterday, or scheduled within the upcoming trade holding window [E-1 to E+max_hold+2]
+                # Check Corporate Earnings Runway:
+                # Truncates hold to Day E-1 if runway >= 3 sessions; blocks completely if runway <= 2 sessions
                 is_blackout = False
+                is_truncated_hold = False
                 blackout_ed = None
                 blackout_days_away = 0
                 erecs = warehouse.get_earnings_dates(t)
@@ -997,10 +998,16 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                             ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
                             days_ahead = (ed_obj - latest_dataset_dt).days
                             if -1 <= days_ahead <= (max_hold + 2):
-                                is_blackout = True
-                                blackout_ed = er["earnings_date"]
-                                blackout_days_away = days_ahead
-                                break
+                                if days_ahead <= 2:
+                                    is_blackout = True
+                                    blackout_ed = er["earnings_date"]
+                                    blackout_days_away = days_ahead
+                                    break
+                                else:
+                                    is_truncated_hold = True
+                                    blackout_ed = er["earnings_date"]
+                                    blackout_days_away = days_ahead
+                                    break
                         except Exception:
                             pass
 
@@ -1354,9 +1361,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
                 max_hold = max(l_hold, s_hold)
 
-                # Check Corporate Earnings Blackout:
-                # Blocks if earnings is today, yesterday, or scheduled within the upcoming trade holding window [E-1 to E+max_hold+2]
+                # Check Corporate Earnings Runway:
+                # Truncates hold to Day E-1 if runway >= 3 sessions; blocks completely if runway <= 2 sessions
                 is_blackout = False
+                is_truncated_hold = False
                 blackout_ed = None
                 blackout_days_away = 0
                 erecs = warehouse.get_earnings_dates(t)
@@ -1366,10 +1374,16 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                             ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
                             days_ahead = (ed_obj - latest_dataset_dt).days
                             if -1 <= days_ahead <= (max_hold + 2):
-                                is_blackout = True
-                                blackout_ed = er["earnings_date"]
-                                blackout_days_away = days_ahead
-                                break
+                                if days_ahead <= 2:
+                                    is_blackout = True
+                                    blackout_ed = er["earnings_date"]
+                                    blackout_days_away = days_ahead
+                                    break
+                                else:
+                                    is_truncated_hold = True
+                                    blackout_ed = er["earnings_date"]
+                                    blackout_days_away = days_ahead
+                                    break
                         except Exception:
                             pass
 
@@ -1385,23 +1399,31 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     badge_class = "tag-amber"
                     is_active = False
                     dist = 999.0
-                    reason = f"BLOCKED: Earnings on {blackout_ed} ({blackout_days_away}d away, overlaps with {max_hold}-session hold)."
+                    reason = f"BLOCKED: Earnings on {blackout_ed} ({blackout_days_away}d away). Runway < 3 sessions."
                 elif not is_short_only and z_1d <= -l_thresh:
                     action = "LONG ASSET"
-                    action_badge = "ACTIVE BULLISH SIGNAL"
+                    action_badge = "ACTIVE BULLISH (E-1 EXIT)" if is_truncated_hold else "ACTIVE BULLISH SIGNAL"
                     badge_class = "tag-green"
                     is_active = True
-                    chosen_hold = l_hold
                     dist = round(abs(z_1d - (-l_thresh)), 2)
-                    reason = f"Z-score {z_1d:+.2f}σ breached Long barrier -{l_thresh:.1f}σ by {dist:.2f}σ"
+                    if is_truncated_hold:
+                        chosen_hold = min(l_hold, max(1, blackout_days_away - 1))
+                        reason = f"Z-score {z_1d:+.2f}σ breached Long barrier -{l_thresh:.1f}σ. Pre-earnings truncated hold: exit Day E-1 at 3:55 PM ({chosen_hold} sessions) before {blackout_ed} earnings."
+                    else:
+                        chosen_hold = l_hold
+                        reason = f"Z-score {z_1d:+.2f}σ breached Long barrier -{l_thresh:.1f}σ by {dist:.2f}σ"
                 elif not is_long_only and z_1d >= s_thresh:
                     action = "SHORT ASSET"
-                    action_badge = "ACTIVE BEARISH SIGNAL"
+                    action_badge = "ACTIVE BEARISH (E-1 EXIT)" if is_truncated_hold else "ACTIVE BEARISH SIGNAL"
                     badge_class = "tag-red"
                     is_active = True
-                    chosen_hold = s_hold
                     dist = round(abs(z_1d - s_thresh), 2)
-                    reason = f"Z-score {z_1d:+.2f}σ breached Short barrier +{s_thresh:.1f}σ by {dist:.2f}σ"
+                    if is_truncated_hold:
+                        chosen_hold = min(s_hold, max(1, blackout_days_away - 1))
+                        reason = f"Z-score {z_1d:+.2f}σ breached Short barrier +{s_thresh:.1f}σ. Pre-earnings truncated hold: exit Day E-1 at 3:55 PM ({chosen_hold} sessions) before {blackout_ed} earnings."
+                    else:
+                        chosen_hold = s_hold
+                        reason = f"Z-score {z_1d:+.2f}σ breached Short barrier +{s_thresh:.1f}σ by {dist:.2f}σ"
                 else:
                     dist_long = 999.0 if is_short_only else max(0.0, z_1d - (-l_thresh))
                     dist_short = 999.0 if is_long_only else max(0.0, s_thresh - z_1d)

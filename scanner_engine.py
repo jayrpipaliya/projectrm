@@ -146,7 +146,9 @@ class UniverseScannerEngine:
 
                 # Check if latest date or upcoming hold window intersects earnings announcement
                 is_earnings_blackout = False
+                is_truncated_hold = False
                 earnings_date_ref = ""
+                effective_hold_sessions = hold_sessions
                 cached_earnings = self.warehouse.get_earnings_dates(ticker)
                 if cached_earnings:
                     try:
@@ -160,8 +162,18 @@ class UniverseScannerEngine:
                             if window_start <= row["earnings_date"] <= window_end
                         ]
                         if earnings_in_window:
-                            is_earnings_blackout = True
-                            earnings_date_ref = earnings_in_window[0]
+                            ed_str = earnings_in_window[0]
+                            ed_obj = datetime.strptime(ed_str, "%Y-%m-%d")
+                            days_ahead = (ed_obj - curr_dt).days
+                            if days_ahead <= 2:
+                                # Insufficient runway (< 3 sessions) -> Hard Blackout
+                                is_earnings_blackout = True
+                                earnings_date_ref = ed_str
+                            else:
+                                # Viable runway (>= 3 sessions) -> Pre-earnings Truncated Hold (exit Day E-1)
+                                is_truncated_hold = True
+                                earnings_date_ref = ed_str
+                                effective_hold_sessions = min(hold_sessions, max(1, days_ahead - 1))
                     except Exception:
                         dates_list = [row["earnings_date"] for row in cached_earnings]
                         if last_date in dates_list:
@@ -183,12 +195,12 @@ class UniverseScannerEngine:
                     earnings_blocked_count += 1
                 elif is_bullish:
                     signal_action = "LONG_ASSET"
-                    action_badge = "LONG ASSET"
+                    action_badge = "LONG ASSET (E-1 EXIT)" if is_truncated_hold else "LONG ASSET"
                     active_bullish += 1
                     ready_to_trade_count += 1
                 elif is_bearish:
                     signal_action = "SHORT_ASSET"
-                    action_badge = "SHORT ASSET"
+                    action_badge = "SHORT ASSET (E-1 EXIT)" if is_truncated_hold else "SHORT ASSET"
                     active_bearish += 1
                     ready_to_trade_count += 1
 
