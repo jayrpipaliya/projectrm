@@ -1480,6 +1480,121 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "ledger": enriched
             })
 
+        elif path == "/api/ledger/trigger-sms-radar":
+            # Cloud Cron Trigger (Vercel Cron & External Webhooks)
+            import datetime as dt
+            import smtplib
+            from email.mime.text import MIMEText
+
+            # Execute scan across champions
+            rows = warehouse.get_all_champion_triplets()
+            latest_dataset_str = "2026-10-21"
+            try:
+                with warehouse._get_connection() as conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT MAX(trade_date) FROM stock_bars")
+                    row_max = cur.fetchone()
+                    if row_max and row_max[0]:
+                        latest_dataset_str = row_max[0]
+            except Exception:
+                pass
+            latest_dataset_dt = dt.datetime.strptime(latest_dataset_str, "%Y-%m-%d").date()
+            eval_dt = max(latest_dataset_dt, dt.datetime.now().date())
+
+            signals_firing = []
+            for row in rows:
+                t = row["ticker"]
+                thresh = float(row.get("threshold", 2.0))
+                l_thresh = float(row.get("long_threshold") or thresh)
+                s_thresh = float(row.get("short_threshold") or thresh)
+                policy = str(row.get("trade_policy") or "ASYMMETRIC_DUAL")
+                is_long_only = (policy == "LONG_ONLY")
+                is_short_only = (policy == "SHORT_ONLY")
+                l_hold = int(row.get("long_holding_days") or row.get("holding_days", 14))
+                s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))
+                max_hold = max(l_hold, s_hold)
+
+                # Check Earnings
+                is_blackout = False
+                erecs = warehouse.get_earnings_dates(t)
+                if erecs and eval_dt:
+                    for er in erecs:
+                        try:
+                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                            days_ahead = (ed_obj - eval_dt).days
+                            if -1 <= days_ahead <= (max_hold + 2):
+                                if days_ahead <= 2:
+                                    is_blackout = True
+                                    break
+                        except Exception:
+                            pass
+
+                if is_blackout:
+                    continue
+
+                z_1d = float(row.get("current_z", 0.0) or 0.0)
+                px = float(row.get("latest_close", 0.0) or 0.0)
+
+                if not is_short_only and z_1d <= -l_thresh:
+                    signals_firing.append({
+                        "ticker": t,
+                        "action": "LONG",
+                        "holding_days": l_hold,
+                        "win_rate_pct": float(row.get("long_win_rate_pct") or row.get("win_rate_pct", 60.0)),
+                        "avg_roi_pct": float(row.get("avg_roi_pct", 2.0)),
+                        "current_z": z_1d,
+                        "price": px
+                    })
+                elif not is_long_only and z_1d >= s_thresh:
+                    signals_firing.append({
+                        "ticker": t,
+                        "action": "SHORT",
+                        "holding_days": s_hold,
+                        "win_rate_pct": float(row.get("short_win_rate_pct") or row.get("win_rate_pct", 60.0)),
+                        "avg_roi_pct": float(row.get("avg_roi_pct", 2.0)),
+                        "current_z": z_1d,
+                        "price": px
+                    })
+
+            sms_dispatched = False
+            error_msg = None
+            if signals_firing:
+                # Format bundle
+                sections = ["---"]
+                for sig in signals_firing:
+                    sections.append(
+                        f"{sig['ticker']} -> {sig['action']} for {sig['holding_days']} sessions\n"
+                        f"AVG WR: {sig['win_rate_pct']:.1f}% / AVG Return {sig['avg_roi_pct']:+.2f}%"
+                    )
+                alert_text = "\n\n".join(sections)
+
+                smtp_user = os.getenv("SMTP_USER", "")
+                smtp_pass = os.getenv("SMTP_PASS", "")
+                if smtp_user and smtp_pass:
+                    try:
+                        msg = MIMEText(alert_text)
+                        msg["Subject"] = "Edge V4 Alert"
+                        msg["From"] = smtp_user
+                        msg["To"] = "8482340380@tmomail.net"
+
+                        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
+                        server.starttls()
+                        server.login(smtp_user, smtp_pass)
+                        server.sendmail(smtp_user, ["8482340380@tmomail.net"], msg.as_string())
+                        server.quit()
+                        sms_dispatched = True
+                    except Exception as e:
+                        error_msg = str(e)
+
+            self._send_json({
+                "status": "SUCCESS",
+                "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S EST"),
+                "signals_firing_count": len(signals_firing),
+                "signals_firing": signals_firing,
+                "sms_dispatched": sms_dispatched,
+                "error": error_msg
+            })
+
         elif path == "/api/ledger/cadence-scan":
             import datetime as dt
             income_file = os.path.join(os.path.dirname(__file__), "scratch", "weekly_income_results.json")

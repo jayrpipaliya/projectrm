@@ -1,0 +1,33 @@
+name: 3:45 PM Quant Radar Cloud Dispatcher
+
+on:
+  schedule:
+    # 19:45 UTC = 3:45 PM EDT (Monday - Friday)
+    - cron: '45 19 * * 1-5'
+  workflow_dispatch: # Allows manual run button from GitHub anytime
+
+jobs:
+  run-radar-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests python-dotenv
+
+      - name: Execute 3:45 PM Cloud Radar Scan & SMS Dispatch
+        env:
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: '587'
+          SMTP_USER: 'jayrpipaliya@gmail.com'
+          SMTP_PASS: 'dudc iikb lkfs zqvh'
+          SERVER_URL: 'https://edgev4.vercel.app'
+        run: |
+          python signal_radar_daemon.py

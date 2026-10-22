@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/ledger/trigger-sms-radar",
+      "schedule": "45 19 * * 1-5"
+    }
+  ],
   "builds": [
     {
       "src": "api/index.py",
