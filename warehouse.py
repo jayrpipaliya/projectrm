@@ -508,15 +508,25 @@ class Warehouse:
             t_upper = t.upper()
             try:
                 tk = yf.Ticker(t_upper)
-                cal = tk.calendar
                 ed_list = []
-                if isinstance(cal, dict) and cal.get("Earnings Date"):
-                    ed_list = [str(d) for d in cal["Earnings Date"]]
-                else:
+                # 1. Primary: Forward dates from earnings_dates index
+                try:
                     ed_df = tk.earnings_dates
                     if ed_df is not None and len(ed_df) > 0:
                         future = [idx.strftime("%Y-%m-%d") for idx in ed_df.index if idx.strftime("%Y-%m-%d") >= today_str]
-                        ed_list = future[:3]
+                        if future:
+                            ed_list = sorted(list(set(future)))[:4]
+                except Exception:
+                    pass
+
+                # 2. Fallback: Forward dates from calendar dict
+                if not ed_list:
+                    try:
+                        cal = tk.calendar
+                        if isinstance(cal, dict) and cal.get("Earnings Date"):
+                            ed_list = [str(d) for d in cal["Earnings Date"] if str(d) >= today_str]
+                    except Exception:
+                        pass
 
                 records = [{"earnings_date": d, "acceptance_time": "", "form": "EARNINGS", "source": "YFINANCE"} for d in ed_list]
                 saved = self.save_earnings_dates(t_upper, records)

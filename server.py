@@ -992,11 +992,12 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 blackout_ed = None
                 blackout_days_away = 0
                 erecs = warehouse.get_earnings_dates(t)
-                if erecs and latest_dataset_dt:
+                eval_dt = max(latest_dataset_dt, dt.datetime.now().date()) if latest_dataset_dt else dt.datetime.now().date()
+                if erecs and eval_dt:
                     for er in erecs:
                         try:
                             ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
-                            days_ahead = (ed_obj - latest_dataset_dt).days
+                            days_ahead = (ed_obj - eval_dt).days
                             if -1 <= days_ahead <= (max_hold + 2):
                                 if days_ahead <= 2:
                                     is_blackout = True
@@ -1368,11 +1369,12 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 blackout_ed = None
                 blackout_days_away = 0
                 erecs = warehouse.get_earnings_dates(t)
-                if erecs and latest_dataset_dt:
+                eval_dt = max(latest_dataset_dt, dt.datetime.now().date()) if latest_dataset_dt else dt.datetime.now().date()
+                if erecs and eval_dt:
                     for er in erecs:
                         try:
                             ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
-                            days_ahead = (ed_obj - latest_dataset_dt).days
+                            days_ahead = (ed_obj - eval_dt).days
                             if -1 <= days_ahead <= (max_hold + 2):
                                 if days_ahead <= 2:
                                     is_blackout = True
