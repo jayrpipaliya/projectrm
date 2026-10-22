@@ -13,12 +13,16 @@ import sqlite3
 import os
 import smtplib
 from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+# Load credentials from .env
+load_dotenv()
 
 SERVER_URL = "http://localhost:8050"
 TARGET_PHONE = "848-234-0380"
 TMOBILE_SMS_GATEWAY = "8482340380@tmomail.net"
 
-# SMTP Relay Configuration (Reads from environment or .env if set)
+# SMTP Relay Configuration (Reads from environment or .env)
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
