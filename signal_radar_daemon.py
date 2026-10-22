@@ -28,22 +28,26 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 
-def format_alert_sms(sig):
-    ticker = sig["ticker"]
-    action = sig["signal_action"]
-    is_long = "LONG" in action
-    direction = "LONG" if is_long else "SHORT"
-    
-    hold = sig.get("holding_horizon_days") or sig.get("holding_days", 7)
-    wr = float(sig.get("long_win_rate_pct" if is_long else "short_win_rate_pct") or sig.get("win_rate_pct", 0.0))
-    roi = float(sig.get("avg_roi_pct", 0.0))
+def format_bundle_alert_sms(firing_signals):
+    """Bundles all firing signals into a single clean text message."""
+    sections = ["---"]
+    for sig in firing_signals:
+        ticker = sig["ticker"]
+        action = sig["signal_action"]
+        is_long = "LONG" in action
+        direction = "LONG" if is_long else "SHORT"
+        
+        hold = sig.get("holding_horizon_days") or sig.get("holding_days", 7)
+        wr = float(sig.get("long_win_rate_pct" if is_long else "short_win_rate_pct") or sig.get("win_rate_pct", 0.0))
+        roi = float(sig.get("avg_roi_pct", 0.0))
 
-    msg = (
-        f"---\n"
-        f"{ticker} -> {direction} for {hold} sessions\n"
-        f"AVG WR: {wr:.1f}% / AVG Return {roi:+.2f}%\n"
-    )
-    return msg
+        item_str = (
+            f"{ticker} -> {direction} for {hold} sessions\n"
+            f"AVG WR: {wr:.1f}% / AVG Return {roi:+.2f}%"
+        )
+        sections.append(item_str)
+    
+    return "\n\n".join(sections)
 
 def send_tmobile_sms(msg_text):
     if not SMTP_USER or not SMTP_PASS:
@@ -54,7 +58,7 @@ def send_tmobile_sms(msg_text):
 
     try:
         msg = MIMEText(msg_text)
-        # Use Subject as the title so T-Mobile places 'Edge V4 Alert /' naturally at the start
+        # Use Subject as title so T-Mobile gateway places 'Edge V4 Alert /' at the top
         msg["Subject"] = "Edge V4 Alert"
         msg["From"] = SMTP_USER
         msg["To"] = TMOBILE_SMS_GATEWAY
@@ -89,10 +93,10 @@ def run_345_radar_scan():
 
     if firing:
         print("\n>>> ACTIVE SIGNALS FIRING (15m to Market Close) <<<")
-        for sig in firing:
-            alert = format_alert_sms(sig)
-            print(alert)
-            send_tmobile_sms(alert)
+        # Bundle ALL firing stocks into one single SMS text
+        alert_body = format_bundle_alert_sms(firing)
+        print(alert_body)
+        send_tmobile_sms(alert_body)
     else:
         print("\nNo signals reached threshold barrier today.")
         if closest:
