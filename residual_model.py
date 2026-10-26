@@ -646,7 +646,10 @@ class ResidualAnomalyModel:
         market_ticker: str = "QQQ",
         sector_ticker: str = "IGV",
         snapback_threshold: float = 1.8,
-        filter_earnings: bool = True
+        filter_earnings: bool = True,
+        long_threshold: Optional[float] = None,
+        short_threshold: Optional[float] = None,
+        trade_policy: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Runs Anchored Kalman Filter + Cointegrated Spread OU Engine + IID CUSUM Monitor.
@@ -784,17 +787,58 @@ class ResidualAnomalyModel:
         latest_alert = latest.get("cusum_alert", 0)
         latest_alpha = latest.get("alpha_ann_pct", 0.0)
 
-        # Determine Cockpit State & Guidance
-        is_snapback_active = abs(latest_z1) >= snapback_threshold
+        # Asymmetric Barrier & Directional Policy Resolution
+        l_thresh = float(long_threshold) if (long_threshold is not None and float(long_threshold) > 0) else float(snapback_threshold)
+        s_thresh = float(short_threshold) if (short_threshold is not None and float(short_threshold) > 0) else float(snapback_threshold)
+        policy = (trade_policy or "ASYMMETRIC_DUAL").upper()
+        is_long_only = (policy == "LONG_ONLY")
+        is_short_only = (policy == "SHORT_ONLY")
+
+        is_bull_breach = (not is_short_only) and (latest_z1 <= -l_thresh)
+        is_bear_breach = (not is_long_only) and (latest_z1 >= s_thresh)
+        is_snapback_active = is_bull_breach or is_bear_breach
         is_regime_shift_active = (latest_alert != 0) or (abs(latest_streak) >= 4)
 
-        if is_snapback_active and not is_regime_shift_active:
-            direction = "OVERSOLD" if latest_z1 < 0 else "OVERBOUGHT"
-            action_type = "LONG ASSET" if latest_z1 < 0 else "SHORT ASSET"
+        # Check Earnings Blackout on Latest Date
+        is_latest_in_blackout = False
+        blackout_reason = ""
+        if filter_earnings and earnings_dates:
+            import datetime as dt
+            latest_d_str = str(latest.get("date", ""))
+            try:
+                latest_dt = dt.datetime.strptime(latest_d_str, "%Y-%m-%d").date()
+                for ed_str in earnings_dates:
+                    ed_dt = dt.datetime.strptime(ed_str, "%Y-%m-%d").date()
+                    days_diff = (ed_dt - latest_dt).days
+                    if days_diff in (0, -1):
+                        is_latest_in_blackout = True
+                        blackout_reason = f"Earnings report on {ed_str} (blackout active)"
+                        break
+                    elif 0 < days_diff <= 2:
+                        is_latest_in_blackout = True
+                        blackout_reason = f"Upcoming earnings on {ed_str} ({days_diff}d away, runway < 3 sessions)"
+                        break
+            except Exception:
+                pass
+
+        if is_latest_in_blackout and is_snapback_active:
+            direction = "OVERSOLD" if is_bull_breach else "OVERBOUGHT"
+            action_type = "LONG ASSET" if is_bull_breach else "SHORT ASSET"
+            active_barrier = l_thresh if is_bull_breach else s_thresh
+            cockpit_state = "EARNINGS_BLACKOUT"
+            cockpit_badge = "EARNINGS BLACKOUT"
+            action_summary = (
+                f"{asset_ticker} is statistically {direction} (Z = {latest_z1:+.2f}σ reached barrier {active_barrier:.1f}σ), "
+                f"but trading is BLOCKED by Corporate Earnings Safety Protocol ({blackout_reason})."
+            )
+        elif is_snapback_active and not is_regime_shift_active:
+            direction = "OVERSOLD" if is_bull_breach else "OVERBOUGHT"
+            action_type = "LONG ASSET" if is_bull_breach else "SHORT ASSET"
+            active_barrier = l_thresh if is_bull_breach else s_thresh
             cockpit_state = "SNAP_BACK_OPPORTUNITY"
             cockpit_badge = "SNAP-BACK EDGE ACTIVE"
             action_summary = (
-                f"{asset_ticker} is statistically {direction} (Z = {latest_z1:+.2f}sigma). "
+                f"{asset_ticker} is statistically {direction} (Z = {latest_z1:+.2f}σ breached {action_type} barrier {active_barrier:.1f}σ). "
                 f"Cointegrated spread exhibits half-life of {ou_stats['half_life']} sessions with {snapback_profile['win_rate_pct']}% historical reversion. "
                 f"Action: {action_type} for asset mean-reversion."
             )
@@ -831,8 +875,15 @@ class ResidualAnomalyModel:
                 "state": cockpit_state,
                 "badge": cockpit_badge,
                 "summary": action_summary,
-                "is_snapback_candidate": is_snapback_active,
-                "is_regime_shift_candidate": is_regime_shift_active
+                "is_snapback_candidate": is_snapback_active and not is_latest_in_blackout,
+                "is_regime_shift_candidate": is_regime_shift_active,
+                "is_earnings_blackout": is_latest_in_blackout
+            },
+            "asymmetric_params": {
+                "policy": policy,
+                "long_threshold": l_thresh,
+                "short_threshold": s_thresh,
+                "effective_threshold": l_thresh if is_bull_breach else (s_thresh if is_bear_breach else snapback_threshold)
             },
             "ou_snapback": {
                 "threshold": round(float(snapback_threshold), 2),

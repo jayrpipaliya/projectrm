@@ -3535,10 +3535,24 @@
                 }
 
                 const isOpt = window.currentStockOptimalThreshold && Math.abs(effThresh - window.currentStockOptimalThreshold) < 0.05;
+                const asym = data.asymmetric_params || data.optimal_params || {};
+                const lThresh = (typeof asym.long_threshold === 'number' && asym.long_threshold > 0) ? asym.long_threshold : effThresh;
+                const sThresh = (typeof asym.short_threshold === 'number' && asym.short_threshold > 0) ? asym.short_threshold : effThresh;
+                const lHold = asym.long_holding_days || window.currentStockOptimalHorizon || 14;
+                const sHold = asym.short_holding_days || window.currentStockOptimalHorizon || 7;
+                const policy = (asym.trade_policy || asym.policy || 'ASYMMETRIC_DUAL').toUpperCase();
+                const isShortOnly = policy === 'SHORT_ONLY';
+                const isLongOnly = policy === 'LONG_ONLY';
+                const isAsym = (Math.abs(lThresh - sThresh) > 0.05) || isShortOnly || isLongOnly;
+
                 const labelEl = document.getElementById("threshold-display-label");
                 if (labelEl) {
-                    labelEl.innerHTML = `&plusmn;${effThresh.toFixed(1)}&sigma; ${isOpt ? '(Optimal &sigma;*)' : ''}`;
-                    labelEl.style.color = isOpt ? "#38bdf8" : "#ffffff";
+                    if (isAsym) {
+                        labelEl.innerHTML = `<span style="color:#34d399; font-weight:800;">🟢 -${lThresh.toFixed(1)}&sigma; &bull; ${lHold}d</span> / <span style="color:#f87171; font-weight:800;">🔴 +${sThresh.toFixed(1)}&sigma; &bull; ${sHold}d</span> <span style="color:#38bdf8;">(Champion &sigma;*)</span>`;
+                    } else {
+                        labelEl.innerHTML = `&plusmn;${effThresh.toFixed(1)}&sigma; ${isOpt ? '(Optimal &sigma;*)' : ''}`;
+                        labelEl.style.color = isOpt ? "#38bdf8" : "#ffffff";
+                    }
                 }
 
                 // Update Tenor Sweep active config badge to show 3D Global search
@@ -3555,28 +3569,44 @@
                 // 1. Cockpit Header Banner & Badge
                 const badge = document.getElementById("cockpit-status-badge");
                 const summaryBox = document.getElementById("cockpit-summary-box");
-                badge.textContent = c.state;
+                badge.textContent = c.badge || c.state;
                 document.getElementById("cockpit-summary-text").textContent = c.summary;
 
-                if (c.badge === "success") {
+                if (c.state === "EARNINGS_BLACKOUT" || c.is_earnings_blackout) {
+                    badge.className = "tag-pill tag-planned";
+                    badge.style.background = "rgba(245,158,11,0.22)";
+                    badge.style.color = "#fcd34d";
+                    badge.style.border = "1px solid #f59e0b";
+                } else if (c.badge === "SNAP-BACK EDGE ACTIVE" || c.badge === "success" || c.state === "SNAP_BACK_OPPORTUNITY") {
                     badge.className = "tag-pill tag-green";
-                } else if (c.badge === "danger") {
+                    badge.style.background = "";
+                    badge.style.color = "";
+                    badge.style.border = "";
+                } else if (c.badge === "danger" || c.state === "REGIME_SHIFT_ALERT") {
                     badge.className = "tag-pill tag-red";
+                    badge.style.background = "";
+                    badge.style.color = "";
+                    badge.style.border = "";
                 } else if (c.badge === "warning") {
                     badge.className = "tag-pill tag-planned";
+                    badge.style.background = "";
+                    badge.style.color = "";
+                    badge.style.border = "";
                 } else {
                     badge.className = "tag-pill tag-blue";
+                    badge.style.background = "";
+                    badge.style.color = "";
+                    badge.style.border = "";
                 }
 
-                // 2. Multi-Horizon Z-Scores (1 STDV, 5 STDV, 20 STDV)
-                const activeThreshold = ou.threshold || threshold;
-                const isBullishZ1 = m.z_score_1d <= -activeThreshold;
-                const isBearishZ1 = m.z_score_1d >= activeThreshold;
+                // 2. Multi-Horizon Z-Scores (1 STDV, 5 STDV, 20 STDV) with Asymmetric Support
+                const isBullishZ1 = !isShortOnly && (m.z_score_1d <= -lThresh);
+                const isBearishZ1 = !isLongOnly && (m.z_score_1d >= sThresh);
                 const z1Color = isBullishZ1 ? "var(--accent-green)" : (isBearishZ1 ? "var(--accent-red)" : "#fff");
                 document.getElementById("val-z1d").innerHTML = `<span style="color: ${z1Color}; font-weight: 800;">${m.z_score_1d >= 0 ? '+' : ''}${m.z_score_1d.toFixed(2)}&sigma;</span>`;
                 const z1SubText = isBullishZ1
-                    ? `▲ Bullish Snap-Back Zone (Oversold Dip)`
-                    : (isBearishZ1 ? `▼ Bearish Snap-Back Zone (Overbought Spike)` : `Clean Innovation Shock (${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}%)`);
+                    ? `▲ Bullish Snap-Back Zone (Oversold Dip &bull; Breached -${lThresh.toFixed(1)}&sigma; Champion Barrier)`
+                    : (isBearishZ1 ? `▼ Bearish Snap-Back Zone (Overbought Spike &bull; Breached +${sThresh.toFixed(1)}&sigma; Champion Barrier)` : `Clean Innovation Shock (${m.unexplained_residual_pct >= 0 ? '+' : ''}${m.unexplained_residual_pct}%)`);
                 document.getElementById("val-z1d-sub").textContent = z1SubText;
 
                 const z5Val = typeof m.z_score_5d === 'number' ? m.z_score_5d : 0;
@@ -5594,9 +5624,18 @@
                 const moveColor = moveDollar >= 0 ? "#34d399" : "#f23645";
                 const dollarColor = (tr.dollar_pnl || 0) >= 0 ? "#34d399" : "#f23645";
 
-                const outcomeBadge = isWin
-                    ? `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.18); color:#34d399; border:1px solid #089981;">WIN</span>`
-                    : `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:700;">${(tr.loss_cause && tr.loss_cause !== 'UNKNOWN') ? tr.loss_cause : 'REGIME_DRIFT'}</span>`;
+                const isBlackout = tr.loss_cause === 'EARNINGS_BLACKOUT' || tr.is_blackout;
+                const isActive = tr.is_active || tr.loss_cause === 'ACTIVE_OPEN';
+                let outcomeBadge = '';
+                if (isBlackout) {
+                    outcomeBadge = `<span class="tag-pill" style="font-size:0.68rem; font-weight:800; background:rgba(245,158,11,0.22); color:#fcd34d; border:1px solid #f59e0b;" title="Execution safely blocked by Corporate Earnings Blackout Rule">EARNINGS BLACKOUT</span>`;
+                } else if (isActive) {
+                    outcomeBadge = `<span class="tag-pill" style="font-size:0.68rem; font-weight:800; background:rgba(56,189,248,0.22); color:#38bdf8; border:1px solid #38bdf8; animation: pulse 2s infinite;">ACTIVE IN-FLIGHT</span>`;
+                } else if (isWin) {
+                    outcomeBadge = `<span class="tag-pill tag-green" style="font-size:0.68rem; font-weight:800; background:rgba(8,153,129,0.18); color:#34d399; border:1px solid #089981;">WIN</span>`;
+                } else {
+                    outcomeBadge = `<span class="tag-pill tag-red" style="font-size:0.68rem; font-weight:700;">${(tr.loss_cause && tr.loss_cause !== 'UNKNOWN') ? tr.loss_cause : 'REGIME_DRIFT'}</span>`;
+                }
 
                 const gapStr = tr.gap_since_prior_days != null
                     ? `${tr.gap_since_prior_days}d gap`

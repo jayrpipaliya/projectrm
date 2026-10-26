@@ -253,6 +253,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             opt_params = warehouse.get_optimal_params(asset) or {}
 
             # Prioritize 3D Champion Triplet from Gold Ledger
+            long_thresh = None
+            short_thresh = None
+            trade_policy = None
             if champ_triplet:
                 opt_params["optimal_threshold"] = float(champ_triplet.get("threshold", opt_params.get("optimal_threshold", 1.8)))
                 opt_params["optimal_horizon"] = int(champ_triplet.get("holding_days", opt_params.get("optimal_horizon", 5)))
@@ -260,6 +263,14 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 opt_params["profit_factor"] = float(champ_triplet.get("profit_factor", 0.0))
                 opt_params["win_rate_pct"] = float(champ_triplet.get("win_rate_pct", 0.0))
                 opt_params["avg_roi_pct"] = float(champ_triplet.get("avg_roi_pct", 0.0))
+                opt_params["long_threshold"] = float(champ_triplet.get("long_threshold") or champ_triplet.get("threshold", 1.8))
+                opt_params["short_threshold"] = float(champ_triplet.get("short_threshold") or champ_triplet.get("threshold", 1.8))
+                opt_params["trade_policy"] = champ_triplet.get("trade_policy", "ASYMMETRIC_DUAL")
+                opt_params["long_holding_days"] = champ_triplet.get("long_holding_days")
+                opt_params["short_holding_days"] = champ_triplet.get("short_holding_days")
+                long_thresh = opt_params["long_threshold"]
+                short_thresh = opt_params["short_threshold"]
+                trade_policy = opt_params["trade_policy"]
 
             use_optimal = query.get("use_optimal", ["false"])[0].lower() in ("true", "1", "yes")
             if use_optimal and opt_params and "optimal_threshold" in opt_params:
@@ -280,9 +291,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 market_ticker=market,
                 sector_ticker=sector,
                 snapback_threshold=threshold,
-                filter_earnings=filter_earnings
+                filter_earnings=filter_earnings,
+                long_threshold=long_thresh,
+                short_threshold=short_thresh,
+                trade_policy=trade_policy
             )
             res["optimal_params"] = opt_params
+            res["champion"] = champ_triplet
             res["threshold_used"] = threshold
             self._send_json(res)
 
@@ -1248,7 +1263,24 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         l_sig = float(existing.get("long_threshold") or existing.get("threshold", 2.0))
                         s_sig = float(existing.get("short_threshold") or existing.get("threshold", 2.0))
                         
-                        if policy != "SHORT_ONLY" and latest_z <= -l_sig:
+                        # Check Corporate Earnings Blackout
+                        is_blackout = False
+                        eval_dt = dt.datetime.now().date()
+                        if edates:
+                            for ed_str in edates:
+                                try:
+                                    ed_obj = dt.datetime.strptime(ed_str, "%Y-%m-%d").date()
+                                    days_ahead = (ed_obj - eval_dt).days
+                                    if -1 <= days_ahead <= 2:
+                                        is_blackout = True
+                                        break
+                                except Exception:
+                                    pass
+
+                        if is_blackout:
+                            act = "EARNINGS_BLACKOUT"
+                            breached = False
+                        elif policy != "SHORT_ONLY" and latest_z <= -l_sig:
                             act = "LONG ASSET"
                             breached = True
                         elif policy != "LONG_ONLY" and latest_z >= s_sig:
@@ -1520,12 +1552,12 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 if erecs and eval_dt:
                     for er in erecs:
                         try:
-                            ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
-                            days_ahead = (ed_obj - eval_dt).days
-                            if -1 <= days_ahead <= (max_hold + 2):
-                                if days_ahead <= 2:
-                                    is_blackout = True
-                                    break
+                              ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                              days_ahead = (ed_obj - eval_dt).days
+                              if -1 <= days_ahead <= (max_hold + 2):
+                                  if days_ahead <= 2:
+                                      is_blackout = True
+                                      break
                         except Exception:
                             pass
 
@@ -1978,13 +2010,29 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             sector = payload.get("sector", "IGV").upper()
             threshold = float(payload.get("threshold", 1.8))
             filter_earnings = bool(payload.get("filter_earnings", True))
+            champ_triplet = warehouse.get_champion_triplet(asset)
+            l_thresh = float(champ_triplet.get("long_threshold")) if champ_triplet and champ_triplet.get("long_threshold") else None
+            s_thresh = float(champ_triplet.get("short_threshold")) if champ_triplet and champ_triplet.get("short_threshold") else None
+            policy = champ_triplet.get("trade_policy") if champ_triplet else None
             res = anomaly_model.analyze(
                 asset_ticker=asset,
                 market_ticker=market,
                 sector_ticker=sector,
                 snapback_threshold=threshold,
-                filter_earnings=filter_earnings
+                filter_earnings=filter_earnings,
+                long_threshold=l_thresh,
+                short_threshold=s_thresh,
+                trade_policy=policy
             )
+            if champ_triplet:
+                res["champion"] = champ_triplet
+                res["optimal_params"] = {
+                    "long_threshold": l_thresh,
+                    "short_threshold": s_thresh,
+                    "trade_policy": policy,
+                    "optimal_threshold": float(champ_triplet.get("threshold", threshold)),
+                    "optimal_horizon": int(champ_triplet.get("holding_days", 14))
+                }
             self._send_json(res)
 
         elif parsed.path == "/api/test/endpoint":

@@ -266,6 +266,32 @@ def main():
             })
         warehouse.save_champion_trades(ticker, gold_trades)
 
+        # Capture Recent Earnings Blackout Triggers into Gold Trades History
+        if best_long and 'full_long_eval' in locals():
+            ex_list = full_long_eval.get("earnings_filter", {}).get("excluded_trades", [])
+            date_to_px = {h["date"]: float(h["asset_close"]) for h in hist}
+            for ex in ex_list:
+                px = date_to_px.get(ex["date"], 0.0)
+                gold_trades.append({
+                    "ticker": ticker,
+                    "trade_date": ex["date"],
+                    "action": "LONG ASSET",
+                    "signal_z": ex.get("signal_z", 0.0),
+                    "underlying_entry": px,
+                    "strike": px,
+                    "contract_dte": 0,
+                    "holding_sessions": 0,
+                    "entry_option_price": px,
+                    "exit_option_price": px,
+                    "pnl_pct": 0.0,
+                    "dollar_pnl": 0.0,
+                    "is_win": 0,
+                    "loss_cause": "EARNINGS_BLACKOUT",
+                    "mfe_pct": 0.0,
+                    "mae_pct": 0.0
+                })
+            warehouse.save_champion_trades(ticker, gold_trades)
+
         # Update Live Trigger Signals using Asymmetric Barriers
         latest = hist[-1]
         latest_z = float(latest["z_1d"])
@@ -274,7 +300,25 @@ def main():
         l_thresh = best_long["sigma"] if (best_long and policy != "SHORT_ONLY") else 999.0
         s_thresh = best_short["sigma"] if (best_short and policy != "LONG_ONLY") else 999.0
 
-        if policy != "SHORT_ONLY" and latest_z <= -l_thresh:
+        # Check Corporate Earnings Blackout
+        is_blackout = False
+        import datetime as dt
+        eval_dt = dt.datetime.now().date()
+        if edates:
+            for ed_str in edates:
+                try:
+                    ed_obj = dt.datetime.strptime(ed_str, "%Y-%m-%d").date()
+                    days_ahead = (ed_obj - eval_dt).days
+                    if -1 <= days_ahead <= 2:
+                        is_blackout = True
+                        break
+                except Exception:
+                    pass
+
+        if is_blackout:
+            act = "EARNINGS_BLACKOUT"
+            is_breached = False
+        elif policy != "SHORT_ONLY" and latest_z <= -l_thresh:
             act = "LONG ASSET"
             is_breached = True
         elif policy != "LONG_ONLY" and latest_z >= s_thresh:
