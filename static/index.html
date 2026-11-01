@@ -5042,13 +5042,19 @@
                 btn.disabled = true;
                 btn.innerHTML = `<span>⏳ Syncing Benchmarks...</span>`;
             }
-            showNotificationToast("Syncing all 12 market and sector benchmarks via high-speed feed...", "info");
+            showNotificationToast("Syncing all market and sector benchmarks via high-speed feed...", "info");
 
             try {
                 const res = await fetch("/api/ledger/sync-benchmarks");
                 const data = await res.json();
                 if (data.status === "SUCCESS") {
-                    showNotificationToast(`✓ Successfully updated ${data.synced_count} benchmarks!`, "success");
+                    showNotificationToast(data.message || `✓ Successfully updated ${data.synced_count} benchmarks!`, "success");
+                    if (typeof fetchGoldLedger === "function") {
+                        await fetchGoldLedger();
+                    }
+                    if (typeof loadWarehouseStats === "function") {
+                        await loadWarehouseStats();
+                    }
                 } else {
                     showNotificationToast(`Benchmark sync warning: ${data.message || data.error}`, "warning");
                 }
@@ -5057,7 +5063,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || ` Update Benchmarks`;
+                    btn.innerHTML = origText || ` Sharpen Benchmarks`;
                 }
             }
         }
@@ -5075,7 +5081,13 @@
                 const res = await fetch("/api/ledger/sync-stocks");
                 const data = await res.json();
                 if (data.status === "SUCCESS") {
-                    showNotificationToast(`✓ Successfully updated ${data.synced_count} watchlist stocks!`, "success");
+                    showNotificationToast(data.message || `✓ Successfully updated ${data.synced_count} watchlist stocks!`, "success");
+                    if (typeof fetchGoldLedger === "function") {
+                        await fetchGoldLedger();
+                    }
+                    if (typeof loadWarehouseStats === "function") {
+                        await loadWarehouseStats();
+                    }
                 } else {
                     showNotificationToast(`Stocks sync warning: ${data.message || data.error}`, "warning");
                 }
@@ -5084,7 +5096,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText || ` Update Watchlist Stocks`;
+                    btn.innerHTML = origText || ` Sharpen Watchlist Stocks`;
                 }
             }
         }

@@ -48,6 +48,85 @@ def resolve_pair_for_ticker(ticker: str, market_param: str = "", sector_param: s
                 return mkt if mkt else p["market"], sec if sec else p["sector"]
     return mkt if mkt else "QQQ", sec if sec else "SMH"
 
+def recompute_and_update_all_champion_signals(target_tickers=None):
+    """
+    Evaluates Anchored Kalman Filter + Cointegrated Spread OU engine across
+    core watchlist champions and writes fresh live Z-scores, close prices,
+    and trigger states directly into champion_gold_ledger on cue.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    import datetime as dt
+
+    rows = warehouse.get_all_champion_triplets()
+    if target_tickers:
+        target_set = {t.upper().strip() for t in target_tickers}
+        rows = [r for r in rows if r["ticker"].upper() in target_set]
+
+    def _worker(row):
+        t = row["ticker"]
+        m = row["market"]
+        s = row["sector"]
+        policy = str(row.get("trade_policy") or "ASYMMETRIC_DUAL")
+        thresh = float(row.get("threshold", 2.0))
+        l_thresh = float(row.get("long_threshold") or thresh)
+        s_thresh = float(row.get("short_threshold") or thresh)
+        is_long_only = (policy == "LONG_ONLY")
+        is_short_only = (policy == "SHORT_ONLY")
+
+        try:
+            analysis = anomaly_model.analyze(asset_ticker=t, market_ticker=m, sector_ticker=s)
+            if analysis.get("status") != "SUCCESS":
+                return None
+            latest = analysis.get("latest_metrics", {})
+            z_1d = float(latest.get("z_score_1d", 0.0))
+            close_px = float(latest.get("asset_close", 0.0))
+
+            # Corporate Earnings Blackout check
+            erecs = warehouse.get_earnings_dates(t)
+            is_blackout = False
+            eval_dt = dt.datetime.now().date()
+            if erecs:
+                for er in erecs:
+                    try:
+                        ed_obj = dt.datetime.strptime(er["earnings_date"], "%Y-%m-%d").date()
+                        days_ahead = (ed_obj - eval_dt).days
+                        if -1 <= days_ahead <= 2:
+                            is_blackout = True
+                            break
+                    except Exception:
+                        pass
+
+            if is_blackout:
+                act = "EARNINGS_BLACKOUT"
+                breached = False
+            elif not is_short_only and z_1d <= -l_thresh:
+                act = "LONG ASSET"
+                breached = True
+            elif not is_long_only and z_1d >= s_thresh:
+                act = "SHORT ASSET"
+                breached = True
+            else:
+                act = "WAITING FOR BARRIER"
+                breached = False
+
+            warehouse.update_champion_live_signal(t, z_1d, close_px, act, breached)
+            return {
+                "ticker": t,
+                "current_z": round(z_1d, 2),
+                "latest_close": round(close_px, 2),
+                "signal_action": act,
+                "is_active": breached
+            }
+        except Exception as e:
+            print(f"Error recomputing signal for {t}: {e}")
+            return None
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(_worker, rows))
+
+    return [r for r in results if r is not None]
+
+
 
 class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -1031,6 +1110,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 z_1d = float(row.get("current_z")) if (row.get("current_z") is not None and not refresh_live) else None
                 close_px = float(row.get("latest_close")) if (row.get("latest_close") is not None and not refresh_live) else None
 
+                # Ensure close_px uses latest warehouse bar price if available
+                hist = warehouse.get_stock_history(t)
+                if hist:
+                    latest_bar_close = float(hist[-1].get("close", 0.0) or 0.0)
+                    if latest_bar_close > 0:
+                        close_px = latest_bar_close
+
                 if z_1d is None or close_px is None:
                     try:
                         analysis = anomaly_model.analyze(asset_ticker=t, market_ticker=m, sector_ticker=s)
@@ -1307,46 +1393,40 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             from universe import get_all_benchmarks
             benchmarks = get_all_benchmarks()
             yf_loader = YFinanceLoader(warehouse)
-            synced = []
-            failed = []
-            for b in benchmarks:
-                try:
-                    res = yf_loader.fetch_and_store_ticker(b, period="5d")
-                    if res.get("status") == "SUCCESS":
-                        synced.append(b)
-                    else:
-                        failed.append(b)
-                except Exception as e:
-                    failed.append(b)
+            batch_res = yf_loader.fetch_and_store_tickers(benchmarks, period="1mo")
+            synced = batch_res.get("synced", [])
+            failed = batch_res.get("failed", [])
+
+            # Re-evaluate watchlist stocks on cue with freshly updated benchmark factors
+            refreshed = recompute_and_update_all_champion_signals()
+
             self._send_json({
                 "status": "SUCCESS",
                 "synced_count": len(synced),
+                "refreshed_count": len(refreshed),
                 "synced": synced,
                 "failed": failed,
-                "message": f"Successfully updated {len(synced)}/{len(benchmarks)} benchmarks via high-speed feed."
+                "message": f"Successfully updated {len(synced)}/{len(benchmarks)} benchmarks and sharpened {len(refreshed)} watchlist stocks on cue."
             })
 
         elif path == "/api/ledger/sync-stocks":
             from universe import get_all_tickers
             stocks = get_all_tickers()
             yf_loader = YFinanceLoader(warehouse)
-            synced = []
-            failed = []
-            for t in stocks:
-                try:
-                    res = yf_loader.fetch_and_store_ticker(t, period="5d")
-                    if res.get("status") == "SUCCESS":
-                        synced.append(t)
-                    else:
-                        failed.append(t)
-                except Exception as e:
-                    failed.append(t)
+            batch_res = yf_loader.fetch_and_store_tickers(stocks, period="1mo")
+            synced = batch_res.get("synced", [])
+            failed = batch_res.get("failed", [])
+
+            # Immediately sharpen and calculate live Kalman Z-scores & signals on cue
+            refreshed = recompute_and_update_all_champion_signals()
+
             self._send_json({
                 "status": "SUCCESS",
                 "synced_count": len(synced),
+                "refreshed_count": len(refreshed),
                 "synced": synced,
                 "failed": failed,
-                "message": f"Successfully updated {len(synced)}/{len(stocks)} watchlist stocks via high-speed feed."
+                "message": f"Successfully updated {len(synced)}/{len(stocks)} watchlist stocks and sharpened live Z-scores on cue."
             })
 
         elif path == "/api/warehouse/sync-earnings":
@@ -1389,6 +1469,11 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
                 z_1d = float(row.get("current_z", 0.0) or 0.0)
                 close_px = float(row.get("latest_close", 0.0) or 0.0)
+                hist = warehouse.get_stock_history(t)
+                if hist:
+                    latest_bar_close = float(hist[-1].get("close", 0.0) or 0.0)
+                    if latest_bar_close > 0:
+                        close_px = latest_bar_close
                 tenor = int(row.get("contract_dte", 21))
                 l_hold = int(row.get("long_holding_days") or row.get("holding_days", 14))
                 s_hold = int(row.get("short_holding_days") or row.get("holding_days", 7))

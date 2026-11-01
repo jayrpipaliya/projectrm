@@ -63,8 +63,107 @@ class KalmanBetaDecomposition:
         if self.k >= 1:
             self.Phi_diag[0] = 0.95  # Alpha decays back to zero slightly faster
 
+    def _run_filter_scalar_3d(self, q0: float, q1: float, q2: float, r: float, T_sub: Optional[int] = None):
+        """High-speed scalar execution of the 3D Anchored Kalman Filter (Intercept, Market, Sector)."""
+        T = self.T if T_sub is None else min(self.T, T_sub)
+        start_idx = self.T - T
+
+        y_arr = self.y[start_idx:]
+        x0_arr = self.X[start_idx:, 0]
+        x1_arr = self.X[start_idx:, 1]
+        x2_arr = self.X[start_idx:, 2]
+
+        phi0 = float(self.Phi_diag[0]) if self.k >= 1 else 0.95
+        phi1 = float(self.Phi_diag[1]) if self.k >= 2 else 0.985
+        phi2 = float(self.Phi_diag[2]) if self.k >= 3 else 0.985
+
+        bp0 = float(self.beta_priors[0]) if self.k >= 1 else 0.0
+        bp1 = float(self.beta_priors[1]) if self.k >= 2 else 1.0
+        bp2 = float(self.beta_priors[2]) if self.k >= 3 else 0.5
+
+        b0, b1, b2 = bp0, bp1, bp2
+        p00, p01, p02 = 0.1, 0.0, 0.0
+        p10, p11, p12 = 0.0, 0.1, 0.0
+        p20, p21, p22 = 0.0, 0.0, 0.1
+
+        residuals = np.zeros(T)
+        innov_var = np.zeros(T)
+        y_preds = np.zeros(T)
+        beta_hist = np.zeros((T, 3))
+        neg_log_likelihood = 0.0
+
+        for t in range(T):
+            x0 = x0_arr[t]
+            x1 = x1_arr[t]
+            x2 = x2_arr[t]
+
+            pred_b0 = bp0 + phi0 * (b0 - bp0)
+            pred_b1 = bp1 + phi1 * (b1 - bp1)
+            pred_b2 = bp2 + phi2 * (b2 - bp2)
+
+            pp00 = phi0 * phi0 * p00 + q0
+            pp01 = phi0 * phi1 * p01
+            pp02 = phi0 * phi2 * p02
+            pp10 = pp01
+            pp11 = phi1 * phi1 * p11 + q1
+            pp12 = phi1 * phi2 * p12
+            pp20 = pp02
+            pp21 = pp12
+            pp22 = phi2 * phi2 * p22 + q2
+
+            y_pred = x0 * pred_b0 + x1 * pred_b1 + x2 * pred_b2
+            y_preds[t] = y_pred
+            e_t = y_arr[t] - y_pred
+            residuals[t] = e_t
+
+            px0 = pp00 * x0 + pp01 * x1 + pp02 * x2
+            px1 = pp10 * x0 + pp11 * x1 + pp12 * x2
+            px2 = pp20 * x0 + pp21 * x1 + pp22 * x2
+
+            s_t = x0 * px0 + x1 * px1 + x2 * px2 + r
+            innov_var[t] = s_t
+            inv_s = 1.0 / s_t if s_t > 1e-12 else 1e12
+
+            k0 = px0 * inv_s
+            k1 = px1 * inv_s
+            k2 = px2 * inv_s
+
+            b0 = pred_b0 + k0 * e_t
+            b1 = pred_b1 + k1 * e_t
+            b2 = pred_b2 + k2 * e_t
+
+            # Clamping
+            if b0 < -0.05: b0 = -0.05
+            elif b0 > 0.05: b0 = 0.05
+            if b1 < 0.1: b1 = 0.1
+            elif b1 > 2.5: b1 = 2.5
+            if b2 < -1.5: b2 = -1.5
+            elif b2 > 2.5: b2 = 2.5
+
+            p00 = pp00 - k0 * px0
+            p01 = pp01 - k0 * px1
+            p02 = pp02 - k0 * px2
+            p10 = pp10 - k1 * px0
+            p11 = pp11 - k1 * px1
+            p12 = pp12 - k1 * px2
+            p20 = pp20 - k2 * px0
+            p21 = pp21 - k2 * px1
+            p22 = pp22 - k2 * px2
+
+            beta_hist[t, 0] = b0
+            beta_hist[t, 1] = b1
+            beta_hist[t, 2] = b2
+
+            if s_t > 1e-12:
+                neg_log_likelihood += 0.5 * (math.log(2.0 * math.pi * s_t) + (e_t * e_t) * inv_s)
+
+        return neg_log_likelihood, beta_hist, residuals, innov_var, y_preds
+
     def _run_filter(self, Q_diag: np.ndarray, R_scalar: float):
         """Runs the forward Kalman Filter with anchored mean-reverting state space."""
+        if self.k == 3:
+            return self._run_filter_scalar_3d(float(Q_diag[0]), float(Q_diag[1]), float(Q_diag[2]), float(R_scalar))
+
         Q = np.diag(Q_diag)
         R = float(R_scalar)
         Phi = np.diag(self.Phi_diag)
@@ -82,7 +181,6 @@ class KalmanBetaDecomposition:
             X_t = self.X[t, :].reshape(1, -1)
 
             # Predict Step with Anchored Mean-Reverting Transition (Vasicek State-Space)
-            # Pulls betas toward economic priors, preventing runaway random-walk drift
             beta_pred = self.beta_priors + Phi @ (beta_t - self.beta_priors)
             P_pred = Phi @ P @ Phi.T + Q
 
@@ -124,19 +222,35 @@ class KalmanBetaDecomposition:
         init_params = np.append(np.repeat(1e-5, self.k), sample_var * 0.5)
         bounds = [(1e-7, 1e-2)] * self.k + [(1e-6, sample_var * 3.0)]
 
-        def obj_func(params):
-            neg_ll, _, _, _, _ = self._run_filter(params[:self.k], params[-1])
-            return neg_ll
+        if self.k == 3:
+            sub_len = min(self.T, 500)
+            def obj_func(params):
+                neg_ll, _, _, _, _ = self._run_filter_scalar_3d(params[0], params[1], params[2], params[3], T_sub=sub_len)
+                return neg_ll
 
-        try:
-            res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 60})
-            opt_Q, opt_R = res.x[:self.k], res.x[-1]
-        except Exception:
-            opt_Q = np.repeat(1e-5, self.k)
-            opt_R = sample_var * 0.5
+            try:
+                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 20})
+                opt_Q, opt_R = res.x[:3], res.x[3]
+            except Exception:
+                opt_Q = np.repeat(1e-5, 3)
+                opt_R = sample_var * 0.5
 
-        _, self.beta_history, self.residuals, self.innov_variances, self.y_preds = \
-            self._run_filter(opt_Q, opt_R)
+            _, self.beta_history, self.residuals, self.innov_variances, self.y_preds = \
+                self._run_filter_scalar_3d(opt_Q[0], opt_Q[1], opt_Q[2], opt_R)
+        else:
+            def obj_func(params):
+                neg_ll, _, _, _, _ = self._run_filter(params[:self.k], params[-1])
+                return neg_ll
+
+            try:
+                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 30})
+                opt_Q, opt_R = res.x[:self.k], res.x[-1]
+            except Exception:
+                opt_Q = np.repeat(1e-5, self.k)
+                opt_R = sample_var * 0.5
+
+            _, self.beta_history, self.residuals, self.innov_variances, self.y_preds = \
+                self._run_filter(opt_Q, opt_R)
 
         self.fitted_Q = opt_Q
         self.fitted_R = opt_R
