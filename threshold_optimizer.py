@@ -76,8 +76,8 @@ class ThresholdOptimizer:
             bear_curve = {c["hold_days"]: c for c in bt["bearish_recommendation"].get("horizon_curve", [])}
 
             for h_idx, h in enumerate(self.horizons):
-                h_bull = bull_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0})
-                h_bear = bear_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0})
+                h_bull = bull_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0, "sharpe_ratio": 0.0})
+                h_bear = bear_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0, "sharpe_ratio": 0.0})
 
                 bull_trades = bt["bullish_recommendation"].get("total_trades", 0)
                 bear_trades = bt["bearish_recommendation"].get("total_trades", 0)
@@ -87,17 +87,23 @@ class ThresholdOptimizer:
                     comb_wr = (h_bull["win_rate_pct"] * bull_trades + h_bear["win_rate_pct"] * bear_trades) / tot_trades
                     comb_ret = (h_bull["avg_roi_pct"] * bull_trades + h_bear["avg_roi_pct"] * bear_trades) / tot_trades
                     comb_pf = max(h_bull.get("profit_factor", 0.0), h_bear.get("profit_factor", 0.0))
+                    comb_sharpe = (h_bull.get("sharpe_ratio", 0.0) * bull_trades + h_bear.get("sharpe_ratio", 0.0) * bear_trades) / tot_trades
                 else:
                     comb_wr = 0.0
                     comb_ret = 0.0
                     comb_pf = 0.0
+                    comb_sharpe = 0.0
 
-                # Disqualify small-sample overfitting spikes
+                # Pitfall 4.1: Risk-adjusted utility function with downside penalty
                 if tot_trades < self.min_trades:
-                    utility = 0.0
+                    utility = -50.0
                 else:
-                    # Risk-adjusted utility: win rate * positive return * sample confidence
-                    utility = (comb_wr / 100.0) * max(0.0, comb_ret) * np.sqrt(min(tot_trades, 40))
+                    # Utility incorporates expected return, win rate confidence, profit factor, and penalizes downside variance
+                    wr_factor = comb_wr / 50.0
+                    sample_factor = np.sqrt(min(tot_trades, 40))
+                    pf_factor = min(3.0, max(0.5, comb_pf))
+                    risk_penalty = 1.0 + max(0.0, -comb_sharpe)
+                    utility = (comb_ret * wr_factor * pf_factor * sample_factor) / risk_penalty
 
                 raw_utility[s_idx, h_idx] = utility
                 cell_details[(s_idx, h_idx)] = {
@@ -110,7 +116,7 @@ class ThresholdOptimizer:
                     "raw_utility": round(float(utility), 3)
                 }
 
-        # 3x3 Plateau Smoothing & Regularization
+        # 3x3 Plateau Smoothing & Regularization (Pitfall 4.2)
         plateau_scores = np.zeros((n_thresh, n_horiz))
         stability_ratios = np.zeros((n_thresh, n_horiz))
 
@@ -124,11 +130,13 @@ class ThresholdOptimizer:
                 mean_neigh = float(np.mean(neigh))
                 std_neigh = float(np.std(neigh)) if len(neigh) > 1 else 0.0
 
-                # Regularization: penalize high neighborhood variance (isolated peaks)
-                penalized_score = max(0.0, mean_neigh - 0.25 * std_neigh)
+                # Normalize boundary cells so fewer neighbors does not artificially inflate plateau score
+                n_cells = neigh.size
+                boundary_weight = np.sqrt(n_cells / 9.0)
+                penalized_score = mean_neigh - 0.25 * std_neigh * (1.0 / max(0.4, boundary_weight))
                 plateau_scores[s, h] = penalized_score
 
-                if raw_utility[s, h] > 0:
+                if raw_utility[s, h] > 0 and penalized_score > 0:
                     stability_ratios[s, h] = penalized_score / raw_utility[s, h]
                 else:
                     stability_ratios[s, h] = 0.0
@@ -222,7 +230,20 @@ class ThresholdOptimizer:
         # Mathematical Expectancy: E[R] = (WR * Avg Win) - ((1 - WR) * Avg Loss)
         p_win = wr / 100.0
         expectancy = round((p_win * avg_win) - ((1.0 - p_win) * avg_loss), 2)
-        trades_per_yr = round(n_trades / 2.7, 1) if n_trades else 0.0
+        # Dynamically compute span in years from dataset dates
+        span_years = 2.7
+        if dates and len(dates) >= 2:
+            try:
+                from datetime import datetime
+                d_start = datetime.strptime(dates[0], "%Y-%m-%d")
+                d_end = datetime.strptime(dates[-1], "%Y-%m-%d")
+                span_years = max(0.1, (d_end - d_start).days / 365.25)
+            except Exception:
+                span_years = max(0.1, len(dates) / 252.0)
+        elif dates and len(dates) == 1:
+            span_years = 1.0 / 252.0
+
+        trades_per_yr = round(n_trades / span_years, 1) if n_trades else 0.0
 
         # Loss forensics
         losses = [t for t in trades if not t["win_rec"]]
@@ -329,6 +350,9 @@ class ThresholdOptimizer:
                     "ACCEPTABLE" if (efficiency_ratio >= 0.55 and oos_win >= 45.0) else "DEGRADED"
                 )
             }
+            # Pitfall 4.3: Optimal champion recommendation MUST be the walk-forward validated champion!
+            optimal_thresh = is_opt_thresh
+            optimal_horizon = is_opt_horizon
         else:
             walk_forward_result = {
                 "validation_status": "UNVALIDATED_INSUFFICIENT_HISTORY",
@@ -369,10 +393,10 @@ class ThresholdOptimizer:
             "optimal_recommendation": {
                 "threshold": optimal_thresh,
                 "horizon_days": optimal_horizon,
-                "win_rate_pct": best_cell["win_rate_pct"],
-                "avg_roi_pct": best_cell["avg_roi_pct"],
-                "profit_factor": best_cell["profit_factor"],
-                "trades_count": best_cell["trades_count"],
+                "win_rate_pct": full_param_trades["win_rate_pct"],
+                "avg_roi_pct": full_param_trades["avg_roi_pct"],
+                "profit_factor": full_param_trades["profit_factor"],
+                "trades_count": full_param_trades["trades_count"],
                 "total_dollar": full_param_trades["total_dollar"],
                 "plateau_score": round(float(full_eval["plateau_scores"][full_eval["best_s"], full_eval["best_h"]]), 3),
                 "stability_ratio": round(float(full_eval["stability_ratios"][full_eval["best_s"], full_eval["best_h"]]), 2)

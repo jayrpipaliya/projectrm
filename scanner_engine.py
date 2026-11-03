@@ -132,6 +132,7 @@ class UniverseScannerEngine:
                 opt_bt = analysis.get("option_backtest", {})
                 ef = opt_bt.get("earnings_filter", {})
 
+                z_spread = float(m.get("z_spread", m.get("z_score_spread", m.get("z_score_1d", 0.0))))
                 z1 = float(m.get("z_score_1d", 0.0))
                 z5 = float(m.get("z_score_5d", 0.0)) if isinstance(m.get("z_score_5d"), (int, float)) else 0.0
                 z20 = float(m.get("z_score_20d", 0.0)) if isinstance(m.get("z_score_20d"), (int, float)) else 0.0
@@ -148,6 +149,7 @@ class UniverseScannerEngine:
                 is_earnings_blackout = False
                 is_truncated_hold = False
                 earnings_date_ref = ""
+                hold_sessions = opt_horizon
                 effective_hold_sessions = hold_sessions
                 cached_earnings = self.warehouse.get_earnings_dates(ticker)
                 if cached_earnings:
@@ -180,10 +182,10 @@ class UniverseScannerEngine:
                             is_earnings_blackout = True
                             earnings_date_ref = last_date
 
-                # Determine Signal & Action based on stock's barrier (optimal sigma*)
-                is_bullish = z1 <= -barrier
-                is_bearish = z1 >= barrier
-                distance_to_barrier = round(abs(z1) - barrier, 2)
+                # Determine Signal & Action based on stock's barrier (optimal sigma*) on mean-reverting spread
+                is_bullish = z_spread <= -barrier
+                is_bearish = z_spread >= barrier
+                distance_to_barrier = round(abs(z_spread) - barrier, 2)
                 signal_action = "NORMAL"
                 action_badge = "NORMAL"
                 status = "OK"
@@ -212,12 +214,12 @@ class UniverseScannerEngine:
                 bear_rec = opt_bt.get("bearish_recommendation", {})
 
                 if is_bullish:
-                    rec_dte = opt_horizon if is_optimal_active else bull_rec.get("recommended_dte", 7)
+                    rec_dte = effective_hold_sessions if is_truncated_hold else (opt_horizon if is_optimal_active else bull_rec.get("recommended_dte", 7))
                     rec_win = float(opt_params["win_rate_pct"]) if (is_optimal_active and opt_params) else bull_rec.get("win_rate_pct", 0.0)
                     rec_roi = float(opt_params["avg_roi_pct"]) if (is_optimal_active and opt_params) else bull_rec.get("avg_roi_pct", 0.0)
                     rec_trades = int(opt_params["trades_count"]) if (is_optimal_active and opt_params) else bull_rec.get("total_trades", 0)
                 elif is_bearish:
-                    rec_dte = opt_horizon if is_optimal_active else bear_rec.get("recommended_dte", 7)
+                    rec_dte = effective_hold_sessions if is_truncated_hold else (opt_horizon if is_optimal_active else bear_rec.get("recommended_dte", 7))
                     rec_win = float(opt_params["win_rate_pct"]) if (is_optimal_active and opt_params) else bear_rec.get("win_rate_pct", 0.0)
                     rec_roi = float(opt_params["avg_roi_pct"]) if (is_optimal_active and opt_params) else bear_rec.get("avg_roi_pct", 0.0)
                     rec_trades = int(opt_params["trades_count"]) if (is_optimal_active and opt_params) else bear_rec.get("total_trades", 0)
@@ -239,7 +241,7 @@ class UniverseScannerEngine:
                 history_list = analysis.get("history", [])
                 if history_list and len(history_list) >= 20:
                     try:
-                        z_series = np.array([float(h.get("z_1d", 0.0)) for h in history_list])
+                        z_series = np.array([float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history_list])
                         smf = SemiMarkovFitter(threshold=barrier)
                         smm_result = smf.fit(z_series)
                         smm_regime   = smm_result.get("current_state_name", "NEUTRAL")
@@ -253,11 +255,11 @@ class UniverseScannerEngine:
                         pass  # SMM failure is non-fatal — fall back to defaults
 
                 # ── SMM-Weighted Opportunity Ranking Score ─────────────────
-                # Base: |Z| magnitude (0–40ish)
-                abs_z = abs(z1)
+                # Base: |Z| magnitude on cumulative spread
+                abs_z = abs(z_spread)
                 rank_score = abs_z * 10.0
 
-                if signal_action in ("BUY_CALL", "BUY_PUT"):
+                if signal_action in ("LONG_ASSET", "SHORT_ASSET", "BUY_CALL", "BUY_PUT"):
                     rank_score += 50.0                       # Active signal tier
                     rank_score += (rec_win * 0.2)            # Calibrated win rate boost
                     rank_score += (smm_exit_3d * 30.0)       # SMM boost: imminent regime exit = snap-back confirmation
@@ -283,6 +285,8 @@ class UniverseScannerEngine:
                     "close": asset_close,
                     "daily_return_pct": asset_ret,
                     "residual_pct": residual_pct,
+                    "z_spread": round(z_spread, 2),
+                    "current_z": round(z_spread, 2),
                     "z_1d": z1,
                     "z_5d": z5,
                     "z_20d": z20,
@@ -297,6 +301,7 @@ class UniverseScannerEngine:
                     "oos_win_rate_pct": float(opt_params.get("oos_win_rate_pct", 0.0)) if opt_params else 0.0,
                     "efficiency_ratio": float(opt_params.get("efficiency_ratio", 1.0)) if opt_params else 1.0,
                     "recommended_dte": rec_dte,
+                    "effective_hold_sessions": effective_hold_sessions,
                     "win_rate_pct": round(rec_win, 1),
                     "avg_roi_pct": round(rec_roi, 1),
                     "total_trades": rec_trades,

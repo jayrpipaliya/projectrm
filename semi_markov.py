@@ -214,6 +214,18 @@ class WeibullFit:
                     best_q = float(q)
                     best_beta = float(beta)
 
+        # Pitfall 5.2: Continuous gradient-free Nelder-Mead optimizer refinement
+        try:
+            from scipy.optimize import minimize
+            def loss(params):
+                return -self._log_likelihood(durations, float(params[0]), float(params[1]))
+            res = minimize(loss, [best_q, best_beta], bounds=[(0.01, 0.99), (0.1, 5.0)], method="Nelder-Mead")
+            if res.success and -res.fun > best_ll:
+                best_q = float(res.x[0])
+                best_beta = float(res.x[1])
+        except Exception:
+            pass
+
         self.q = best_q
         self.beta = best_beta
         return self
@@ -262,13 +274,22 @@ class WeibullFit:
 
 
 def _best_fit(durations: List[int]) -> Any:
-    """Fit both Geometric and Weibull; return whichever has lower AIC."""
-    geo = GeometricFit().fit(durations)
-    if len(durations) < MIN_SOJOURN_SAMPLES:
-        return geo   # Not enough data for 2-param Weibull
+    """Fit both Geometric and Weibull; return whichever has lower small-sample corrected AICc (Pitfall 5.3)."""
+    n = len(durations)
+    if n < MIN_SOJOURN_SAMPLES:
+        return GeometricFit().fit(durations)
 
+    geo = GeometricFit().fit(durations)
     wei = WeibullFit().fit(durations)
-    if wei.aic(durations) < geo.aic(durations) - 2.0:  # 2-unit AIC penalty for extra param
+
+    # Pitfall 5.3: AICc correction for small sojourn sample sizes
+    # AICc = AIC + 2k(k+1) / (n - k - 1)
+    k_geo = 1
+    k_wei = 2
+    aicc_geo = geo.aic(durations) + (2.0 * k_geo * (k_geo + 1)) / max(1, n - k_geo - 1)
+    aicc_wei = wei.aic(durations) + (2.0 * k_wei * (k_wei + 1)) / max(1, n - k_wei - 1)
+
+    if aicc_wei < aicc_geo - 2.0:
         return wei
     return geo
 

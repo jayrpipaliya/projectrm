@@ -78,7 +78,7 @@ def recompute_and_update_all_champion_signals(target_tickers=None):
             if analysis.get("status") != "SUCCESS":
                 return None
             latest = analysis.get("latest_metrics", {})
-            z_1d = float(latest.get("z_score_1d", 0.0))
+            z_val = float(latest.get("z_spread", latest.get("z_score_spread", latest.get("z_score_1d", 0.0))))
             close_px = float(latest.get("asset_close", 0.0))
 
             # Corporate Earnings Blackout check
@@ -99,20 +99,20 @@ def recompute_and_update_all_champion_signals(target_tickers=None):
             if is_blackout:
                 act = "EARNINGS_BLACKOUT"
                 breached = False
-            elif not is_short_only and z_1d <= -l_thresh:
+            elif not is_short_only and z_val <= -l_thresh:
                 act = "LONG ASSET"
                 breached = True
-            elif not is_long_only and z_1d >= s_thresh:
+            elif not is_long_only and z_val >= s_thresh:
                 act = "SHORT ASSET"
                 breached = True
             else:
                 act = "WAITING FOR BARRIER"
                 breached = False
 
-            warehouse.update_champion_live_signal(t, z_1d, close_px, act, breached)
+            warehouse.update_champion_live_signal(t, z_val, close_px, act, breached)
             return {
                 "ticker": t,
-                "current_z": round(z_1d, 2),
+                "current_z": round(z_val, 2),
                 "latest_close": round(close_px, 2),
                 "signal_action": act,
                 "is_active": breached
@@ -496,7 +496,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 })
                 return
 
-            z_series = np.array([float(h.get("z_1d", 0.0)) for h in history])
+            z_series = np.array([float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history])
             smf = SemiMarkovFitter(threshold=threshold)
             smm = smf.fit(z_series)
 
@@ -532,7 +532,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         hist = an.get("history", [])
                         if len(hist) < 40:
                             continue
-                        z_arr = [float(h.get("z_1d", 0.0)) for h in hist]
+                        z_arr = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in hist]
                         p_arr = [float(h.get("asset_close", 0.0)) for h in hist]
                         d_arr = [str(h.get("date", "")) for h in hist]
                         recs = warehouse.get_earnings_dates(t)
@@ -589,7 +589,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
                 return
 
-            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
             prices = [float(h.get("asset_close", 0.0)) for h in history]
             dates = [str(h.get("date", "")) for h in history]
             earnings_recs = warehouse.get_earnings_dates(ticker)
@@ -635,7 +635,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         if an.get("status") != "SUCCESS": continue
                         hist = an.get("history", [])
                         if len(hist) < 40: continue
-                        z_arr = [float(h.get("z_1d", 0.0)) for h in hist]
+                        z_arr = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in hist]
                         p_arr = [float(h.get("asset_close", 0.0)) for h in hist]
                         d_arr = [str(h.get("date", "")) for h in hist]
                         recs = warehouse.get_earnings_dates(t)
@@ -737,7 +737,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             history = analysis.get("history", [])
-            z_arr = np.array([float(h.get("z_1d", 0.0)) for h in history], dtype=float)
+            z_arr = np.array([float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history], dtype=float)
             p_arr = np.array([float(h.get("asset_close", 0.0)) for h in history], dtype=float)
             d_arr = [str(h.get("date", "")) for h in history]
             recs = warehouse.get_earnings_dates(ticker)
@@ -829,7 +829,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
                 return
 
-            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
             prices = [float(h.get("asset_close", 0.0)) for h in history]
             dates = [str(h.get("date", "")) for h in history]
 
@@ -884,7 +884,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
                 return
 
-            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
             prices = [float(h.get("asset_close", 0.0)) for h in history]
             dates = [str(h.get("date", "")) for h in history]
 
@@ -948,7 +948,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
                 return
 
-            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
             prices = [float(h.get("asset_close", 0.0)) for h in history]
             dates = [str(h.get("date", "")) for h in history]
 
@@ -1002,7 +1002,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"status": "ERROR", "error": f"Insufficient history ({len(history)} obs)."})
                 return
 
-            z_series = [float(h.get("z_1d", 0.0)) for h in history]
+            z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
             prices = [float(h.get("asset_close", 0.0)) for h in history]
             dates = [str(h.get("date", "")) for h in history]
 
@@ -1122,7 +1122,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         analysis = anomaly_model.analyze(asset_ticker=t, market_ticker=m, sector_ticker=s)
                         if analysis.get("status") == "SUCCESS":
                             latest = analysis.get("latest_metrics", {})
-                            z_1d = float(latest.get("z_score_1d", 0.0))
+                            z_1d = float(latest.get("z_spread", latest.get("z_score_spread", latest.get("z_score_1d", 0.0))))
                             close_px = float(latest.get("asset_close", 0.0))
                             
                             # Directional Asymmetric Trigger
@@ -1249,7 +1249,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     try:
                         res = anomaly_model.analyze(t, item["market"], item["sector"])
                         if res.get("status") == "SUCCESS":
-                            z_1d = float(res.get("z_1d", 0.0))
+                            z_1d = float(res.get("z_spread", res.get("current_z", res.get("z_1d", 0.0))))
                             close_px = float(res.get("latest_price", 0.0))
                     except Exception:
                         z_1d = 0.0
@@ -1331,7 +1331,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     history = analysis.get("history", [])
                     if len(history) < 40:
                         continue
-                    z_series = [float(h.get("z_1d", 0.0)) for h in history]
+                    z_series = [float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history]
                     prices = [float(h.get("asset_close", 0.0)) for h in history]
                     dates = [str(h.get("date", "")) for h in history]
                     recs = warehouse.get_earnings_dates(t)
@@ -1762,7 +1762,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     try:
                         res = anomaly_model.analyze(asset_ticker=t, market_ticker=item["market"], sector_ticker=item["sector"])
                         if res.get("status") == "SUCCESS":
-                            z_1d = float(res.get("z_1d", 0.0))
+                            z_1d = float(res.get("z_spread", res.get("current_z", res.get("z_1d", 0.0))))
                             close_px = float(res.get("latest_price", 0.0))
                     except Exception:
                         z_1d = 0.0
@@ -2296,7 +2296,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         skipped.append({"ticker": ticker, "reason": f"Only {len(history)} history obs"})
                         continue
 
-                    z_series = np.array([float(h.get("z_1d", 0.0)) for h in history])
+                    z_series = np.array([float(h.get("z_spread", h.get("z_1d", 0.0))) for h in history])
                     smf = SemiMarkovFitter(threshold=threshold)
                     smm = smf.fit(z_series)
 

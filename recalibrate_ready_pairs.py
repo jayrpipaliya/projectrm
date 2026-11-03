@@ -67,7 +67,7 @@ def main():
                 print(f"  [SKIP] {ticker}: Insufficient bars ({n_bars})", flush=True)
                 continue
 
-            z = [h["z_1d"] for h in hist]
+            z = [h.get("z_spread", h["z_1d"]) for h in hist]
             p = [h["asset_close"] for h in hist]
             d = [h["date"] for h in hist]
 
@@ -152,7 +152,7 @@ def main():
 
             # 4. Update live barrier breach signal
             latest = hist[-1]
-            latest_z = float(latest["z_1d"])
+            latest_z = float(latest.get("z_spread", latest["z_1d"]))
             latest_close = float(latest["asset_close"])
             act = "LONG ASSET" if latest_z <= -thresh else ("SHORT ASSET" if latest_z >= thresh else "WAITING FOR BARRIER")
             warehouse.update_champion_live_signal(ticker, latest_z, latest_close, act, bool(abs(latest_z) >= thresh))

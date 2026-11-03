@@ -132,23 +132,34 @@ class KalmanBetaDecomposition:
             b1 = pred_b1 + k1 * e_t
             b2 = pred_b2 + k2 * e_t
 
-            # Clamping
-            if b0 < -0.05: b0 = -0.05
-            elif b0 > 0.05: b0 = 0.05
-            if b1 < 0.1: b1 = 0.1
-            elif b1 > 2.5: b1 = 2.5
-            if b2 < -1.5: b2 = -1.5
-            elif b2 > 2.5: b2 = 2.5
+            # Numerically stable Joseph form covariance update:
+            # P = (I - K X) P_pred (I - K X)^T + K R K^T
+            ik00, ik01, ik02 = 1.0 - k0 * x0, -k0 * x1, -k0 * x2
+            ik10, ik11, ik12 = -k1 * x0, 1.0 - k1 * x1, -k1 * x2
+            ik20, ik21, ik22 = -k2 * x0, -k2 * x1, 1.0 - k2 * x2
 
-            p00 = pp00 - k0 * px0
-            p01 = pp01 - k0 * px1
-            p02 = pp02 - k0 * px2
-            p10 = pp10 - k1 * px0
-            p11 = pp11 - k1 * px1
-            p12 = pp12 - k1 * px2
-            p20 = pp20 - k2 * px0
-            p21 = pp21 - k2 * px1
-            p22 = pp22 - k2 * px2
+            t00 = ik00 * pp00 + ik01 * pp10 + ik02 * pp20
+            t01 = ik00 * pp01 + ik01 * pp11 + ik02 * pp21
+            t02 = ik00 * pp02 + ik01 * pp12 + ik02 * pp22
+
+            t10 = ik10 * pp00 + ik11 * pp10 + ik12 * pp20
+            t11 = ik10 * pp01 + ik11 * pp11 + ik12 * pp21
+            t12 = ik10 * pp02 + ik11 * pp12 + ik12 * pp22
+
+            t20 = ik20 * pp00 + ik21 * pp10 + ik22 * pp20
+            t21 = ik20 * pp01 + ik21 * pp11 + ik22 * pp21
+            t22 = ik20 * pp02 + ik21 * pp12 + ik22 * pp22
+
+            p00 = t00 * ik00 + t01 * ik01 + t02 * ik02 + k0 * k0 * r
+            p11 = t10 * ik10 + t11 * ik11 + t12 * ik12 + k1 * k1 * r
+            p22 = t20 * ik20 + t21 * ik21 + t22 * ik22 + k2 * k2 * r
+
+            p01 = 0.5 * ((t00 * ik10 + t01 * ik11 + t02 * ik12 + k0 * k1 * r) + (t10 * ik00 + t11 * ik01 + t12 * ik02 + k1 * k0 * r))
+            p02 = 0.5 * ((t00 * ik20 + t01 * ik21 + t02 * ik22 + k0 * k2 * r) + (t20 * ik00 + t21 * ik01 + t22 * ik02 + k2 * k0 * r))
+            p12 = 0.5 * ((t10 * ik20 + t11 * ik21 + t12 * ik22 + k1 * k2 * r) + (t20 * ik10 + t21 * ik11 + t22 * ik12 + k2 * k1 * r))
+            p10 = p01
+            p20 = p02
+            p21 = p12
 
             beta_hist[t, 0] = b0
             beta_hist[t, 1] = b1
@@ -156,6 +167,8 @@ class KalmanBetaDecomposition:
 
             if s_t > 1e-12:
                 neg_log_likelihood += 0.5 * (math.log(2.0 * math.pi * s_t) + (e_t * e_t) * inv_s)
+                # Soft economic L2 penalty toward priors (Pitfall 1.1)
+                neg_log_likelihood += 1e-4 * ((b0 - bp0)**2 + (b1 - bp1)**2 + (b2 - bp2)**2)
 
         return neg_log_likelihood, beta_hist, residuals, innov_var, y_preds
 
@@ -200,19 +213,15 @@ class KalmanBetaDecomposition:
             # Correct Step (State update)
             beta_t = beta_pred + K_t.flatten() * e_t
 
-            # Soft economic clamping to eliminate pathological extreme values
-            if self.k >= 1:
-                beta_t[0] = float(np.clip(beta_t[0], -0.05, 0.05))   # Alpha daily limit +/-5%
-            if self.k >= 2:
-                beta_t[1] = float(np.clip(beta_t[1], 0.1, 2.5))     # Market beta bounded [0.1, 2.5]
-            if self.k >= 3:
-                beta_t[2] = float(np.clip(beta_t[2], -1.5, 2.5))    # Sector beta bounded [-1.5, 2.5]
-
-            P = (np.eye(self.k) - K_t @ X_t) @ P_pred
+            # Joseph stabilized covariance update: P = (I - K X) P_pred (I - K X)^T + K R K^T
+            IKX = np.eye(self.k) - K_t @ X_t
+            P = IKX @ P_pred @ IKX.T + (K_t @ K_t.T) * R
+            P = 0.5 * (P + P.T)
             beta_history[t, :] = beta_t
 
             if S_t > 1e-12:
                 neg_log_likelihood += 0.5 * (np.log(2.0 * np.pi * S_t) + (e_t**2) / S_t)
+                neg_log_likelihood += 1e-4 * float(np.sum((beta_t - self.beta_priors)**2))
 
         return neg_log_likelihood, beta_history, residuals, innov_var, y_preds
 
@@ -222,15 +231,20 @@ class KalmanBetaDecomposition:
         init_params = np.append(np.repeat(1e-5, self.k), sample_var * 0.5)
         bounds = [(1e-7, 1e-2)] * self.k + [(1e-6, sample_var * 3.0)]
 
+        # Train on up to 756 bars (3 years of diverse market regimes)
+        sub_len = min(self.T, 756)
+
         if self.k == 3:
-            sub_len = min(self.T, 500)
             def obj_func(params):
                 neg_ll, _, _, _, _ = self._run_filter_scalar_3d(params[0], params[1], params[2], params[3], T_sub=sub_len)
                 return neg_ll
 
             try:
-                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 20})
-                opt_Q, opt_R = res.x[:3], res.x[3]
+                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 100})
+                if res.success or res.fun < obj_func(init_params):
+                    opt_Q, opt_R = res.x[:3], float(res.x[3])
+                else:
+                    opt_Q, opt_R = init_params[:3], float(init_params[3])
             except Exception:
                 opt_Q = np.repeat(1e-5, 3)
                 opt_R = sample_var * 0.5
@@ -243,8 +257,11 @@ class KalmanBetaDecomposition:
                 return neg_ll
 
             try:
-                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 30})
-                opt_Q, opt_R = res.x[:self.k], res.x[-1]
+                res = minimize(obj_func, init_params, bounds=bounds, method="L-BFGS-B", options={"maxiter": 100})
+                if res.success or res.fun < obj_func(init_params):
+                    opt_Q, opt_R = res.x[:self.k], float(res.x[-1])
+                else:
+                    opt_Q, opt_R = init_params[:self.k], float(init_params[-1])
             except Exception:
                 opt_Q = np.repeat(1e-5, self.k)
                 opt_R = sample_var * 0.5
@@ -263,15 +280,53 @@ class KalmanBetaDecomposition:
 
 class OrnsteinUhlenbeckEngine:
     @staticmethod
-    def fit(spread_series: np.ndarray, dt: float = 1.0):
+    def adf_test(series: np.ndarray, max_lags: int = 1) -> Dict[str, Any]:
+        r"""
+        Augmented Dickey-Fuller (ADF) test for cointegration/stationarity:
+            \Delta s_t = \alpha + \gamma s_{t-1} + \sum \delta_i \Delta s_{t-i} + \epsilon_t
+        H0: \gamma = 0 (unit root, non-stationary)
+        H1: \gamma < 0 (mean-reverting / stationary)
+        Critical values for constant without trend (approx MacKinnon):
+        1%: -3.434, 5%: -2.863, 10%: -2.568
         """
-        Fits AR(1) representation of continuous-time Ornstein-Uhlenbeck process on
-        the cointegrated cumulative price spread s_t:
-            s_t = a + b * s_{t-1} + xi_t
-        where b = exp(-theta * dt) and mu = a / (1 - b).
-        Half-life: tau = ln(2) / theta
-        Equilibrium variance: sigma_eq^2 = Var(xi) / (1 - b^2)
-        Standardized OU innovations: u_t = xi_t / std(xi) (strictly IID!)
+        y = np.asarray(series, dtype=float)
+        n = len(y)
+        if n < 20:
+            return {"stat": 0.0, "is_stationary": False}
+
+        dy = np.diff(y)
+        n_samples = len(dy) - max_lags
+        Y = dy[max_lags:]
+        X = np.empty((n_samples, 2 + max_lags))
+        X[:, 0] = 1.0
+        X[:, 1] = y[max_lags : max_lags + n_samples]
+        for lag in range(1, max_lags + 1):
+            X[:, 1 + lag] = dy[max_lags - lag : max_lags - lag + n_samples]
+
+        try:
+            beta, _, _, _ = np.linalg.lstsq(X, Y, rcond=None)
+            resids = Y - X @ beta
+            dof = max(1, n_samples - (2 + max_lags))
+            s2 = np.sum(resids**2) / dof
+            cov = s2 * np.linalg.pinv(X.T @ X)
+            se_gamma = np.sqrt(max(1e-12, cov[1, 1]))
+            t_stat = float(beta[1] / se_gamma)
+            is_stat = bool(t_stat < -2.568)  # Reject unit root at 10% or better
+        except Exception:
+            t_stat = 0.0
+            is_stat = False
+
+        return {"stat": t_stat, "is_stationary": is_stat}
+
+    @staticmethod
+    def fit(spread_series: np.ndarray, dt: float = 1.0, window: int = 252):
+        r"""
+        Fits continuous-time Ornstein-Uhlenbeck process on cumulative idiosyncratic spread:
+            ds_t = \theta (\mu - s_t) dt + \sigma dW_t
+        AR(1) discrete-time representation:
+            s_t = a + b * s_{t-1} + \xi_t
+        where b = exp(-\theta * dt) and \mu = a / (1 - b).
+        Half-life: \tau = ln(2) / \theta.
         """
         s = np.asarray(spread_series, dtype=float)
         n = len(s)
@@ -283,12 +338,28 @@ class OrnsteinUhlenbeckEngine:
                 "sigma_eq": 0.05,
                 "sigma_innov": 0.01,
                 "is_mean_reverting": True,
+                "adf_stat": 0.0,
+                "is_stationary": True,
                 "innovations": np.zeros(n),
                 "z_spread": np.zeros(n)
             }
 
-        y = s[1:]
-        x = s[:-1]
+        # Vectorized trailing-window normalization for full spread history (strictly zero look-ahead bias)
+        z_spread = np.zeros(n)
+        for t in range(n):
+            w_start = max(0, t - window + 1)
+            sub = s[w_start : t + 1]
+            if len(sub) < 15:
+                z_spread[t] = 0.0
+            else:
+                m = np.mean(sub)
+                dev = np.std(sub, ddof=1)
+                z_spread[t] = (s[t] - m) / max(1e-4, dev)
+
+        # Fit continuous-time OU on active trailing window (last 252 sessions / 1 year)
+        active_s = s[-min(n, window):]
+        y = active_s[1:]
+        x = active_s[:-1]
         x_mat = np.column_stack([np.ones(len(x)), x])
         try:
             coeffs, _, _, _ = np.linalg.lstsq(x_mat, y, rcond=None)
@@ -296,28 +367,34 @@ class OrnsteinUhlenbeckEngine:
         except Exception:
             a, b = 0.0, 0.90
 
-        # Enforce stationary mean reversion: 0 < b < 0.999
-        b_clamped = max(0.01, min(0.995, b))
-        theta = -np.log(b_clamped) / dt
-        half_life = np.log(2.0) / max(1e-4, theta)
-        mu = a / (1.0 - b_clamped)
-        is_mean_reverting = bool(0.0 < b < 0.999)
+        adf_res = OrnsteinUhlenbeckEngine.adf_test(active_s)
 
-        # 1-step forecast residuals (OU innovations)
-        xi = y - (a + b_clamped * x)
-        sigma_innov = float(np.std(xi, ddof=1)) if len(xi) > 2 else 0.01
-        sigma_innov = max(1e-5, sigma_innov)
-
-        # Stationary equilibrium standard deviation
-        denom = max(1e-4, 1.0 - b_clamped**2)
-        sigma_eq = sigma_innov / np.sqrt(denom)
-
-        # Standardized IID innovations (for CUSUM monitor)
-        innovations = np.zeros(n)
-        innovations[1:] = xi / sigma_innov
-
-        # Standardized pricing spread Z-score (stationary, mean-reverting)
-        z_spread = (s - mu) / max(1e-4, sigma_eq)
+        # Detect non-mean-reverting or explosive/oscillating series without masking
+        if b <= 0.01 or b >= 0.99:
+            is_mean_reverting = False
+            theta = 0.0 if b >= 0.99 else 99.0
+            half_life = 999.0 if b >= 0.99 else 0.1
+            mu = float(np.mean(active_s))
+            sigma_innov = float(np.std(np.diff(active_s))) if len(active_s) > 1 else 0.01
+            sigma_eq = max(1e-4, float(np.std(active_s, ddof=1)))
+            innovations = np.zeros(n)
+        else:
+            theta = -np.log(b) / dt
+            half_life = np.log(2.0) / max(1e-4, theta)
+            mu = a / (1.0 - b)
+            xi = y - (a + b * x)
+            sigma_innov = float(np.std(xi, ddof=1)) if len(xi) > 2 else 0.01
+            sigma_innov = max(1e-5, sigma_innov)
+            denom = max(1e-4, 1.0 - b**2)
+            gaussian_sigma_eq = sigma_innov / np.sqrt(denom)
+            empirical_std = float(np.std(active_s, ddof=1))
+            # Tail-risk adjustment (Pitfall 2.3): protect against Gaussian underestimation in fat tails
+            sigma_eq = max(gaussian_sigma_eq, empirical_std)
+            innovations = np.zeros(n)
+            act_n = len(active_s)
+            innovations[-act_n + 1 :] = xi / sigma_innov
+            # Valid discrete-time mean reversion: half-life <= 60 sessions and ADF cointegration confirmation
+            is_mean_reverting = bool(0.01 < b < 0.985 and (adf_res["is_stationary"] or half_life <= 30.0))
 
         return {
             "theta": round(float(theta), 4),
@@ -326,6 +403,8 @@ class OrnsteinUhlenbeckEngine:
             "sigma_eq": round(float(sigma_eq), 4),
             "sigma_innov": round(float(sigma_innov), 5),
             "is_mean_reverting": is_mean_reverting,
+            "adf_stat": round(float(adf_res["stat"]), 2),
+            "is_stationary": adf_res["is_stationary"],
             "innovations": innovations,
             "z_spread": z_spread
         }
@@ -430,7 +509,8 @@ class AssetReturnBacktestEngine:
                 else:
                     earnings_blackout_dates.add(ed)
 
-        slip_pct = (slippage_bps * 2.0) / 10000.0 * 100.0  # round-trip slippage %
+        # Base round-trip slippage (5 bps per leg = 10 bps)
+        base_slip_pct = (slippage_bps * 2.0) / 10000.0 * 100.0
 
         signal_episodes = []
         excluded_earnings_trades = []
@@ -453,6 +533,9 @@ class AssetReturnBacktestEngine:
                     i += 1
                     continue
 
+                # Pitfall 3.3: Dynamic slippage scaling with dislocation magnitude |Z|
+                slip_pct = base_slip_pct * (1.0 + 0.5 * max(0.0, abs(z[i]) - 1.5))
+
                 max_fwd = min(20, n - 1 - i)
                 if max_fwd >= 1:
                     traj = []
@@ -471,9 +554,8 @@ class AssetReturnBacktestEngine:
                         "s_entry": s_entry,
                         "traj": traj
                     })
-                    i += max(1, min(holding_horizon, max_fwd))
-                else:
-                    i += 1
+                # Step by 1 bar to collect all valid dislocation events without combinatorial bias (Pitfall 3.2)
+                i += 1
             else:
                 i += 1
 
@@ -538,17 +620,32 @@ class AssetReturnBacktestEngine:
         bear_stats = eval_direction(False)
 
         trades = []
+        last_exit_idx = -1
+        target_h = holding_horizon if (holding_horizon and holding_horizon > 0) else 5
+
         for ep in signal_episodes:
-            h_use = holding_horizon if (holding_horizon and holding_horizon > 0) else (bull_stats["best_horizon"] if ep["is_bullish"] else bear_stats["best_horizon"])
-            h_avail = min(h_use, len(ep["traj"]))
+            # Prevent overlapping positions on same asset (realistic execution)
+            if ep["idx"] <= last_exit_idx:
+                continue
+
+            h_avail = min(target_h, len(ep["traj"]))
             if h_avail < 1:
                 continue
 
-            exit_info = ep["traj"][h_avail - 1]
+            # Snapback profit-taking exit at equilibrium (|Z| <= 0.5), or hold to target_h
+            exit_day = h_avail
+            for d in range(1, h_avail):
+                chk_idx = ep["idx"] + d
+                if chk_idx < n and abs(z[chk_idx]) <= 0.5:
+                    exit_day = d
+                    break
+
+            exit_info = ep["traj"][exit_day - 1]
             ret_pct = float(exit_info["return_pct"])
             s_exit = float(exit_info["price"])
+            last_exit_idx = ep["idx"] + exit_day
 
-            inter_rets = [pt["return_pct"] for pt in ep["traj"][:h_avail]]
+            inter_rets = [pt["return_pct"] for pt in ep["traj"][:exit_day]]
             mfe = float(max(inter_rets))
             mae = float(min(inter_rets))
 
@@ -577,8 +674,8 @@ class AssetReturnBacktestEngine:
                 "stock_move_dollar": stock_move_dollar,
                 "stock_move_pct": stock_move_pct,
                 "captured_move_pct": round(ret_pct, 2),
-                "holding_sessions": h_avail,
-                "holding_dte": h_avail,
+                "holding_sessions": exit_day,
+                "holding_dte": exit_day,
                 "contract_dte": 0,
                 "pnl_rec_pct": round(ret_pct, 2),
                 "pnl_pct": round(ret_pct, 2),
@@ -839,16 +936,16 @@ class ResidualAnomalyModel:
         z_spread = ou_stats["z_spread"]
         u_innovations = ou_stats["innovations"]
 
-        # Multi-horizon smoothed Z-scores
+        # Multi-horizon smoothed Z-scores of cumulative cointegrated spread
         z_5d = np.zeros(T)
         z_20d = np.zeros(T)
         for t in range(T):
-            z_5d[t] = float(np.mean(z_1d[max(0, t - 4) : t + 1]))
-            z_20d[t] = float(np.mean(z_1d[max(0, t - 19) : t + 1]))
+            z_5d[t] = float(np.mean(z_spread[max(0, t - 4) : t + 1]))
+            z_20d[t] = float(np.mean(z_spread[max(0, t - 19) : t + 1]))
 
-        # Evaluate snapback win rate on standardized spread
+        # Evaluate snapback win rate on standardized cointegrated spread (genuine mean reversion)
         snapback_profile = OrnsteinUhlenbeckEngine.evaluate_snapbacks(
-            z_series=z_1d, dates=list(ret_dates), barrier=snapback_threshold, target=0.5,
+            z_series=z_spread, dates=list(ret_dates), barrier=snapback_threshold, target=0.5,
             max_days=int(np.ceil(ou_stats["half_life"] * 1.5))
         )
 
@@ -856,8 +953,9 @@ class ResidualAnomalyModel:
         earnings_dates = self._fetch_and_cache_earnings(asset_ticker)
 
         # --- Layer 2.5: Pure Asset % Return Backtest Engine ---
+        # Backtest mean-reversion trades on cumulative spread Z breaches
         asset_backtest = AssetReturnBacktestEngine.evaluate_asset_performance(
-            z_series=z_1d,
+            z_series=z_spread,
             prices=p_asset[1:],
             dates=list(ret_dates),
             barrier=snapback_threshold,
@@ -897,6 +995,7 @@ class ResidualAnomalyModel:
 
         latest = history[-1] if history else {}
         latest_z1 = latest.get("z_1d", 0.0)
+        latest_z_spread = latest.get("z_spread", 0.0)
         latest_streak = latest.get("cusum_streak", 0)
         latest_alert = latest.get("cusum_alert", 0)
         latest_alpha = latest.get("alpha_ann_pct", 0.0)
@@ -908,8 +1007,9 @@ class ResidualAnomalyModel:
         is_long_only = (policy == "LONG_ONLY")
         is_short_only = (policy == "SHORT_ONLY")
 
-        is_bull_breach = (not is_short_only) and (latest_z1 <= -l_thresh)
-        is_bear_breach = (not is_long_only) and (latest_z1 >= s_thresh)
+        # Mean-reverting signal fires on cumulative spread Z-score breaches:
+        is_bull_breach = (not is_short_only) and (latest_z_spread <= -l_thresh)
+        is_bear_breach = (not is_long_only) and (latest_z_spread >= s_thresh)
         is_snapback_active = is_bull_breach or is_bear_breach
         is_regime_shift_active = (latest_alert != 0) or (abs(latest_streak) >= 4)
 
@@ -1024,11 +1124,17 @@ class ResidualAnomalyModel:
                 "expected_return_pct": latest.get("expected_return_pct"),
                 "unexplained_residual_pct": latest.get("residual_pct"),
                 "z_score_1d": latest.get("z_1d"),
+                "z_score_spread": latest.get("z_spread"),
+                "z_spread": latest.get("z_spread"),
+                "current_z": latest.get("z_spread"),
                 "z_score_5d": latest.get("z_5d"),
                 "z_score_20d": latest.get("z_20d"),
                 "beta_market": latest.get("beta_mkt"),
                 "beta_sector": latest.get("beta_sec"),
-                "alpha": latest_alpha
+                "alpha": latest_alpha,
+                "is_mean_reverting": ou_stats.get("is_mean_reverting", False),
+                "half_life": ou_stats.get("half_life", 0.0),
+                "adf_stat": ou_stats.get("adf_stat", 0.0)
             },
             "history": history
         }

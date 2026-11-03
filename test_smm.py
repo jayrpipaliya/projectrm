@@ -15,7 +15,7 @@ if analysis.get('status') != 'SUCCESS':
 history = analysis.get('history', [])
 print(f'History length: {len(history)} trading days')
 
-z_series = np.array([float(h.get('z_1d', 0.0)) for h in history])
+z_series = np.array([float(h.get('z_spread', h.get('z_1d', 0.0))) for h in history])
 
 smf = SemiMarkovFitter(threshold=1.8)
 result = smf.fit(z_series)
