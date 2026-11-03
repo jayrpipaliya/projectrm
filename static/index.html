@@ -1614,19 +1614,6 @@
                 </div>
 
                 <div class="input-item" style="margin-left: 4px;">
-                    <label>Presets (Mag 7)</label>
-                    <div class="preset-pill-group">
-                        <button class="preset-pill active" onclick="applyPreset('MSFT', 'QQQ', 'IGV')">MSFT</button>
-                        <button class="preset-pill" onclick="applyPreset('AAPL', 'QQQ', 'XLK')">AAPL</button>
-                        <button class="preset-pill" onclick="applyPreset('NVDA', 'QQQ', 'SMH')">NVDA</button>
-                        <button class="preset-pill" onclick="applyPreset('AMZN', 'QQQ', 'XLY')">AMZN</button>
-                        <button class="preset-pill" onclick="applyPreset('GOOGL', 'QQQ', 'XLC')">GOOGL</button>
-                        <button class="preset-pill" onclick="applyPreset('META', 'QQQ', 'XLC')">META</button>
-                        <button class="preset-pill" onclick="applyPreset('TSLA', 'QQQ', 'XLY')">TSLA</button>
-                    </div>
-                </div>
-
-                <div class="input-item" style="margin-left: 4px;">
                     <label>All Measured Stocks</label>
                     <select id="all-measured-stocks-select" class="trades-filter-select" style="min-width: 180px; padding: 6px 10px; background: #16171a !important; border: 1px solid #2a2e39; border-radius: 4px; color: #f1f5f9; font-weight: 700; font-family: var(--font-mono); font-size: 0.78rem;" onchange="onSelectMeasuredStock(this.value)">
                         <option value="">▾ All Measured Stocks...</option>
@@ -3448,29 +3435,31 @@
             // Update footer legend
             const leg = document.getElementById("chart-legend-footer");
             const thresh = getCurrentThreshold();
-            if (view === 'snapback') {
-                leg.innerHTML = `
-                    <span style="color: #ffffff;">● 1-Day Innovation Z-Score</span>
-                    <span style="color: #f59e0b;">-- ±${thresh.toFixed(1)}σ Snap-Back Trigger</span>
-                    <span style="color: #089981;">░ ±0.5σ Target Ribbon</span>
-                    <span style="color: #f23645;">-- ±3.0σ Extreme Boundary</span>
-                `;
-            } else if (view === 'cusum') {
-                leg.innerHTML = `
-                    <span style="color: #089981;">● S+ Upper Cumulative Drift</span>
-                    <span style="color: #f23645;">● S- Lower Cumulative Drift</span>
-                    <span style="color: #c084fc;">-- h=3.8 Regime Alert Barrier</span>
-                `;
-            } else {
-                leg.innerHTML = `
-                    <span style="color: #ffffff;">● 1-Day Z-Score</span>
-                    <span style="color: #f59e0b;">● 5-Day Cumulative Z-Score</span>
-                    <span style="color: #c084fc;">● 20-Day Structural Z-Score</span>
-                    <span style="color: #52525b;">-- ±2.0σ Baseline</span>
-                `;
+            if (leg) {
+                if (view === 'snapback') {
+                    leg.innerHTML = `
+                        <span style="color: #ffffff;">● Cointegrated Spread Z-Score</span>
+                        <span style="color: #f59e0b;">-- ±${thresh.toFixed(1)}σ Snap-Back Trigger</span>
+                        <span style="color: #089981;">░ ±0.5σ Target Ribbon</span>
+                        <span style="color: #f23645;">-- ±3.0σ Extreme Boundary</span>
+                    `;
+                } else if (view === 'cusum') {
+                    leg.innerHTML = `
+                        <span style="color: #089981;">● S+ Upper Cumulative Drift</span>
+                        <span style="color: #f23645;">● S- Lower Cumulative Drift</span>
+                        <span style="color: #c084fc;">-- h=3.8 Regime Alert Barrier</span>
+                    `;
+                } else {
+                    leg.innerHTML = `
+                        <span style="color: #ffffff;">● 1-Day Z-Score</span>
+                        <span style="color: #f59e0b;">● 5-Day Cumulative Z-Score</span>
+                        <span style="color: #c084fc;">● 20-Day Structural Z-Score</span>
+                        <span style="color: #52525b;">-- ±2.0σ Baseline</span>
+                    `;
+                }
             }
 
-            if (currentAnomalyHistory.length >0) {
+            if (currentAnomalyHistory && currentAnomalyHistory.length > 0) {
                 renderAnomalyChart(currentAnomalyHistory, currentAnomalyAsset);
             }
         }
@@ -3604,7 +3593,7 @@
                 const ep = (ou && ou.total_past_episodes !== undefined) ? `${ou.total_past_episodes} eps` : '--';
                 const lblHl = document.getElementById("label-ou-halflife") || document.getElementById("label-ou-winrate");
                 if (lblHl) {
-                    lblHl.innerHTML = `<span>O-U Half-Life (&tau;)</span> <span style="font-size:0.68rem; color:#38bdf8;">@ &plusmn;${activeThreshold.toFixed(1)}&sigma;</span>`;
+                    lblHl.innerHTML = `<span>O-U Half-Life (&tau;)</span> <span style="font-size:0.68rem; color:#38bdf8;">@ &plusmn;${effThresh.toFixed(1)}&sigma;</span>`;
                 }
                 const valHl = document.getElementById("val-ou-halflife") || document.getElementById("val-ou-winrate");
                 if (valHl) {
@@ -4015,7 +4004,7 @@
                 const triggerColor = isOptimal ? "rgba(56, 189, 248, 0.9)" : "rgba(245, 158, 11, 0.85)";
                 const triggerWidth = isOptimal ? 1.6 : 1.4;
 
-                const zValues = visibleSlice.map(h => h.z_1d);
+                const zValues = visibleSlice.map(h => (h.z_spread !== undefined && h.z_spread !== null) ? h.z_spread : h.z_1d);
                 const pointColors = zValues.map(z => {
                     if (z <= -thr) return "#089981"; // Bullish Oversold Snap-Back (Long)
                     if (z >= thr) return "#f23645";  // Bearish Overbought Snap-Back (Short)
@@ -4084,7 +4073,7 @@
                         fill: false
                     },
                     {
-                        label: `${asset} 1-Day Z-Score`,
+                        label: `${asset} Spread Z-Score`,
                         data: zValues,
                         borderColor: "#ffffff",
                         borderWidth: 1.2,
@@ -4147,13 +4136,15 @@
                                     afterBody: (ctx) => {
                                         const row = visibleSlice[ctx[0].dataIndex];
                                         if (!row) return [];
-                                        const isBullishZone = row.z_1d <= -thr;
-                                        const isBearishZone = row.z_1d >= thr;
+                                        const zVal = (row.z_spread !== undefined && row.z_spread !== null) ? row.z_spread : row.z_1d;
+                                        const isBullishZone = zVal <= -thr;
+                                        const isBearishZone = zVal >= thr;
                                         const zoneLabel = isBullishZone
                                             ? `▲ BULLISH SNAP-BACK ZONE (Oversold: Long Asset, Z ≤ -${thr.toFixed(1)}σ)`
                                             : (isBearishZone ? `▼ BEARISH SNAP-BACK ZONE (Overbought: Short Asset, Z ≥ +${thr.toFixed(1)}σ)` : `✓ Normal co-movement`);
                                         return [
-                                            `1-Day Z-Score: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
+                                            `Spread Z-Score: ${zVal >= 0 ? '+' : ''}${zVal}σ`,
+                                            `1-Day Shock Z: ${row.z_1d >= 0 ? '+' : ''}${row.z_1d}σ`,
                                             `Idiosyncratic Residual: ${row.residual_pct >= 0 ? '+' : ''}${row.residual_pct}%`,
                                             `Kalman β_mkt: ${row.beta_mkt} | β_sec: ${row.beta_sec}`,
                                             zoneLabel,
