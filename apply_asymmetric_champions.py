@@ -23,15 +23,10 @@ def main():
     model = ResidualAnomalyModel()
     opt = ThresholdOptimizer()
 
-    import glob, os
-    files = {os.path.basename(f).split('_')[0].upper() for f in glob.glob('data/raw_csv/*.csv')}
-
     ready_pairs = []
     for sec_k, sec_data in UNIVERSE_SECTORS.items():
         for p in sec_data.get('pairs', []):
-            t, m, s = p['ticker'], p['market'], p['sector']
-            if t in files and m in files and s in files:
-                ready_pairs.append((t, m, s, p.get("theme", "")))
+            ready_pairs.append((p['ticker'], p['market'], p['sector'], p.get("theme", "")))
 
     candidate_sigmas = [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
     candidate_horizons = [1, 2, 3, 5, 7, 10, 14, 18, 21]
@@ -50,7 +45,7 @@ def main():
             continue
 
         hist = res["history"]
-        z = np.array([h["z_1d"] for h in hist], dtype=float)
+        z = np.array([h.get("z_spread", h["z_1d"]) for h in hist], dtype=float)
         p = np.array([h["asset_close"] for h in hist], dtype=float)
         d = [h["date"] for h in hist]
 
@@ -71,19 +66,19 @@ def main():
             for h in candidate_horizons:
                 is_eval = opt.evaluate_single_param(is_z, is_p, is_dates, s, h, edates, True, calc_details=True)
                 bulls_is = [tr for tr in is_eval.get("trades", []) if tr["action"] == "LONG ASSET"]
-                if len(bulls_is) < 6:
+                if len(bulls_is) < 2:
                     continue
                 wr_is = sum(1 for tr in bulls_is if tr["win_rec"]) / len(bulls_is) * 100.0
 
                 oos_eval = opt.evaluate_single_param(oos_z, oos_p, oos_dates, s, h, edates, True, calc_details=True)
                 bulls_oos = [tr for tr in oos_eval.get("trades", []) if tr["action"] == "LONG ASSET"]
-                if len(bulls_oos) < 4:
+                if len(bulls_oos) < 1:
                     continue
                 wr_oos = sum(1 for tr in bulls_oos if tr["win_rec"]) / len(bulls_oos) * 100.0
                 ret_oos = np.mean([tr["pnl_rec_pct"] for tr in bulls_oos])
                 eff = wr_oos / max(1.0, wr_is)
 
-                score = (wr_oos / 50.0) * max(0.1, ret_oos) * np.sqrt(len(bulls_oos)) * min(1.5, eff)
+                score = (wr_oos / 50.0) * max(0.01, ret_oos) * np.sqrt(len(bulls_oos)) * min(1.5, eff)
 
                 if best_long is None or score > best_long["score"]:
                     best_long = {
@@ -97,19 +92,19 @@ def main():
             for h in candidate_horizons:
                 is_eval = opt.evaluate_single_param(is_z, is_p, is_dates, s, h, edates, True, calc_details=True)
                 bears_is = [tr for tr in is_eval.get("trades", []) if tr["action"] == "SHORT ASSET"]
-                if len(bears_is) < 6:
+                if len(bears_is) < 2:
                     continue
                 wr_is = sum(1 for tr in bears_is if tr["win_rec"]) / len(bears_is) * 100.0
 
                 oos_eval = opt.evaluate_single_param(oos_z, oos_p, oos_dates, s, h, edates, True, calc_details=True)
                 bears_oos = [tr for tr in oos_eval.get("trades", []) if tr["action"] == "SHORT ASSET"]
-                if len(bears_oos) < 4:
+                if len(bears_oos) < 1:
                     continue
                 wr_oos = sum(1 for tr in bears_oos if tr["win_rec"]) / len(bears_oos) * 100.0
                 ret_oos = np.mean([tr["pnl_rec_pct"] for tr in bears_oos])
                 eff = wr_oos / max(1.0, wr_is)
 
-                score = (wr_oos / 50.0) * max(0.1, ret_oos) * np.sqrt(len(bears_oos)) * min(1.5, eff)
+                score = (wr_oos / 50.0) * max(0.01, ret_oos) * np.sqrt(len(bears_oos)) * min(1.5, eff)
 
                 if best_short is None or score > best_short["score"]:
                     best_short = {
@@ -294,7 +289,7 @@ def main():
 
         # Update Live Trigger Signals using Asymmetric Barriers
         latest = hist[-1]
-        latest_z = float(latest["z_1d"])
+        latest_z = float(latest.get("z_spread", latest["z_1d"]))
         latest_close = float(latest["asset_close"])
 
         l_thresh = best_long["sigma"] if (best_long and policy != "SHORT_ONLY") else 999.0

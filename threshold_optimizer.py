@@ -63,46 +63,25 @@ class ThresholdOptimizer:
         cell_details = {}
 
         for s_idx, thresh in enumerate(self.thresholds):
-            bt = AssetReturnBacktestEngine.evaluate_asset_performance(
-                z_series=z,
-                prices=p,
-                dates=dates,
-                barrier=thresh,
-                earnings_dates=earnings_dates,
-                filter_earnings=filter_earnings
-            )
-
-            bull_curve = {c["hold_days"]: c for c in bt["bullish_recommendation"].get("horizon_curve", [])}
-            bear_curve = {c["hold_days"]: c for c in bt["bearish_recommendation"].get("horizon_curve", [])}
-
             for h_idx, h in enumerate(self.horizons):
-                h_bull = bull_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0, "sharpe_ratio": 0.0})
-                h_bear = bear_curve.get(h, {"win_rate_pct": 0.0, "avg_roi_pct": 0.0, "profit_factor": 0.0, "sharpe_ratio": 0.0})
+                perf = self._eval_single_param(
+                    z, p, dates, thresh, h, earnings_dates, filter_earnings
+                )
+                comb_wr = perf["win_rate_pct"]
+                comb_ret = perf["avg_roi_pct"]
+                comb_pf = perf["profit_factor"]
+                tot_trades = perf["trades_count"]
 
-                bull_trades = bt["bullish_recommendation"].get("total_trades", 0)
-                bear_trades = bt["bearish_recommendation"].get("total_trades", 0)
-                tot_trades = bull_trades + bear_trades
-
-                if tot_trades > 0:
-                    comb_wr = (h_bull["win_rate_pct"] * bull_trades + h_bear["win_rate_pct"] * bear_trades) / tot_trades
-                    comb_ret = (h_bull["avg_roi_pct"] * bull_trades + h_bear["avg_roi_pct"] * bear_trades) / tot_trades
-                    comb_pf = max(h_bull.get("profit_factor", 0.0), h_bear.get("profit_factor", 0.0))
-                    comb_sharpe = (h_bull.get("sharpe_ratio", 0.0) * bull_trades + h_bear.get("sharpe_ratio", 0.0) * bear_trades) / tot_trades
-                else:
-                    comb_wr = 0.0
-                    comb_ret = 0.0
-                    comb_pf = 0.0
-                    comb_sharpe = 0.0
-
-                # Pitfall 4.1: Risk-adjusted utility function with downside penalty
+                # Risk-adjusted utility function with downside penalty
                 if tot_trades < self.min_trades:
                     utility = -50.0
+                elif comb_ret <= 0.0:
+                    utility = comb_ret * 5.0
                 else:
-                    # Utility incorporates expected return, win rate confidence, profit factor, and penalizes downside variance
                     wr_factor = comb_wr / 50.0
                     sample_factor = np.sqrt(min(tot_trades, 40))
                     pf_factor = min(3.0, max(0.5, comb_pf))
-                    risk_penalty = 1.0 + max(0.0, -comb_sharpe)
+                    risk_penalty = 1.0 + (max(0.0, -comb_ret) * 2.0)
                     utility = (comb_ret * wr_factor * pf_factor * sample_factor) / risk_penalty
 
                 raw_utility[s_idx, h_idx] = utility
@@ -122,6 +101,10 @@ class ThresholdOptimizer:
 
         for s in range(n_thresh):
             for h in range(n_horiz):
+                if raw_utility[s, h] <= 0:
+                    plateau_scores[s, h] = -50.0
+                    continue
+
                 s_min = max(0, s - 1)
                 s_max = min(n_thresh, s + 2)
                 h_min = max(0, h - 1)
