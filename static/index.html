@@ -5123,7 +5123,8 @@
                         const holdDays = isCall 
                             ? (f.long_holding_days || o.holding_horizon_days || f.holding_days || 14) 
                             : (f.short_holding_days || o.holding_horizon_days || f.holding_days || 7);
-                        const wr = isCall ? (f.long_win_rate_pct || f.win_rate_pct) : (f.short_win_rate_pct || f.win_rate_pct);
+                        const fullWr = Number(f.win_rate_pct ?? 0).toFixed(1);
+                        const oosWr = Number(f.oos_win_rate_pct ?? (isCall ? f.long_oos_wr_pct : f.short_oos_wr_pct) ?? fullWr).toFixed(1);
 
                         firingCardsHtml += `
                             <div style="background:#16171a; border:1px solid ${dirColor}; border-radius:4px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -5133,7 +5134,7 @@
                                     </div>
                                     <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Signal: <strong style="color:${dirColor};">${isCall ? 'BULLISH REVERSION' : 'BEARISH EXTENSION/REVERSION'}</strong> &bull; Holding Exit: <strong style="color:#d1d4dc;">${holdDays} Sessions</strong> &bull; Current Z: <strong style="color:#fff;">${zFormatted}&sigma;</strong> vs Barrier <strong style="color:#fff;">${barrierFormatted}&sigma;</strong>
                                     </div>
-                                    <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Execution Window: <strong>3:45 PM &ndash; 3:58 PM EST (Market-On-Close)</strong> &bull; Historical Edge: PF ${f.profit_factor}x, WR ${Number(wr).toFixed(1)}%, ROI +${f.avg_roi_pct}%
+                                    <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Execution Window: <strong>3:45 PM &ndash; 3:58 PM EST (Market-On-Close)</strong> &bull; Edge: PF <strong>${f.profit_factor}x</strong> &bull; Full Win Rate: <strong style="color:#ffffff;">${fullWr}%</strong> (${f.trades_count || 0} trades) &bull; OOS Walk-Forward: <strong style="color:#34d399;">${oosWr}%</strong> &bull; ROI <strong>+${f.avg_roi_pct}%</strong>
                                     </div>
                                 </div>
                                 <button class="action-pill btn-primary" onclick="loadChampionToCockpit('${f.ticker}', '${f.market}', '${f.sector}', ${f.threshold}, ${f.contract_dte || 21}, ${holdDays})" style="font-size:0.75rem; padding:5px 12px;">Load Trifecta

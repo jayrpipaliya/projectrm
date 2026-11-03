@@ -167,6 +167,12 @@ def main():
         sum_loss_pct = sum(abs(tr["pnl_rec_pct"]) for tr in losses) if losses else 0.0
         pf = (sum_win_pct / sum_loss_pct) if sum_loss_pct > 0 else 99.0
 
+        full_long_trades = [tr for tr in combined_raw_trades if tr["action"] == "LONG ASSET"]
+        long_full_wr = (sum(1 for tr in full_long_trades if tr["win_rec"]) / len(full_long_trades) * 100.0) if full_long_trades else (best_long["wr_oos"] if best_long else None)
+
+        full_short_trades = [tr for tr in combined_raw_trades if tr["action"] == "SHORT ASSET"]
+        short_full_wr = (sum(1 for tr in full_short_trades if tr["win_rec"]) / len(full_short_trades) * 100.0) if full_short_trades else (best_short["wr_oos"] if best_short else None)
+
         # Weighted OOS Win Rate
         if policy == "LONG_ONLY":
             comb_oos_wr = best_long["wr_oos"] if best_long else 50.0
@@ -222,11 +228,11 @@ def main():
             "trade_policy": policy,
             "long_threshold": best_long["sigma"] if (policy != "SHORT_ONLY" and best_long) else None,
             "long_holding_days": best_long["horizon"] if (policy != "SHORT_ONLY" and best_long) else None,
-            "long_win_rate_pct": round(float(best_long["wr_oos"]), 1) if (policy != "SHORT_ONLY" and best_long) else None,
+            "long_win_rate_pct": round(float(long_full_wr), 1) if (policy != "SHORT_ONLY" and long_full_wr is not None) else None,
             "long_oos_wr_pct": round(float(best_long["wr_oos"]), 1) if (policy != "SHORT_ONLY" and best_long) else None,
             "short_threshold": best_short["sigma"] if (policy != "LONG_ONLY" and best_short) else None,
             "short_holding_days": best_short["horizon"] if (policy != "LONG_ONLY" and best_short) else None,
-            "short_win_rate_pct": round(float(best_short["wr_oos"]), 1) if (policy != "LONG_ONLY" and best_short) else None,
+            "short_win_rate_pct": round(float(short_full_wr), 1) if (policy != "LONG_ONLY" and short_full_wr is not None) else None,
             "short_oos_wr_pct": round(float(best_short["wr_oos"]), 1) if (policy != "LONG_ONLY" and best_short) else None
         }
 
